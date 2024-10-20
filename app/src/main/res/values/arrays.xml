@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="classification_array">
+        <item>二分类</item>
+        <item>三分类</item>
+        <item>四分类</item>
+    </string-array>
+</resources>

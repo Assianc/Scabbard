@@ -1,0 +1,13 @@
+<!-- res/drawable/shadow_gradient.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:startColor="#E0F7FA"
+    android:endColor="#ffffff"
+    android:angle="0" />
+    <corners android:radius="8dp" />
+    <padding
+        android:left="5dp"
+        android:top="5dp"
+        android:right="5dp"
+        android:bottom="5dp" />
+</shape>

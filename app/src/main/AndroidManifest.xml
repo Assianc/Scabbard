@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/tubiao"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/tubiao"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Allocator"
+        tools:targetApi="31">
+
+        <!-- 启动界面，添加启动的 intent-filter -->
+        <activity
+            android:name=".StartActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Allocator">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 分类功能界面，作为第二个活动 -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Allocator" />
+        <activity android:name=".PlayerSelectionActivity" />
+
+
+
+
+    </application>
+
+</manifest>
