@@ -28,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean isTeamsAllocated = false;  // 标志是否已经进行过分类
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
         classificationSpinner = findViewById(R.id.classificationSpinner);
         allocateButton = findViewById(R.id.allocate_button);
         addPlayerButton = findViewById(R.id.add_player_button);
+
         teamAText = findViewById(R.id.team_a_text);
         teamBText = findViewById(R.id.team_b_text);
         teamCText = findViewById(R.id.team_c_text);
@@ -45,20 +45,15 @@ public class MainActivity extends AppCompatActivity {
 
         // 初始化玩家列表
         players = new ArrayList<>();
-        players.add("吴");
-        players.add("韩");
-        players.add("祖力");
-        players.add("功桑");
-        players.add("展斌");
-        players.add("欧桑");
-        players.add("陆勇诺");
-        players.add("赵志辉");
-        players.add("聂宏旭");
-        players.add("6舅");
-        players.add("付俊杰");
-        players.add("黄贵豪");
-        players.add("孜巴努尔");
-        players.add("侯欢格");
+        players.add("1");
+        players.add("2");
+        players.add("3");
+        players.add("4");
+        players.add("5");
+        players.add("6");
+        players.add("7");
+        players.add("8");
+        players.add("9");
 
         // 设置 Spinner
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -93,7 +88,6 @@ public class MainActivity extends AppCompatActivity {
                 classificationType = 2;  // 默认二分类
             }
         });
-
 
 
         // 添加玩家按钮
@@ -137,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
 
     // 修改 allocateTeams 方法，接受选中的玩家作为参数
     // 格式化玩家列表，将玩家名用逗号分隔
-// 格式化玩家列表，将玩家名用逗号分隔
+    // 格式化玩家列表，将玩家名用逗号分隔
     private String formatPlayerList(List<String> team) {
         return String.join(", ", team); // 使用逗号分隔玩家名字
     }
