@@ -1,9 +1,8 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Allocator" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<resources>
+    <style name="Theme.Allocator" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- 浅色模式 -->
+        <item name="android:colorBackground">@color/background</item>
+        <item name="android:textColor">@color/textColor</item>
+        <!-- 添加更多主题属性 -->
     </style>
-
-    <style name="Theme.Allocator" parent="Base.Theme.Allocator" />
 </resources>
