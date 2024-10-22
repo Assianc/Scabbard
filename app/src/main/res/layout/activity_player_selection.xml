@@ -2,14 +2,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/gradient_background"
+    android:background="@color/background"
     android:padding="16dp">
 
     <EditText
         android:id="@+id/player_name_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="输入添加元素" />
+        android:hint="输入添加元素"
+        android:minHeight="48dp"
+        android:textColorHint="@color/InputTextColor" />
 
     <Button
         android:id="@+id/add_player_button"
@@ -26,7 +28,7 @@
         android:layout_height="wrap_content"
         android:text="全选"
         android:layout_gravity="end"
-        android:textColor="@android:color/black"
+        android:textColor="@color/AllSelectColor"
         android:background="@android:color/transparent"
         android:layout_marginRight="16dp"
         android:layout_marginTop="16dp" />

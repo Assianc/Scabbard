@@ -60,7 +60,7 @@ public class PlayerSelectionActivity extends AppCompatActivity {
             }
         });
 
-// 全选按钮事件
+        // 全选按钮事件
         selectAllButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -3,7 +3,10 @@
 <resources>
     <color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#03DAC5</color>
-    <color name="background">#FFFFFF</color> <!-- 白色背景 -->
-    <color name="textColor">#000000</color>  <!-- 黑色文本 -->
+    <color name="colorAccent">#00C0FF</color>
+    <color name="background">#FFFFFF</color>
+    <color name="textColor">#000000</color>
+    <color name="AllSelectColor">#000000</color>
+    <color name="InputTextColor">#808080</color>
+    <!-- 添加更多颜色 -->
 </resources>
