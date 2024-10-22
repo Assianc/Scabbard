@@ -19,6 +19,18 @@
         android:layout_gravity="center"
         android:layout_marginTop="8dp" />
 
+    <!-- 全选按钮 -->
+    <Button
+        android:id="@+id/select_all_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="全选"
+        android:layout_gravity="end"
+        android:textColor="@android:color/black"
+        android:background="@android:color/transparent"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp" />
+
     <!-- ListView with multiple choice mode -->
     <ListView
         android:id="@+id/player_list_view"
@@ -35,5 +47,6 @@
         android:text="添加"
         android:layout_gravity="center"
         android:layout_marginTop="8dp" />
+
 
 </LinearLayout>

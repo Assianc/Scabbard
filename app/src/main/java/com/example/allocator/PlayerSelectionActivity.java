@@ -18,9 +18,10 @@ public class PlayerSelectionActivity extends AppCompatActivity {
 
     private EditText playerNameInput;
     private ListView playerListView;
-    private Button addPlayerButton, doneButton;
+    private Button addPlayerButton, doneButton, selectAllButton;
     private ArrayList<String> playerList;
     private ArrayAdapter<String> playerAdapter;
+    private boolean isAllSelected = false;  // 用于跟踪全选状态
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +32,7 @@ public class PlayerSelectionActivity extends AppCompatActivity {
         playerListView = findViewById(R.id.player_list_view);
         addPlayerButton = findViewById(R.id.add_player_button);
         doneButton = findViewById(R.id.done_button);
+        selectAllButton = findViewById(R.id.select_all_button);  // 新增的全选按钮
 
         // 从 MainActivity 获取当前的玩家列表
         playerList = getIntent().getStringArrayListExtra("currentPlayers");
@@ -57,6 +59,29 @@ public class PlayerSelectionActivity extends AppCompatActivity {
                 }
             }
         });
+
+// 全选按钮事件
+        selectAllButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isAllSelected) {
+                    // 取消所有选中的项目
+                    for (int i = 0; i < playerList.size(); i++) {
+                        playerListView.setItemChecked(i, false);  // 设置为未选中
+                    }
+                    isAllSelected = false;  // 更新状态为未全选
+                    selectAllButton.setText("全选");  // 更新按钮文字
+                } else {
+                    // 全选所有项目
+                    for (int i = 0; i < playerList.size(); i++) {
+                        playerListView.setItemChecked(i, true);  // 设置为选中
+                    }
+                    isAllSelected = true;  // 更新状态为全选
+                    selectAllButton.setText("取消全选");  // 更新按钮文字
+                }
+            }
+        });
+
 
         // 设置 ListView 长按删除玩家功能
         playerListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
