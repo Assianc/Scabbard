@@ -34,6 +34,7 @@ public class StartActivity extends AppCompatActivity {
             }
         });
 
+
         // 设置备忘录按钮点击事件，跳转到备忘录界面
         memoButton.setOnClickListener(new View.OnClickListener() {
             @Override
