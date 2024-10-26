@@ -5,8 +5,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import com.example.memo.MainActivityMemo;
-
-
 import androidx.appcompat.app.AppCompatActivity;
 
 
@@ -18,7 +16,7 @@ public class StartActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_start);
+        setContentView(R.layout.activity_start_allocator);
 
         startButton = findViewById(R.id.start_button);
         memoButton = findViewById(R.id.memo_button); // 初始化新增的按钮

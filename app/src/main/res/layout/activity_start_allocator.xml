@@ -15,7 +15,7 @@
         android:id="@+id/start_button"
         android:layout_width="300dp"
         android:layout_height="wrap_content"
-        android:text="野道"
+        android:text="分道"
         android:textSize="18sp"
         android:padding="16dp"
         android:layout_margin="40dp"

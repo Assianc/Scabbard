@@ -14,6 +14,9 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        // JitPack 远程仓库
+        mavenCentral()
+        maven(url = "https://jitpack.io") // 添加 JitPack 仓库
         google()
         mavenCentral()
     }

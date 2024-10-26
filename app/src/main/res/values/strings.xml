@@ -1,11 +1,13 @@
 <resources>
-    <string name="app_name">Allocator</string>
+    <string name="app_name">Scabbard</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+    <string name="common_permission_fail">权限请求失败，请检查设置。</string>
+    <string name="common_permission_hint">请授予必要的权限。</string>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
