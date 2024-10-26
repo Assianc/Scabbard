@@ -1,0 +1,84 @@
+name: Nightly Release
+
+
+on:
+  schedule:
+    - cron: "0 22 * * *"
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Get versionName from build.gradle.kts
+        id: get_version
+        run: |
+          VERSION_NAME=$(grep 'versionName' app/build.gradle.kts | head -n 1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_ENV
+
+      - name: Gradle build
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: current
+          arguments: assembleRelease
+
+      - name: Setup build tool version variable
+        run: |
+          BUILD_TOOL_VERSION=$(ls /usr/local/lib/android/sdk/build-tools/ | tail -n 1)
+          echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
+          echo "Last build tool version is: $BUILD_TOOL_VERSION"
+
+      - name: Sign APK
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.KEYSTORE_FILE }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_ALIAS_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: ${{ env.BUILD_TOOL_VERSION }}
+
+      - name: Get current date
+        id: date
+        run: |
+          echo "BUILD_DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+      - name: Rename APK
+        run: |
+          APK_NAME="${{ steps.sign_app.outputs.signedReleaseFile }}"
+          NEW_APK_NAME="Scabbard-${{ env.VERSION_NAME }}-nightly.${{ env.BUILD_DATE }}.apk"
+          mv "${APK_NAME}" "${NEW_APK_NAME}"
+          echo "NEW_APK_NAME=${NEW_APK_NAME}" >> $GITHUB_ENV
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NEW_APK_NAME }}
+          path: ${{ github.workspace }}/${{ env.NEW_APK_NAME }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ env.VERSION_NAME }}-nightly.${{ env.BUILD_DATE }}"
+          name: "Nightly ${{ env.VERSION_NAME }}-nightly.${{ env.BUILD_DATE }}"
+          body: |
+            This is an automated nightly release for testing purposes.
+            Version: ${{ env.VERSION_NAME }}-nightly.${{ env.BUILD_DATE }}
+            
+            Warning: This build may be unstable and is not recommended for production use.
+          draft: false
+          prerelease: true
+          files: ${{ env.NEW_APK_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
