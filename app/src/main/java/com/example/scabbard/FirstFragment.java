@@ -1,4 +1,4 @@
-package com.example.allocator;
+package com.example.scabbard;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.example.allocator.databinding.FragmentFirstBinding;
+import com.example.scabbard.databinding.FragmentFirstBinding;
 
 public class FirstFragment extends Fragment {
 

@@ -1,4 +1,4 @@
-package com.example.allocator;
+package com.example.scabbard;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         addPlayerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, PlayerSelectionActivity.class);
+                Intent intent = new Intent(MainActivity.this, com.example.scabbard.PlayerSelectionActivity.class);
                 intent.putStringArrayListExtra("currentPlayers", new ArrayList<>(players)); // 传递当前的玩家列表
                 startActivityForResult(intent, REQUEST_CODE_ADD_PLAYER); // 启动玩家选择界面
             }

@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.Allocator" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.Scabbard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- 浅色模式 -->
         <item name="android:colorBackground">@color/background</item>
         <item name="android:textColor">@color/textColor</item>

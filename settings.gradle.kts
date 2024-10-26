@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Allocator"
+rootProject.name = "Scabbard"
 include(":app")
- 
+include(":memo")

@@ -1,4 +1,4 @@
-package com.example.allocator;
+package com.example.memo;
 
 import org.junit.Test;
 

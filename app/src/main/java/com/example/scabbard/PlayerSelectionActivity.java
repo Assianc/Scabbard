@@ -1,4 +1,4 @@
-package com.example.allocator;
+package com.example.scabbard;
 
 import android.content.DialogInterface;
 import android.content.Intent;

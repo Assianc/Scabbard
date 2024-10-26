@@ -15,7 +15,21 @@
         android:id="@+id/start_button"
         android:layout_width="300dp"
         android:layout_height="wrap_content"
-        android:text="分类器"
+        android:text="野道"
+        android:textSize="18sp"
+        android:padding="16dp"
+        android:layout_margin="40dp"
+        android:textColor="@android:color/black"
+        android:layout_centerInParent="true"
+        android:background="@drawable/transparent_button_with_black_border"
+        android:backgroundTint="@null" />
+
+    <Button
+        android:id="@+id/memo_button"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:text="云端事"
+        android:layout_above="@id/start_button"
         android:textSize="18sp"
         android:padding="16dp"
         android:layout_margin="40dp"
