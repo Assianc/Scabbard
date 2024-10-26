@@ -1,9 +1,9 @@
-name: Build and Release APK
+name: Nightly Release
+
 
 on:
-  push:
-    branches:
-      - master
+  schedule:
+    - cron: "0 22 * * *"
 
 jobs:
   build_and_release:
@@ -57,7 +57,7 @@ jobs:
       - name: Rename APK
         run: |
           APK_NAME="${{ steps.sign_app.outputs.signedReleaseFile }}"
-          NEW_APK_NAME="Scabbard-${{ env.VERSION_NAME }}-auto.${{ env.BUILD_DATE }}.apk"
+          NEW_APK_NAME="Scabbard-${{ env.VERSION_NAME }}-nightly.${{ env.BUILD_DATE }}.apk"
           mv "${APK_NAME}" "${NEW_APK_NAME}"
           echo "NEW_APK_NAME=${NEW_APK_NAME}" >> $GITHUB_ENV
 
@@ -70,11 +70,11 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ env.VERSION_NAME }}-auto.${{ env.BUILD_DATE }}"
-          name: "Auto ${{ env.VERSION_NAME }}-auto.${{ env.BUILD_DATE }}"
+          tag_name: "v${{ env.VERSION_NAME }}-nightly.${{ env.BUILD_DATE }}"
+          name: "Nightly ${{ env.VERSION_NAME }}-nightly.${{ env.BUILD_DATE }}"
           body: |
-            This is an automated release for testing purposes.
-            Version: ${{ env.VERSION_NAME }}-auto.${{ env.BUILD_DATE }}
+            This is an automated nightly release for testing purposes.
+            Version: ${{ env.VERSION_NAME }}-nightly.${{ env.BUILD_DATE }}
             
             Warning: This build may be unstable and is not recommended for production use.
           draft: false
