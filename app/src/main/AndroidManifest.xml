@@ -25,6 +25,7 @@
         android:roundIcon="@drawable/ic_add"
         android:supportsRtl="true"
         android:theme="@style/Theme.Scabbard"
+        android:hardwareAccelerated="true"
         tools:targetApi="31">
 
         <!-- 启动画面 -->
