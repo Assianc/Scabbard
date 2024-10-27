@@ -21,7 +21,7 @@
         android:layout_margin="8dp"
         android:backgroundTint="@color/colorAccent"
         android:contentDescription="添加备忘录"
-        android:src="@drawable/ic_add5_foreground" />
+        android:src="@drawable/mdiandroidauto" />
 
     <!-- 删除选中备忘录的按钮，初始状态为隐藏 -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -32,7 +32,7 @@
         android:layout_margin="16dp"
         android:backgroundTint="@color/colorAccent"
         android:contentDescription="删除选中的备忘录"
-        android:src="@drawable/ic_add2"
+        android:src="@drawable/trash"
         android:visibility="gone"/> <!-- 初始隐藏 -->
 
 </FrameLayout>
