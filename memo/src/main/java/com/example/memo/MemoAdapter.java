@@ -1,6 +1,5 @@
 package com.example.memo;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,10 +19,12 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
     private static final int MAX_CONTENT_LENGTH = 50;
     private boolean isMultiSelectMode = false; // 是否处于多选模式
     private List<Memo> selectedItems = new ArrayList<>(); // 保存被选中的备忘录
+    private MemoDAO memoDAO;
 
-    public MemoAdapter(List<Memo> memoList, Context context) {
+    public MemoAdapter(List<Memo> memoList, Context context, MemoDAO memoDAO) { // 修改构造函数
         this.memoList = memoList;
         this.context = context;
+        this.memoDAO = memoDAO; // 初始化 MemoDAO
     }
 
     @NonNull
@@ -46,11 +47,11 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
         holder.contentTextView.setText(displayContent);
         holder.contentTextView.setMaxLines(2);
 
-        // 如果是多选模式，显示 CheckBox；否则隐藏
+        // 多选模式下显示 CheckBox，并设置选中状态
         holder.checkBox.setVisibility(isMultiSelectMode ? View.VISIBLE : View.GONE);
         holder.checkBox.setChecked(selectedItems.contains(memo));
 
-        // 设置内容点击事件，切换内容展开/收起
+        // 内容点击事件，切换展开/收起
         holder.contentTextView.setOnClickListener(new View.OnClickListener() {
             private boolean isExpanded = false;
 
@@ -61,26 +62,21 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
             }
         });
 
-        // 长按启用多选模式
+        // 长按进入多选模式
         holder.itemView.setOnLongClickListener(v -> {
-            isMultiSelectMode = true;
-            notifyDataSetChanged();
-            return true;
-        });
-
-        holder.itemView.setOnLongClickListener(v -> {
-            isMultiSelectMode = true;
-            if (context instanceof MainActivityMemo) {
-                ((MainActivityMemo) context).toggleDeleteButton(true); // 显示删除按钮
+            if (!isMultiSelectMode) { // 确保仅在未激活多选模式时才进入多选模式
+                isMultiSelectMode = true;
+                if (context instanceof MainActivityMemo) {
+                    ((MainActivityMemo) context).toggleDeleteButton(true); // 显示删除按钮
+                }
+                notifyDataSetChanged();
             }
-            notifyDataSetChanged();
             return true;
         });
 
-
-        // 处理多选状态切换
-        holder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
+        // CheckBox 点击事件，添加或移除选中的备忘录
+        holder.checkBox.setOnClickListener(v -> {
+            if (holder.checkBox.isChecked()) {
                 selectedItems.add(memo);
             } else {
                 selectedItems.remove(memo);
@@ -93,17 +89,38 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
         return memoList.size();
     }
 
-    // 批量删除选中 Memo
+    // 批量删除选中的备忘录
+// 批量删除选中的备忘录
+    // 批量删除选中的备忘录
     public void deleteSelectedMemos() {
+        for (Memo memo : selectedItems) {
+            memoDAO.deleteMemo(memo.getId()); // 使用 memoDAO 实例删除数据库中的记录
+        }
         memoList.removeAll(selectedItems);
         selectedItems.clear();
         isMultiSelectMode = false;
+        notifyDataSetChanged();
+
+        if (context instanceof MainActivityMemo) {
+            ((MainActivityMemo) context).toggleDeleteButton(false); // 隐藏删除按钮
+        }
+    }
+
+
+    // 退出多选模式
+    public void exitMultiSelectMode() {
+        isMultiSelectMode = false;
+        selectedItems.clear();
         notifyDataSetChanged();
         if (context instanceof MainActivityMemo) {
             ((MainActivityMemo) context).toggleDeleteButton(false); // 隐藏删除按钮
         }
     }
 
+    // 判断是否处于多选模式
+    public boolean isMultiSelectMode() {
+        return isMultiSelectMode;
+    }
 
     public static class MemoViewHolder extends RecyclerView.ViewHolder {
         TextView titleTextView;

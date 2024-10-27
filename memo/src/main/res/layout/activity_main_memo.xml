@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- RecyclerView 用于显示备忘录列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
@@ -11,24 +12,27 @@
         android:background="@drawable/gradient_background_memo"
         android:padding="16dp" />
 
+    <!-- 添加备忘录的 FloatingActionButton -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="54dp"
         android:layout_height="58dp"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:backgroundTint="@color/design_default_color_on_primary"
+        android:layout_margin="8dp"
+        android:backgroundTint="@color/colorAccent"
         android:contentDescription="添加备忘录"
-        android:src="@drawable/ic_add3" />
+        android:src="@drawable/ic_add5_foreground" />
 
+    <!-- 删除选中备忘录的按钮，初始状态为隐藏 -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/delete_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end|bottom"
+        android:layout_gravity="end|top"
         android:layout_margin="16dp"
-        android:src="@drawable/ic_add3"
-        android:visibility="gone" /> <!-- 初始状态为不可见 -->
-
+        android:backgroundTint="@color/colorAccent"
+        android:contentDescription="删除选中的备忘录"
+        android:src="@drawable/ic_add2"
+        android:visibility="gone"/> <!-- 初始隐藏 -->
 
 </FrameLayout>
