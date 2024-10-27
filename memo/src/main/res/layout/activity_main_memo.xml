@@ -17,7 +17,7 @@
         android:id="@+id/fab"
         android:layout_width="54dp"
         android:layout_height="58dp"
-        android:layout_gravity="bottom|end"
+        android:layout_gravity="center_vertical|right"
         android:layout_margin="20dp"
         android:backgroundTint="@color/colorAccent"
         android:contentDescription="添加备忘录"
