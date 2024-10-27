@@ -10,7 +10,7 @@
         android:scaleType="centerCrop"
         android:src="@drawable/background3" />
 
-    <!-- Start 按钮 -->
+    <!-- 分类器 按钮 -->
     <Button
         android:id="@+id/start_button"
         android:layout_width="300dp"
@@ -23,6 +23,16 @@
         android:layout_centerInParent="true"
         android:background="@drawable/transparent_button_with_black_border"
         android:backgroundTint="@null" />
+
+    <!-- 使用渐变效果的分界线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1.5dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="30dp"
+        android:layout_below="@id/memo_button"
+        android:background="@drawable/line_divider_allocator" />
 
     <Button
         android:id="@+id/memo_button"

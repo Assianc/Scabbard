@@ -2,10 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="36dp"
+    android:layout_marginTop="52dp"
     android:background="@drawable/memo_white_text_border"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="26dp">
 
     <TextView
         android:id="@+id/memo_title"
@@ -14,15 +14,26 @@
         android:layout_height="wrap_content"
         android:paddingBottom="4dp"
         android:text="Memo Title"
-        android:textSize="18sp"
+        android:textSize="21sp"
         android:textStyle="bold" />
+
+    <!-- 使用渐变效果的分界线 -->
+    <View
+        android:layout_above="@+id/memo_content"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="1dp"
+        android:layout_marginEnd="1dp"
+        android:layout_marginBottom="30dp"
+        android:layout_below="@+id/memo_title"
+        android:background="@drawable/line_divider" />
 
     <TextView
         android:id="@+id/memo_content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Memo Content"
-        android:textSize="14sp" />
+        android:textSize="16sp" />
 
     <CheckBox
         android:id="@+id/checkbox"

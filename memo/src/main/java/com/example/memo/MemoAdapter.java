@@ -1,6 +1,7 @@
 package com.example.memo;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,7 +52,17 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
         holder.checkBox.setVisibility(isMultiSelectMode ? View.VISIBLE : View.GONE);
         holder.checkBox.setChecked(selectedItems.contains(memo));
 
-        // 内容点击事件，切换展开/收起
+        // 设置点击事件，跳转到 MemoDetailActivity 显示完整信息
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, MemoDetailActivity.class);
+            intent.putExtra("memo_title", memo.getTitle());
+            intent.putExtra("memo_content", memo.getContent());
+            context.startActivity(intent);
+        });
+
+        holder.checkBox.setVisibility(isMultiSelectMode ? View.VISIBLE : View.GONE);
+        holder.checkBox.setChecked(selectedItems.contains(memo));
+
         holder.contentTextView.setOnClickListener(new View.OnClickListener() {
             private boolean isExpanded = false;
 
@@ -62,19 +73,17 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
             }
         });
 
-        // 长按进入多选模式
         holder.itemView.setOnLongClickListener(v -> {
-            if (!isMultiSelectMode) { // 确保仅在未激活多选模式时才进入多选模式
+            if (!isMultiSelectMode) {
                 isMultiSelectMode = true;
                 if (context instanceof MainActivityMemo) {
-                    ((MainActivityMemo) context).toggleDeleteButton(true); // 显示删除按钮
+                    ((MainActivityMemo) context).toggleDeleteButton(true);
                 }
                 notifyDataSetChanged();
             }
             return true;
         });
 
-        // CheckBox 点击事件，添加或移除选中的备忘录
         holder.checkBox.setOnClickListener(v -> {
             if (holder.checkBox.isChecked()) {
                 selectedItems.add(memo);
@@ -89,8 +98,6 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
         return memoList.size();
     }
 
-    // 批量删除选中的备忘录
-// 批量删除选中的备忘录
     // 批量删除选中的备忘录
     public void deleteSelectedMemos() {
         for (Memo memo : selectedItems) {

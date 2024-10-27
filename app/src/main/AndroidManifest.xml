@@ -57,10 +57,14 @@
         <!-- 备忘录功能界面 -->
         <activity
             android:name="com.example.memo.MainActivityMemo"
+
             android:exported="true"
             android:theme="@style/Theme.Scabbard" />
 
         <activity android:name="com.example.memo.AddMemoActivity" />
+
+        <activity android:name="com.example.memo.MemoDetailActivity" />
+
 
     </application>
 

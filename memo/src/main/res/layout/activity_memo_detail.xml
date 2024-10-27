@@ -6,27 +6,35 @@
     android:background="@drawable/gradient_background_memo"
     android:padding="26dp">
 
-    <EditText
-        android:id="@+id/editTextTitle"
+    <TextView
+        android:id="@+id/memo_detail_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="50dp"
-        android:hint="Title" />
+        android:layout_marginBottom="30dp"
+        android:gravity="left"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:hint="bold" />
 
-    <EditText
-        android:id="@+id/editTextContent"
+    <!-- 使用渐变效果的分界线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1.5dp"
+        android:background="@drawable/line_divider"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="30dp"/>
+
+    <TextView
+        android:id="@+id/memo_detail_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="50dp"
         android:hint="Content"
         android:minLines="5"
         android:gravity="top"
-        android:inputType="textMultiLine" />
+        android:textSize="16sp" />
 
-    <Button
-        android:id="@+id/buttonSave"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Save"
-        android:layout_gravity="end" />
+
 </LinearLayout>
+
