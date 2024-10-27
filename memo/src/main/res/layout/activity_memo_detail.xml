@@ -1,50 +1,61 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/gradient_background_memo"
     android:padding="26dp">
 
+    <!-- 标题 TextView -->
     <TextView
         android:id="@+id/memo_detail_title"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="20dp"
         android:gravity="left"
         android:textSize="32sp"
         android:textStyle="bold"
-        android:hint="bold" />
+        android:hint="标题"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 使用渐变效果的分界线 -->
+    <!-- 分界线 -->
     <View
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="1.5dp"
-        android:background="@drawable/line_divider"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
-        android:layout_marginBottom="30dp"/>
+        android:layout_marginBottom="30dp"
+        android:background="@drawable/line_divider"
+        app:layout_constraintTop_toBottomOf="@id/memo_detail_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
+    <!-- 内容 TextView -->
     <TextView
         android:id="@+id/memo_detail_content"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="50dp"
-        android:hint="Content"
+        android:hint="内容"
         android:minLines="5"
         android:gravity="top"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@id/memo_detail_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
+    <!-- 更新时间 TextView -->
     <TextView
         android:id="@+id/memo_detail_update_time"
-        android:textColor="#999999"
-        android:text="2024/02/28"
-        android:textStyle="bold"
-
-        android:layout_marginTop="-250dp"
-        android:layout_marginLeft="230dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content"/>
+        android:text="2024/02/28"
+        android:textColor="#999999"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/memo_detail_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="8dp"/>
 
-</LinearLayout>
-
+</androidx.constraintlayout.widget.ConstraintLayout>

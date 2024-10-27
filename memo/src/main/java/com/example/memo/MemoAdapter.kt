@@ -1,152 +1,118 @@
-package com.example.memo;
+package com.example.memo
 
-import android.content.Context;
-import android.content.Intent;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.TextView;
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
+import android.content.Context
+import android.content.Intent
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.CheckBox
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+class MemoAdapter(
+    private val memoList: MutableList<Memo>,
+    private val context: Context,
+    private val memoDAO: MemoDAO
+) : RecyclerView.Adapter<MemoAdapter.MemoViewHolder>() {
 
-public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder> {
-
-    private List<Memo> memoList;
-    private Context context;
-    private static final int MAX_CONTENT_LENGTH = 50;
-    private boolean isMultiSelectMode = false; // 是否处于多选模式
-    private List<Memo> selectedItems = new ArrayList<>(); // 保存被选中的备忘录
-    private MemoDAO memoDAO;
-
-    public MemoAdapter(List<Memo> memoList, Context context, MemoDAO memoDAO) { // 修改构造函数
-        this.memoList = memoList;
-        this.context = context;
-        this.memoDAO = memoDAO; // 初始化 MemoDAO
+    companion object {
+        private const val MAX_CONTENT_LENGTH = 50
     }
 
-    @NonNull
-    @Override
-    public MemoViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.memo_item, parent, false);
-        return new MemoViewHolder(view);
+    var isMultiSelectMode = false // 是否处于多选模式
+        private set // 设置为私有，只允许内部修改
+
+    private val selectedItems = mutableListOf<Memo>() // 保存被选中的备忘录
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MemoViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.memo_item, parent, false)
+        return MemoViewHolder(view)
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull MemoViewHolder holder, int position) {
-        Memo memo = memoList.get(position);
-        holder.titleTextView.setText(memo.getTitle());
+    override fun onBindViewHolder(holder: MemoViewHolder, position: Int) {
+        val memo = memoList[position]
+        holder.titleTextView.text = memo.title
+        holder.updateTimeTextView.text = "上次更新: ${memo.updateTime}"
 
-        // 显示更新时间
-        holder.updateTimeTextView.setText("上次更新: " + memo.getUpdateTime());
+        val content = memo.content
+        val displayContent = if (content.length > MAX_CONTENT_LENGTH) {
+            content.substring(0, MAX_CONTENT_LENGTH) + "..."
+        } else {
+            content
+        }
+        holder.contentTextView.text = displayContent
+        holder.contentTextView.maxLines = 2
 
-        // 限制内容显示前50字符，并设置最大行数为2行
-        String content = memo.getContent();
-        String displayContent = content.length() > MAX_CONTENT_LENGTH
-                ? content.substring(0, MAX_CONTENT_LENGTH) + "..."
-                : content;
-        holder.contentTextView.setText(displayContent);
-        holder.contentTextView.setMaxLines(2);
+        holder.checkBox.visibility = if (isMultiSelectMode) View.VISIBLE else View.GONE
+        holder.checkBox.isChecked = selectedItems.contains(memo)
 
-        // 多选模式下显示 CheckBox，并设置选中状态
-        holder.checkBox.setVisibility(isMultiSelectMode ? View.VISIBLE : View.GONE);
-        holder.checkBox.setChecked(selectedItems.contains(memo));
-
-        // 设置点击事件，跳转到 MemoDetailActivity 显示完整信息
-        holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, MemoDetailActivity.class);
-            intent.putExtra("memo_title", memo.getTitle());
-            intent.putExtra("memo_content", memo.getContent());
-            intent.putExtra("memo_update_time",memo.getUpdateTime()+ " 修改"); // 传递更新时间
-
-            context.startActivity(intent);
-        });
-
-        holder.checkBox.setVisibility(isMultiSelectMode ? View.VISIBLE : View.GONE);
-        holder.checkBox.setChecked(selectedItems.contains(memo));
-
-        holder.contentTextView.setOnClickListener(new View.OnClickListener() {
-            private boolean isExpanded = false;
-
-            @Override
-            public void onClick(View v) {
-                isExpanded = !isExpanded;
-                holder.contentTextView.setText(isExpanded ? content : displayContent);
+        holder.itemView.setOnClickListener {
+            val intent = Intent(context, MemoDetailActivity::class.java).apply {
+                putExtra("memo_title", memo.title)
+                putExtra("memo_content", memo.content)
+                putExtra("memo_update_time", "${memo.updateTime} 修改")
             }
-        });
+            context.startActivity(intent)
+        }
 
-        holder.itemView.setOnLongClickListener(v -> {
+        holder.contentTextView.setOnClickListener(object : View.OnClickListener {
+            private var isExpanded = false
+
+            override fun onClick(v: View?) {
+                isExpanded = !isExpanded
+                holder.contentTextView.text = if (isExpanded) content else displayContent
+            }
+        })
+
+        holder.itemView.setOnLongClickListener {
             if (!isMultiSelectMode) {
-                isMultiSelectMode = true;
-                if (context instanceof MainActivityMemo) {
-                    ((MainActivityMemo) context).toggleDeleteButton(true);
+                isMultiSelectMode = true
+                if (context is MainActivityMemo) {
+                    context.toggleDeleteButton(true)
                 }
-                notifyDataSetChanged();
+                notifyDataSetChanged()
             }
-            return true;
-        });
+            true
+        }
 
-        holder.checkBox.setOnClickListener(v -> {
-            if (holder.checkBox.isChecked()) {
-                selectedItems.add(memo);
+        holder.checkBox.setOnClickListener {
+            if (holder.checkBox.isChecked) {
+                selectedItems.add(memo)
             } else {
-                selectedItems.remove(memo);
+                selectedItems.remove(memo)
             }
-        });
-    }
-
-    @Override
-    public int getItemCount() {
-        return memoList.size();
-    }
-
-    // 批量删除选中的备忘录
-    public void deleteSelectedMemos() {
-        for (Memo memo : selectedItems) {
-            memoDAO.deleteMemo(memo.getId()); // 使用 memoDAO 实例删除数据库中的记录
-        }
-        memoList.removeAll(selectedItems);
-        selectedItems.clear();
-        isMultiSelectMode = false;
-        notifyDataSetChanged();
-
-        if (context instanceof MainActivityMemo) {
-            ((MainActivityMemo) context).toggleDeleteButton(false); // 隐藏删除按钮
         }
     }
 
+    override fun getItemCount(): Int = memoList.size
 
-    // 退出多选模式
-    public void exitMultiSelectMode() {
-        isMultiSelectMode = false;
-        selectedItems.clear();
-        notifyDataSetChanged();
-        if (context instanceof MainActivityMemo) {
-            ((MainActivityMemo) context).toggleDeleteButton(false); // 隐藏删除按钮
+    fun deleteSelectedMemos() {
+        for (memo in selectedItems) {
+            memoDAO.deleteMemo(memo.id)
+        }
+        memoList.removeAll(selectedItems)
+        selectedItems.clear()
+        isMultiSelectMode = false
+        notifyDataSetChanged()
+
+        if (context is MainActivityMemo) {
+            context.toggleDeleteButton(false)
         }
     }
 
-    // 判断是否处于多选模式
-    public boolean isMultiSelectMode() {
-        return isMultiSelectMode;
+    fun exitMultiSelectMode() {
+        isMultiSelectMode = false
+        selectedItems.clear()
+        notifyDataSetChanged()
+        if (context is MainActivityMemo) {
+            context.toggleDeleteButton(false)
+        }
     }
 
-    public static class MemoViewHolder extends RecyclerView.ViewHolder {
-        TextView titleTextView;
-        TextView contentTextView;
-        CheckBox checkBox;
-        TextView updateTimeTextView;
-
-        public MemoViewHolder(@NonNull View itemView) {
-            super(itemView);
-            titleTextView = itemView.findViewById(R.id.memo_title);
-            contentTextView = itemView.findViewById(R.id.memo_content);
-            checkBox = itemView.findViewById(R.id.checkbox); // 添加一个 CheckBox
-            updateTimeTextView = itemView.findViewById(R.id.memo_update_time); // 绑定到布局
-        }
+    class MemoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val titleTextView: TextView = itemView.findViewById(R.id.memo_title)
+        val contentTextView: TextView = itemView.findViewById(R.id.memo_content)
+        val checkBox: CheckBox = itemView.findViewById(R.id.checkbox)
+        val updateTimeTextView: TextView = itemView.findViewById(R.id.memo_update_time)
     }
 }

@@ -1,35 +1,28 @@
-package com.example.memo;
+package com.example.memo
 
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import com.example.memo.databinding.ActivityAddMemoBinding // 引入 ViewBinding 生成的绑定类
 
-public class AddMemoActivity extends AppCompatActivity {
+class AddMemoActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityAddMemoBinding // 定义 ViewBinding 变量
+    private lateinit var memoDAO: MemoDAO
 
-    private EditText editTextTitle, editTextContent;
-    private Button buttonSave;
-    private MemoDAO memoDAO;
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_memo);
+        // 初始化 binding 对象并设置内容视图
+        binding = ActivityAddMemoBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        editTextTitle = findViewById(R.id.editTextTitle);
-        editTextContent = findViewById(R.id.editTextContent);
-        buttonSave = findViewById(R.id.buttonSave);
-        memoDAO = new MemoDAO(this);
+        memoDAO = MemoDAO(this)
 
-        buttonSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String title = editTextTitle.getText().toString();
-                String content = editTextContent.getText().toString();
-                memoDAO.insertMemo(title, content);
-                finish();
-            }
-        });
+        // 使用 binding 来访问视图元素
+        binding.buttonSave.setOnClickListener {
+            val title = binding.editTextTitle.text.toString()
+            val content = binding.editTextContent.text.toString()
+            memoDAO.insertMemo(title, content)
+            finish() // 保存完成后关闭当前活动
+        }
     }
 }

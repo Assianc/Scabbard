@@ -1,5 +1,6 @@
 plugins {
-    alias(libs.plugins.android.library)
+    id("com.android.library")  // 如果 memo 是一个库模块
+    kotlin("android")
 }
 
 android {
@@ -22,16 +23,32 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+
+    // 启用 ViewBinding
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.9.0")
 
+    // 检查 libs 引用是否正确
     implementation(libs.appcompat)
     implementation(libs.material)
+    implementation(libs.core.ktx)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

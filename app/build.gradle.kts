@@ -1,10 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "com.example.scabbard"
     compileSdk = 34
+
 
     defaultConfig {
         applicationId = "com.example.scabbard"
@@ -21,7 +23,7 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -29,14 +31,21 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    kotlinOptions {
+        jvmTarget = "11"
+    }
 }
 
 dependencies {
-
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -48,19 +57,16 @@ dependencies {
     implementation("com.geyifeng.immersionbar:immersionbar:3.2.2")
 
     // AndroidX 基础库
-    implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.9.0")
-    implementation("androidx.fragment:fragment-ktx:1.5.7")
-    // XXPermissions 权限库
-    implementation("com.github.getActivity:XXPermissions:20.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.4")
+
     // ImmersionBar（状态栏管理）
     implementation("com.geyifeng.immersionbar:immersionbar:3.2.2")
-    implementation("com.google.android.material:material:1.9.0")
 
+    // 本地模块依赖
     implementation(project(":memo"))
+
+    implementation(libs.core.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }
-

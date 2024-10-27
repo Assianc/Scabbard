@@ -1,101 +1,95 @@
-package com.example.memo;
+package com.example.memo
 
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
+import android.content.ContentValues
+import android.content.Context
+import android.database.Cursor
+import android.database.SQLException
+import android.database.sqlite.SQLiteDatabase
+import java.text.SimpleDateFormat
+import java.util.*
 
-import java.util.ArrayList;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Locale;
-import java.util.Date;
+class MemoDAO(context: Context) {
 
-public class MemoDAO {
-
-    private MemoDatabaseHelper dbHelper;
-
-    public MemoDAO(Context context) {
-        dbHelper = new MemoDatabaseHelper(context);
-    }
+    private val dbHelper: MemoDatabaseHelper = MemoDatabaseHelper(context)
 
     // 插入新的备忘录
-    public long insertMemo(String title, String content) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        long result = -1;
+    fun insertMemo(title: String, content: String): Long {
+        val db = dbHelper.writableDatabase
+        var result: Long = -1
         try {
-            ContentValues values = new ContentValues();
-            values.put(MemoDatabaseHelper.COLUMN_TITLE, title);
-            values.put(MemoDatabaseHelper.COLUMN_CONTENT, content);
-            values.put(MemoDatabaseHelper.COLUMN_UPDATE_TIME, System.currentTimeMillis()); // 添加更新时间
-            result = db.insert(MemoDatabaseHelper.TABLE_NAME, null, values);
-        } catch (SQLException e) {
-            e.printStackTrace();
+            val values = ContentValues().apply {
+                put(MemoDatabaseHelper.COLUMN_TITLE, title)
+                put(MemoDatabaseHelper.COLUMN_CONTENT, content)
+                put(MemoDatabaseHelper.COLUMN_UPDATE_TIME, System.currentTimeMillis()) // 添加更新时间
+            }
+            result = db.insert(MemoDatabaseHelper.TABLE_NAME, null, values)
+        } catch (e: SQLException) {
+            e.printStackTrace()
         } finally {
-            db.close(); // 确保在操作后关闭数据库
+            db.close() // 确保在操作后关闭数据库
         }
-        return result;
+        return result
     }
 
     // 查询所有备忘录
-    public List<Memo> getAllMemos() {
-        List<Memo> memoList = new ArrayList<>();
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
+    fun getAllMemos(): List<Memo> {
+        val memoList = mutableListOf<Memo>()
+        val db = dbHelper.readableDatabase
 
-        try (Cursor cursor = db.query(
-                MemoDatabaseHelper.TABLE_NAME,
-                null, null, null, null, null,
-                MemoDatabaseHelper.COLUMN_TIMESTAMP + " DESC"
-        )) {
-            if (cursor != null) {
-                while (cursor.moveToNext()) {
-                    int id = cursor.getInt(cursor.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_ID));
-                    String title = cursor.getString(cursor.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_TITLE));
-                    String content = cursor.getString(cursor.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_CONTENT));
-                    String timestamp = cursor.getString(cursor.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_TIMESTAMP));
+        val cursor: Cursor? = db.query(
+            MemoDatabaseHelper.TABLE_NAME,
+            null, null, null, null, null,
+            "${MemoDatabaseHelper.COLUMN_TIMESTAMP} DESC"
+        )
 
-                    // 获取更新时间并进行格式化
-                    long updateTimeMillis = cursor.getLong(cursor.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_UPDATE_TIME));
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-                    String formattedUpdateTime = sdf.format(new Date(updateTimeMillis));
+        cursor?.use {
+            while (it.moveToNext()) {
+                val id = it.getInt(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_ID))
+                val title = it.getString(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_TITLE))
+                val content = it.getString(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_CONTENT))
+                val timestamp = it.getString(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_TIMESTAMP))
 
-                    memoList.add(new Memo(id, title, content, timestamp, formattedUpdateTime)); // 将格式化后的更新时间传入 Memo
-                }
+                // 获取更新时间并进行格式化
+                val updateTimeMillis = it.getLong(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_UPDATE_TIME))
+                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                val formattedUpdateTime = sdf.format(Date(updateTimeMillis))
+
+                memoList.add(Memo(id, title, content, timestamp, formattedUpdateTime)) // 将格式化后的更新时间传入 Memo
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            db.close(); // 确保在操作后关闭数据库
+        } ?: run {
+            println("Cursor is null")
         }
-        return memoList;
+
+        db.close() // 确保在操作后关闭数据库
+        return memoList
     }
 
     // 删除指定ID的备忘录
-    public void deleteMemo(int id) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
+    fun deleteMemo(id: Int) {
+        val db = dbHelper.writableDatabase
         try {
-            db.delete(MemoDatabaseHelper.TABLE_NAME, MemoDatabaseHelper.COLUMN_ID + "=?", new String[]{String.valueOf(id)});
-        } catch (SQLException e) {
-            e.printStackTrace();
+            db.delete(MemoDatabaseHelper.TABLE_NAME, "${MemoDatabaseHelper.COLUMN_ID}=?", arrayOf(id.toString()))
+        } catch (e: SQLException) {
+            e.printStackTrace()
         } finally {
-            db.close();
+            db.close()
         }
     }
 
     // 更新备忘录
-    public void updateMemo(int id, String title, String content) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
+    fun updateMemo(id: Int, title: String, content: String) {
+        val db = dbHelper.writableDatabase
         try {
-            ContentValues values = new ContentValues();
-            values.put(MemoDatabaseHelper.COLUMN_TITLE, title);
-            values.put(MemoDatabaseHelper.COLUMN_CONTENT, content);
-            values.put(MemoDatabaseHelper.COLUMN_UPDATE_TIME, System.currentTimeMillis()); // 更新当前时间戳
-            db.update(MemoDatabaseHelper.TABLE_NAME, values, MemoDatabaseHelper.COLUMN_ID + "=?", new String[]{String.valueOf(id)});
-} catch (SQLException e) {
-            e.printStackTrace();
+            val values = ContentValues().apply {
+                put(MemoDatabaseHelper.COLUMN_TITLE, title)
+                put(MemoDatabaseHelper.COLUMN_CONTENT, content)
+                put(MemoDatabaseHelper.COLUMN_UPDATE_TIME, System.currentTimeMillis()) // 更新当前时间戳
+            }
+            db.update(MemoDatabaseHelper.TABLE_NAME, values, "${MemoDatabaseHelper.COLUMN_ID}=?", arrayOf(id.toString()))
+        } catch (e: SQLException) {
+            e.printStackTrace()
         } finally {
-            db.close();
+            db.close()
         }
     }
 }

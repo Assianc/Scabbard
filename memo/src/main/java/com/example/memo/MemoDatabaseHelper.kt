@@ -1,43 +1,46 @@
-package com.example.memo;
+package com.example.memo
 
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
+import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
 
-public class MemoDatabaseHelper extends SQLiteOpenHelper {
+class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
-    private static final String DATABASE_NAME = "memo.db";
-    private static final int DATABASE_VERSION = 2;
-
-    // 表和列名
-    public static final String TABLE_NAME = "memo";
-    public static final String COLUMN_ID = "_id";
-    public static final String COLUMN_TITLE = "title";
-    public static final String COLUMN_CONTENT = "content";
-    public static final String COLUMN_TIMESTAMP = "timestamp";
-    public static final String COLUMN_UPDATE_TIME = "update_time"; // 新增字段
-
-    // 更新后的建表语句
-    private static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
-            + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-            + COLUMN_TITLE + " TEXT, "
-            + COLUMN_CONTENT + " TEXT, "
-            + COLUMN_TIMESTAMP + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
-            + COLUMN_UPDATE_TIME + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"; // 新字段
-
-    public MemoDatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    override fun onCreate(db: SQLiteDatabase) {
+        db.execSQL(CREATE_TABLE)
     }
 
-    @Override
-    public void onCreate(SQLiteDatabase db) {
-        db.execSQL(CREATE_TABLE);
-    }
-
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 2) { // 如果是第一次升级
-            db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + COLUMN_UPDATE_TIME + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 2) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_UPDATE_TIME TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
+    }
+
+    companion object {
+        private const val DATABASE_NAME = "memo.db"
+        private const val DATABASE_VERSION = 2
+
+        // 表和列名
+        const val TABLE_NAME = "memo"
+        const val COLUMN_ID = "_id"
+        const val COLUMN_TITLE = "title"
+        const val COLUMN_CONTENT = "content"
+        const val COLUMN_TIMESTAMP = "timestamp"
+        const val COLUMN_UPDATE_TIME = "update_time" // 新增字段
+
+        // 创建表语句
+        val CREATE_TABLE = """
+            CREATE TABLE $TABLE_NAME (
+                $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_TITLE TEXT,
+                $COLUMN_CONTENT TEXT,
+                $COLUMN_TIMESTAMP TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                $COLUMN_UPDATE_TIME TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """.trimIndent()
     }
 }
