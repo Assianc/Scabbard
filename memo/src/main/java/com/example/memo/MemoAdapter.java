@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder> {
 
@@ -40,6 +41,9 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
         Memo memo = memoList.get(position);
         holder.titleTextView.setText(memo.getTitle());
 
+        // 显示更新时间
+        holder.updateTimeTextView.setText("上次更新: " + memo.getUpdateTime());
+
         // 限制内容显示前50字符，并设置最大行数为2行
         String content = memo.getContent();
         String displayContent = content.length() > MAX_CONTENT_LENGTH
@@ -57,6 +61,8 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
             Intent intent = new Intent(context, MemoDetailActivity.class);
             intent.putExtra("memo_title", memo.getTitle());
             intent.putExtra("memo_content", memo.getContent());
+            intent.putExtra("memo_update_time",memo.getUpdateTime()+ " 修改"); // 传递更新时间
+
             context.startActivity(intent);
         });
 
@@ -133,12 +139,14 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.MemoViewHolder
         TextView titleTextView;
         TextView contentTextView;
         CheckBox checkBox;
+        TextView updateTimeTextView;
 
         public MemoViewHolder(@NonNull View itemView) {
             super(itemView);
             titleTextView = itemView.findViewById(R.id.memo_title);
             contentTextView = itemView.findViewById(R.id.memo_content);
             checkBox = itemView.findViewById(R.id.checkbox); // 添加一个 CheckBox
+            updateTimeTextView = itemView.findViewById(R.id.memo_update_time); // 绑定到布局
         }
     }
 }

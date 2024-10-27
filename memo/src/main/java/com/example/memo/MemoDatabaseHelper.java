@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class MemoDatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "memo.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // 表和列名
     public static final String TABLE_NAME = "memo";
@@ -15,6 +15,15 @@ public class MemoDatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_TITLE = "title";
     public static final String COLUMN_CONTENT = "content";
     public static final String COLUMN_TIMESTAMP = "timestamp";
+    public static final String COLUMN_UPDATE_TIME = "update_time"; // 新增字段
+
+    // 更新后的建表语句
+    private static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
+            + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+            + COLUMN_TITLE + " TEXT, "
+            + COLUMN_CONTENT + " TEXT, "
+            + COLUMN_TIMESTAMP + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+            + COLUMN_UPDATE_TIME + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"; // 新字段
 
     public MemoDatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -22,20 +31,13 @@ public class MemoDatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // 创建表的SQL语句
-        String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + "("
-                + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + COLUMN_TITLE + " TEXT,"
-                + COLUMN_CONTENT + " TEXT,"
-                + COLUMN_TIMESTAMP + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
-                + ")";
         db.execSQL(CREATE_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // 如果数据库版本改变，删除旧表并创建新表
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
-        onCreate(db);
+        if (oldVersion < 2) { // 如果是第一次升级
+            db.execSQL("ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + COLUMN_UPDATE_TIME + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+        }
     }
 }
