@@ -44,6 +44,7 @@ public class MainActivityMemo extends AppCompatActivity {
         recyclerView.setAdapter(memoAdapter);
 
         FloatingActionButton fab = findViewById(R.id.fab);
+        FloatingActionButton deleteButton = findViewById(R.id.delete_button);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,6 +54,14 @@ public class MainActivityMemo extends AppCompatActivity {
             }
         });
 
+        // 设置点击事件，删除选中的备忘录
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                memoAdapter.deleteSelectedMemos();
+                deleteButton.setVisibility(View.GONE); // 删除完成后隐藏按钮
+            }
+        });
 
         // 设置 FloatingActionButton 可拖动
         fab.setOnTouchListener(new View.OnTouchListener() {
@@ -92,6 +101,12 @@ public class MainActivityMemo extends AppCompatActivity {
                         return false;
                 }
             }
+
+            public void toggleDeleteButton(boolean show) {
+                deleteButton.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+
+
         });
     }
 
@@ -102,4 +117,8 @@ public class MainActivityMemo extends AppCompatActivity {
         memoList.addAll(memoDAO.getAllMemos());
         memoAdapter.notifyDataSetChanged();
     }
+
+    public void toggleDeleteButton(boolean b) {
+    }
 }
+

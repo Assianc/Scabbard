@@ -1,0 +1,20 @@
+<!-- res/drawable/white_button_with_black_border.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+<!--    &lt;!&ndash; 按钮的白色背景 &ndash;&gt;-->
+<!--    <solid android:color="@android:color/white" />-->
+
+    <!-- 按钮的黑色边框 -->
+    <stroke
+        android:width="2dp"
+        android:color="@android:color/black" />
+
+    <!-- 圆角效果 -->
+    <corners android:radius="7dp" />
+
+    <!-- 内边距 -->
+    <padding
+        android:left="10dp"
+        android:right="10dp"
+        android:top="5dp"
+        android:bottom="5dp" />
+</shape>

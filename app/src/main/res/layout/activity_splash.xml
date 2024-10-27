@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:src="@drawable/background" />
+        android:src="@drawable/preview" />
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -21,10 +21,14 @@
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/iv_splash_icon"
+            android:layout_width="105dp"
+            android:layout_height="100dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:src="@drawable/ic_add" />
+            android:layout_marginStart="27dp"
+            android:layout_marginBottom="473dp"
+            android:src="@drawable/ic_add2" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/iv_splash_name"
@@ -44,9 +48,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal|bottom"
         android:layout_marginBottom="30dp"
-        android:text="Debug"
+        android:text="剑鞘——你的盒子管家"
         android:textColor="@color/colorPrimary"
-        android:textSize="14sp"
+        android:textSize="20sp"
         tools:ignore="HardcodedText" />
 
 </FrameLayout>

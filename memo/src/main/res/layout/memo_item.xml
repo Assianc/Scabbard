@@ -2,17 +2,20 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:background="@drawable/memo_white_text_border"
     android:orientation="vertical"
     android:padding="16dp">
 
     <TextView
         android:id="@+id/memo_title"
+        android:textColor="#000000"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingBottom="4dp"
         android:text="Memo Title"
         android:textSize="18sp"
-        android:textStyle="bold"
-        android:paddingBottom="4dp" />
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/memo_content"
@@ -20,5 +23,13 @@
         android:layout_height="wrap_content"
         android:text="Memo Content"
         android:textSize="14sp" />
+
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_alignParentEnd="true"/>
+
 
 </LinearLayout>
