@@ -99,10 +99,18 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
                 override fun onDenied(permissions: List<String>, quick: Boolean) {
                     if (quick) {
-                        Toast.makeText(this@StartSplashActivity, R.string.common_permission_fail, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@StartSplashActivity,
+                            R.string.common_permission_fail,
+                            Toast.LENGTH_SHORT
+                        ).show()
                         XXPermissions.startPermissionActivity(this@StartSplashActivity, permissions)
                     } else {
-                        Toast.makeText(this@StartSplashActivity, R.string.common_permission_hint, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@StartSplashActivity,
+                            R.string.common_permission_hint,
+                            Toast.LENGTH_SHORT
+                        ).show()
                         handler.postDelayed({ requestPermission() }, 1000)
                     }
                 }
@@ -110,16 +118,21 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
     }
 
     private fun getRequiredPermissions(): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Android 10及以上
             arrayOf(
                 Permission.READ_MEDIA_IMAGES,
                 Permission.READ_MEDIA_VIDEO,
                 Permission.READ_MEDIA_AUDIO
             )
         } else {
-            arrayOf(Permission.READ_EXTERNAL_STORAGE)
+            arrayOf(
+                Permission.READ_EXTERNAL_STORAGE,
+                Permission.WRITE_EXTERNAL_STORAGE
+            )
         }
     }
+
 
     override fun onAnimationEnd(animation: Animation) {
         isAnimationEnded = true
