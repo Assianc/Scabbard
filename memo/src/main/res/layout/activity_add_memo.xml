@@ -16,7 +16,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="50dp"
-            android:textColor="@color/textColor"
             android:hint="Title" />
 
         <EditText
@@ -25,7 +24,6 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="50dp"
             android:hint="Content"
-            android:textColor="@color/textColor"
             android:minLines="5"
             android:gravity="top"
             android:inputType="textMultiLine" />
@@ -34,8 +32,7 @@
             android:id="@+id/buttonSave"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="保存"
-            android:textColor="@color/textColor"
+            android:text="Save"
             android:layout_gravity="end" />
 
     </LinearLayout>

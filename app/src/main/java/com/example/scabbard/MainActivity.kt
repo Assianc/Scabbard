@@ -6,22 +6,21 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.example.scabbard.databinding.ActivityMainBinding
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        private const val REQUEST_CODE_ADD_PLAYER = 1
+    }
+
     private lateinit var binding: ActivityMainBinding
     private var players: MutableList<String> = mutableListOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
     private var classificationType = 2 // 默认二分类
     private var selectedPlayers: MutableList<String> = mutableListOf()
     private var isTeamsAllocated = false // 标志是否已经进行过分类
-
-    // 用于替代 startActivityForResult 的 ActivityResultLauncher
-    private lateinit var addPlayerLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,20 +29,6 @@ class MainActivity : AppCompatActivity() {
 
         setupClassificationSpinner()
         setupButtons()
-
-        // 初始化 addPlayerLauncher 用于接收 PlayerSelectionActivity 的返回结果
-        addPlayerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                result.data?.getStringArrayListExtra("allPlayers")?.let {
-                    players.clear()
-                    players.addAll(it)
-                }
-
-                result.data?.getStringArrayListExtra("selectedPlayers")?.let {
-                    selectedPlayers = ArrayList(it)
-                }
-            }
-        }
     }
 
     private fun setupClassificationSpinner() {
@@ -53,6 +38,7 @@ class MainActivity : AppCompatActivity() {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.classificationSpinner.adapter = adapter
 
+        // 设置Spinner的OnItemSelectedListener
         binding.classificationSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
                 classificationType = when (parent.getItemAtPosition(position).toString()) {
@@ -61,6 +47,7 @@ class MainActivity : AppCompatActivity() {
                     "四分类" -> 4
                     else -> 2
                 }
+                // 更新分类视图
                 updateClassificationViews()
             }
 
@@ -74,11 +61,25 @@ class MainActivity : AppCompatActivity() {
         binding.addPlayerButton.setOnClickListener {
             val intent = Intent(this, PlayerSelectionActivity::class.java)
             intent.putStringArrayListExtra("currentPlayers", ArrayList(players))
-            addPlayerLauncher.launch(intent)  // 使用 addPlayerLauncher 启动 PlayerSelectionActivity
+            startActivityForResult(intent, REQUEST_CODE_ADD_PLAYER)
         }
 
         binding.allocateButton.setOnClickListener {
             allocateTeams(selectedPlayers)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CODE_ADD_PLAYER && resultCode == RESULT_OK && data != null) {
+            data.getStringArrayListExtra("allPlayers")?.let {
+                players.clear()
+                players.addAll(it)
+            }
+
+            data.getStringArrayListExtra("selectedPlayers")?.let {
+                selectedPlayers = ArrayList(it)
+            }
         }
     }
 
@@ -90,6 +91,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        // 转换为可变列表并打乱顺序
         val shuffledPlayers = selectedPlayers.toMutableList().apply { shuffle() }
 
         resetTeamTexts()
@@ -138,6 +140,7 @@ class MainActivity : AppCompatActivity() {
         binding.teamDText.visibility = View.GONE
     }
 
+    // 三分法
     private fun List<String>.partitionToThree(): Triple<List<String>, List<String>, List<String>> {
         val sizeThird = size / 3
         val teamA = take(sizeThird + if (size % 3 > 0) 1 else 0)
@@ -146,6 +149,7 @@ class MainActivity : AppCompatActivity() {
         return Triple(teamA, teamB, teamC)
     }
 
+    // 四分法
     private fun List<String>.partitionToFour(): Quadruple<List<String>, List<String>, List<String>, List<String>> {
         val sizeFourth = size / 4
         val teamA = take(sizeFourth + if (size % 4 > 0) 1 else 0)
