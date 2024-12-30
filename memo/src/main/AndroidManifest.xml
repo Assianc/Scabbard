@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- 添加读取外部存储权限 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="32" />
+    <!-- 对于 Android 13 及以上版本，需要添加照片选择权限 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <application>
+        <activity android:name=".MemoDetailActivity"
+            android:exported="false" />
+        <activity android:name=".AddMemoActivity"
+            android:exported="false" />
+        <activity android:name=".MainActivityMemo"
+            android:exported="false" />
+    </application>
+
 </manifest>

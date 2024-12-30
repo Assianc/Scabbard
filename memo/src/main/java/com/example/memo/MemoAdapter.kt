@@ -19,10 +19,10 @@ class MemoAdapter(
         private const val MAX_CONTENT_LENGTH = 50
     }
 
-    var isMultiSelectMode = false // 是否处于多选模式
-        private set // 设置为私有，只允许内部修改
+    var isMultiSelectMode = false
+        private set
 
-    private val selectedItems = mutableListOf<Memo>() // 保存被选中的备忘录
+    private val selectedItems = mutableListOf<Memo>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MemoViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.memo_item, parent, false)
@@ -52,6 +52,7 @@ class MemoAdapter(
                 putExtra("memo_title", memo.title)
                 putExtra("memo_content", memo.content)
                 putExtra("memo_update_time", "${memo.updateTime} 修改")
+                putStringArrayListExtra("memo_image_paths", ArrayList(memo.imagePaths))
             }
             context.startActivity(intent)
         }

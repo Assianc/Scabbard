@@ -67,10 +67,16 @@
         <activity
             android:name="com.example.memo.MainActivityMemo"
             android:exported="true"
+            tools:replace="android:exported"
             android:theme="@style/Theme.Scabbard" />
 
-        <activity android:name="com.example.memo.AddMemoActivity" />
-        <activity android:name="com.example.memo.MemoDetailActivity" />
+        <activity 
+            android:name="com.example.memo.AddMemoActivity"
+            android:exported="false" />
+            
+        <activity 
+            android:name="com.example.memo.MemoDetailActivity"
+            android:exported="false" />
 
     </application>
 

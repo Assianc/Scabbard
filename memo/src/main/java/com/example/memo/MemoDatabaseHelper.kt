@@ -18,11 +18,22 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 e.printStackTrace()
             }
         }
+        if (oldVersion < 3) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_NAME RENAME COLUMN $COLUMN_IMAGE_PATH TO $COLUMN_IMAGE_PATHS")
+            } catch (e: Exception) {
+                try {
+                    db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_IMAGE_PATHS TEXT")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
     }
 
     companion object {
         private const val DATABASE_NAME = "memo.db"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
 
         // 表和列名
         const val TABLE_NAME = "memo"
@@ -30,7 +41,9 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         const val COLUMN_TITLE = "title"
         const val COLUMN_CONTENT = "content"
         const val COLUMN_TIMESTAMP = "timestamp"
-        const val COLUMN_UPDATE_TIME = "update_time" // 新增字段
+        const val COLUMN_UPDATE_TIME = "update_time"
+        const val COLUMN_IMAGE_PATH = "image_path"
+        const val COLUMN_IMAGE_PATHS = "image_paths"
 
         // 创建表语句
         val CREATE_TABLE = """
@@ -39,7 +52,8 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 $COLUMN_TITLE TEXT,
                 $COLUMN_CONTENT TEXT,
                 $COLUMN_TIMESTAMP TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                $COLUMN_UPDATE_TIME TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                $COLUMN_UPDATE_TIME TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                $COLUMN_IMAGE_PATHS TEXT
             )
         """.trimIndent()
     }
