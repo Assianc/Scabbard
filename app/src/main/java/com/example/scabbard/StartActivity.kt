@@ -34,3 +34,4 @@ open class StartActivity : AppCompatActivity() {
         }
     }
 }
+

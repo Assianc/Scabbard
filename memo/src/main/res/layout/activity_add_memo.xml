@@ -16,14 +16,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="50dp"
-            android:hint="Title" />
+            android:hint="请输入标题" />
 
         <EditText
             android:id="@+id/editTextContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="50dp"
-            android:hint="Content"
+            android:hint="请输入内容"
             android:minLines="5"
             android:gravity="top"
             android:inputType="textMultiLine" />
