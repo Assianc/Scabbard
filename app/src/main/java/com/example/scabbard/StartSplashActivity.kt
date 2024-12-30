@@ -92,7 +92,7 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
     private fun checkForUpdates() {
         CoroutineScope(Dispatchers.Main).launch {
-            val updateInfo = updateChecker.checkForUpdates()
+            val updateInfo = updateChecker.checkForUpdates(this@StartSplashActivity)
             
             updateInfo?.let { info ->
                 if (updateChecker.shouldUpdate(info.latestVersion)) {
@@ -100,7 +100,6 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
                         context = this@StartSplashActivity,
                         updateInfo = info,
                         onConfirm = {
-                            // 打开浏览器下载更新
                             try {
                                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(info.updateUrl))
                                 startActivity(intent)
@@ -112,14 +111,16 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
                             }
                         },
                         onCancel = {
-                            // 如果用户选择稍后更新，继续正常的应用启动流程
                             continueAppLaunch()
                         }
                     )
                 } else {
                     continueAppLaunch()
                 }
-            } ?: continueAppLaunch() // 如果检查更新失败，继续正常启动
+            } ?: run {
+                Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
+                continueAppLaunch()
+            }
         }
     }
 

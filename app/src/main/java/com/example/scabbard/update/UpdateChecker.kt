@@ -1,6 +1,7 @@
 package com.example.scabbard.update
 
 import android.content.Context
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,8 +22,13 @@ class UpdateChecker {
         val forceUpdate: Boolean
     )
 
-    suspend fun checkForUpdates(): UpdateInfo? = withContext(Dispatchers.IO) {
+    suspend fun checkForUpdates(context: Context): UpdateInfo? = withContext(Dispatchers.IO) {
         try {
+            // 在主线程显示检查更新的Toast
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "正在检查更新...", Toast.LENGTH_SHORT).show()
+            }
+            
             val connection = URL(GITHUB_API_URL).openConnection()
             connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             
@@ -47,6 +53,16 @@ class UpdateChecker {
             // 检查更新说明中是否包含强制更新标记
             val forceUpdate = body.contains("[强制更新]")
             
+            // 在主线程显示检查结果的Toast
+            withContext(Dispatchers.Main) {
+                val message = if (shouldUpdate(tagName)) {
+                    "发现新版本：$tagName"
+                } else {
+                    "当前已是最新版本"
+                }
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
+            
             return@withContext UpdateInfo(
                 latestVersion = tagName,
                 updateUrl = apkUrl,
@@ -55,6 +71,10 @@ class UpdateChecker {
             )
         } catch (e: Exception) {
             e.printStackTrace()
+            // 在主线程显示错误提示
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "检查更新失败", Toast.LENGTH_SHORT).show()
+            }
             return@withContext null
         }
     }
@@ -84,22 +104,31 @@ class UpdateChecker {
         onCancel: () -> Unit
     ) {
         val builder = AlertDialog.Builder(context)
-            .setTitle("发现新版本")
-            .setMessage("""
-                当前版本：$CURRENT_VERSION
-                最新版本：${updateInfo.latestVersion}
-                
-                更新内容：
-                ${updateInfo.updateDescription}
-            """.trimIndent())
-            .setPositiveButton("立即更新") { _, _ -> onConfirm() }
+        
+        if (shouldUpdate(updateInfo.latestVersion)) {
+            builder.setTitle("发现新版本")
+                .setMessage("""
+                    当前版本：$CURRENT_VERSION
+                    最新版本：${updateInfo.latestVersion}
+                    
+                    更新内容：
+                    ${updateInfo.updateDescription}
+                """.trimIndent())
+                .setPositiveButton("立即更新") { _, _ -> onConfirm() }
 
-        if (!updateInfo.forceUpdate) {
-            builder.setNegativeButton("稍后再说") { _, _ -> onCancel() }
+            if (!updateInfo.forceUpdate) {
+                builder.setNegativeButton("稍后再说") { _, _ -> onCancel() }
+            }
+            
+            val dialog = builder.create()
+            dialog.setCancelable(!updateInfo.forceUpdate)
+            dialog.show()
+        } else {
+            builder.setTitle("检查更新")
+                .setMessage("当前已是最新版本")
+                .setPositiveButton("确定") { _, _ -> onCancel() }
+                .create()
+                .show()
         }
-
-        val dialog = builder.create()
-        dialog.setCancelable(!updateInfo.forceUpdate)
-        dialog.show()
     }
 } 
