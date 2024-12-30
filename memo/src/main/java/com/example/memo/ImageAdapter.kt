@@ -10,7 +10,9 @@ import com.bumptech.glide.Glide
 
 class ImageAdapter(
     private val context: Context,
-    private val images: MutableList<String>
+    private val images: MutableList<String>,
+    private val isEditMode: Boolean = false,
+    private val onImageLongClick: ((Int) -> Unit)? = null
 ) : RecyclerView.Adapter<ImageAdapter.ImageViewHolder>() {
 
     class ImageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -29,6 +31,15 @@ class ImageAdapter(
             .load(imagePath)
             .centerCrop()
             .into(holder.imageView)
+
+        if (isEditMode) {
+            holder.itemView.setOnLongClickListener {
+                onImageLongClick?.invoke(position)
+                true
+            }
+        } else {
+            holder.itemView.setOnLongClickListener(null)
+        }
     }
 
     override fun getItemCount() = images.size
@@ -36,5 +47,12 @@ class ImageAdapter(
     fun addImage(path: String) {
         images.add(path)
         notifyItemInserted(images.size - 1)
+    }
+
+    fun removeImage(position: Int) {
+        if (position in 0 until images.size) {
+            images.removeAt(position)
+            notifyItemRemoved(position)
+        }
     }
 } 

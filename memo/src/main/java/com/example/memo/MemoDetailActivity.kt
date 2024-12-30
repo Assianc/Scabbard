@@ -12,6 +12,7 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -81,7 +82,15 @@ class MemoDetailActivity : AppCompatActivity() {
         // 初始化图片列表
         imagesRecyclerView = findViewById(R.id.images_recycler_view)
         imagesRecyclerView.layoutManager = LinearLayoutManager(this)
-        imageAdapter = ImageAdapter(this, imagePaths)
+        imageAdapter = ImageAdapter(
+            this, 
+            imagePaths,
+            isEditMode = false
+        ) { position ->
+            // 长按删除图片
+            imagePaths.removeAt(position)
+            imageAdapter.notifyItemRemoved(position)
+        }
         imagesRecyclerView.adapter = imageAdapter
 
         // 获取并显示现有图片
@@ -96,7 +105,6 @@ class MemoDetailActivity : AppCompatActivity() {
         titleEditText.isEnabled = edit
         contentEditText.isEnabled = edit
         
-        // 根据编辑状态设置不同的文字颜色
         val textColor = if (edit) {
             getColor(R.color.edit_mode_text)
         } else {
@@ -106,12 +114,37 @@ class MemoDetailActivity : AppCompatActivity() {
         titleEditText.setTextColor(textColor)
         contentEditText.setTextColor(textColor)
         
-        // 控制编辑和保存按钮的显示
         editButton.visibility = if (edit) View.GONE else View.VISIBLE
         saveButton.visibility = if (edit) View.VISIBLE else View.GONE
-        
-        // 控制添加图片按钮的显示
         addImageButton.visibility = if (edit) View.VISIBLE else View.GONE
+        
+        // 更新 ImageAdapter 的编辑模式
+        imageAdapter = ImageAdapter(
+            this, 
+            imagePaths,
+            isEditMode = edit
+        ) { position ->
+            // 长按时显示确认对话框
+            showDeleteConfirmationDialog(position)
+        }
+        imagesRecyclerView.adapter = imageAdapter
+    }
+
+    private fun showDeleteConfirmationDialog(position: Int) {
+        AlertDialog.Builder(this)
+            .setTitle("删除图片")
+            .setMessage("确定要删除这张图片吗？")
+            .setPositiveButton("确定") { dialog, _ ->
+                // 用户点击确定后删除图片
+                imagePaths.removeAt(position)
+                imageAdapter.notifyItemRemoved(position)
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
     }
 
     private fun openImagePicker() {
