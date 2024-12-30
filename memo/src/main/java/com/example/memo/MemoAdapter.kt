@@ -48,6 +48,7 @@ class MemoAdapter(
 
         holder.itemView.setOnClickListener {
             val intent = Intent(context, MemoDetailActivity::class.java).apply {
+                putExtra("memo_id", memo.id)
                 putExtra("memo_title", memo.title)
                 putExtra("memo_content", memo.content)
                 putExtra("memo_update_time", "${memo.updateTime} 修改")

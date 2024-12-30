@@ -5,43 +5,80 @@
     android:background="@drawable/gradient_background_memo"
     android:padding="26dp">
 
-    <!-- 标题 TextView -->
-    <TextView
-        android:id="@+id/memo_detail_title"
+    <!-- 标题布局 -->
+    <LinearLayout
+        android:id="@+id/title_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        android:gravity="left"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:hint="标题"
+        android:orientation="horizontal"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <EditText
+            android:id="@+id/memo_detail_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@null"
+            android:enabled="false"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textColorHighlight="#99000000"
+            android:hint="标题"
+            android:textColorHint="#99000000" />
+
+        <ImageButton
+            android:id="@+id/edit_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center_vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_edit"
+            android:contentDescription="编辑" />
+
+        <Button
+            android:id="@+id/save_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="保存"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:visibility="gone" />
+    </LinearLayout>
 
     <!-- 分界线 -->
     <View
+        android:id="@+id/divider"
         android:layout_width="0dp"
         android:layout_height="1.5dp"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
-        android:layout_marginBottom="30dp"
+        android:layout_marginTop="20dp"
         android:background="@drawable/line_divider"
-        app:layout_constraintTop_toBottomOf="@id/memo_detail_title"
+        app:layout_constraintTop_toBottomOf="@id/title_layout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- 内容 TextView -->
-    <TextView
+    <!-- 内容 EditText -->
+    <EditText
         android:id="@+id/memo_detail_content"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginTop="30dp"
         android:layout_marginBottom="50dp"
+        android:background="@null"
+        android:enabled="false"
+        android:gravity="top"
         android:hint="内容"
         android:minLines="5"
-        android:gravity="top"
         android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@id/memo_detail_title"
+        android:textColor="#000000"
+        android:textColorHint="#99000000"
+        app:layout_constraintTop_toBottomOf="@id/divider"
+        app:layout_constraintBottom_toTopOf="@id/memo_detail_update_time"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
@@ -54,8 +91,8 @@
         android:textColor="#999999"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/memo_detail_content"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginEnd="16dp"
-        android:layout_marginTop="8dp"/>
+        android:layout_marginBottom="16dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 其他颜色定义 -->
+    <color name="view_mode_text">#2C2A2A</color>     <!-- 查看模式下的黑色 -->
+    <color name="edit_mode_text">#2C2A2A</color>     <!-- 编辑模式下的蓝色 -->
+</resources> 
