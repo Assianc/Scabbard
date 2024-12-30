@@ -34,6 +34,9 @@ class MemoAdapter(
         holder.titleTextView.text = memo.title
         holder.updateTimeTextView.text = "上次更新: ${memo.updateTime}"
 
+        holder.imageTextIndicator.visibility = 
+            if (memo.imagePaths.isNotEmpty()) View.VISIBLE else View.GONE
+
         val content = memo.content
         val displayContent = if (content.length > MAX_CONTENT_LENGTH) {
             content.substring(0, MAX_CONTENT_LENGTH) + "..."
@@ -116,5 +119,6 @@ class MemoAdapter(
         val contentTextView: TextView = itemView.findViewById(R.id.memo_content)
         val checkBox: CheckBox = itemView.findViewById(R.id.checkbox)
         val updateTimeTextView: TextView = itemView.findViewById(R.id.memo_update_time)
+        val imageTextIndicator: TextView = itemView.findViewById(R.id.image_text_indicator)
     }
 }
