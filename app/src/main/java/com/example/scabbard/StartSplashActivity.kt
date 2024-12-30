@@ -1,6 +1,7 @@
 package com.example.scabbard
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -17,6 +18,10 @@ import com.gyf.immersionbar.ImmersionBar
 import com.hjq.permissions.OnPermissionCallback
 import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import com.example.scabbard.update.UpdateChecker
 
 class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
@@ -32,6 +37,7 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
     private var hasPermissionGranted = false
     private var isAnimationEnded = false
+    private val updateChecker = UpdateChecker()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,7 +87,45 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
     // 初始化数据
     private fun initData() {
-        // 此处可以放置其他初始化逻辑
+        checkForUpdates()
+    }
+
+    private fun checkForUpdates() {
+        CoroutineScope(Dispatchers.Main).launch {
+            val updateInfo = updateChecker.checkForUpdates()
+            
+            updateInfo?.let { info ->
+                if (updateChecker.shouldUpdate(info.latestVersion)) {
+                    updateChecker.showUpdateDialog(
+                        context = this@StartSplashActivity,
+                        updateInfo = info,
+                        onConfirm = {
+                            // 打开浏览器下载更新
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(info.updateUrl))
+                                startActivity(intent)
+                                if (info.forceUpdate) {
+                                    finish()
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        },
+                        onCancel = {
+                            // 如果用户选择稍后更新，继续正常的应用启动流程
+                            continueAppLaunch()
+                        }
+                    )
+                } else {
+                    continueAppLaunch()
+                }
+            } ?: continueAppLaunch() // 如果检查更新失败，继续正常启动
+        }
+    }
+
+    private fun continueAppLaunch() {
+        // 原有的启动逻辑
+        requestPermission()
     }
 
     private fun requestPermission() {
