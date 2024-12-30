@@ -48,4 +48,28 @@
         android:background="@drawable/transparent_button_with_black_border"
         android:backgroundTint="@null" />
 
+    <!-- 使用渐变效果的分界线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1.5dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="30dp"
+        android:layout_below="@id/start_button"
+        android:background="@drawable/line_divider_allocator" />
+
+    <Button
+        android:id="@+id/alm_button"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:text="冬去鸟鸣时"
+        android:layout_below="@id/start_button"
+        android:textSize="18sp"
+        android:padding="16dp"
+        android:layout_margin="40dp"
+        android:textColor="@android:color/black"
+        android:layout_centerInParent="true"
+        android:background="@drawable/transparent_button_with_black_border"
+        android:backgroundTint="@null" />
+
 </RelativeLayout>
