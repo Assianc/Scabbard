@@ -1,6 +1,10 @@
 package com.example.scabbard.update
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.view.ContextThemeWrapper
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import kotlinx.coroutines.Dispatchers
@@ -103,32 +107,23 @@ class UpdateChecker {
         onConfirm: () -> Unit,
         onCancel: () -> Unit
     ) {
-        val builder = AlertDialog.Builder(context)
-        
-        if (shouldUpdate(updateInfo.latestVersion)) {
-            builder.setTitle("发现新版本")
-                .setMessage("""
-                    当前版本：$CURRENT_VERSION
-                    最新版本：${updateInfo.latestVersion}
-                    
-                    更新内容：
-                    ${updateInfo.updateDescription}
-                """.trimIndent())
-                .setPositiveButton("立即更新") { _, _ -> onConfirm() }
-
-            if (!updateInfo.forceUpdate) {
-                builder.setNegativeButton("稍后再说") { _, _ -> onCancel() }
+        val builder = AlertDialog.Builder(context).apply {
+            setTitle("发现新版本")
+            setMessage("是否更新到最新版本？\n\n${updateInfo.updateDescription}")
+            setCancelable(!updateInfo.forceUpdate)
+            setPositiveButton("更新") { dialog, _ ->
+                onConfirm()
             }
-            
-            val dialog = builder.create()
-            dialog.setCancelable(!updateInfo.forceUpdate)
-            dialog.show()
-        } else {
-            builder.setTitle("检查更新")
-                .setMessage("当前已是最新版本")
-                .setPositiveButton("确定") { _, _ -> onCancel() }
-                .create()
-                .show()
+            if (!updateInfo.forceUpdate) {
+                setNegativeButton("取消") { dialog, _ ->
+                    onCancel()
+                    dialog.dismiss()
+                }
+            }
+        }
+
+        Handler(Looper.getMainLooper()).post {
+            builder.create().show()
         }
     }
 } 
