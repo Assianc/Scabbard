@@ -52,16 +52,24 @@ class MemoAdapter(
         holder.contentTextView.maxLines = 2
 
         try {
+            when (memo.titleFontName) {
+                "宋体" -> ResourcesCompat.getFont(context, R.font.simsunch)
+                "仿宋" -> ResourcesCompat.getFont(context, R.font.fasimsunch)
+                "黑体" -> ResourcesCompat.getFont(context, R.font.simheich)
+                else -> Typeface.DEFAULT
+            }?.let { typeface ->
+                holder.titleTextView.typeface = typeface
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            holder.titleTextView.typeface = Typeface.DEFAULT
+        }
+
+        try {
             when (memo.fontName) {
                 "宋体" -> ResourcesCompat.getFont(context, R.font.simsunch)
-                "宋体（繁）" -> ResourcesCompat.getFont(context, R.font.simsunhk)
-                "宋体（港繁）" -> ResourcesCompat.getFont(context, R.font.simsunpro)
                 "仿宋" -> ResourcesCompat.getFont(context, R.font.fasimsunch)
-                "仿宋（繁）" -> ResourcesCompat.getFont(context, R.font.fasimsunhk)
-                "仿宋（港繁）" -> ResourcesCompat.getFont(context, R.font.fasimsunpro)
                 "黑体" -> ResourcesCompat.getFont(context, R.font.simheich)
-                "黑体（繁）" -> ResourcesCompat.getFont(context, R.font.simheihk)
-                "黑体（港繁）" -> ResourcesCompat.getFont(context, R.font.simheipro)
                 else -> Typeface.DEFAULT
             }?.let { typeface ->
                 holder.contentTextView.typeface = typeface
@@ -82,6 +90,11 @@ class MemoAdapter(
                 putExtra("memo_update_time", "${memo.updateTime} 修改")
                 putStringArrayListExtra("memo_image_paths", ArrayList(memo.imagePaths))
                 putExtra("memo_font_name", memo.fontName)
+                putExtra("memo_title_font_name", memo.titleFontName)
+                putExtra("memo_title_style", memo.titleStyle)
+                putExtra("memo_content_style", memo.contentStyle)
+                putExtra("memo_title_underline", memo.titleUnderline)
+                putExtra("memo_content_underline", memo.contentUnderline)
             }
             context.startActivity(intent)
         }
@@ -113,6 +126,11 @@ class MemoAdapter(
                 selectedItems.remove(memo)
             }
         }
+
+        holder.titleTextView.setTypeface(holder.titleTextView.typeface, memo.titleStyle)
+        holder.contentTextView.setTypeface(holder.contentTextView.typeface, memo.contentStyle)
+        holder.titleTextView.paint.isUnderlineText = memo.titleUnderline
+        holder.contentTextView.paint.isUnderlineText = memo.contentUnderline
     }
 
     override fun getItemCount(): Int = memoList.size

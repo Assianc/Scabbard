@@ -84,7 +84,42 @@ class MemoDAO(context: Context) {
                     "DEFAULT"
                 }
 
-                memoList.add(Memo(id, title, content, timestamp, formattedUpdateTime, imagePaths, fontName))
+                val titleFontName = try {
+                    it.getString(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_TITLE_FONT_NAME))
+                } catch (e: Exception) {
+                    "DEFAULT"
+                }
+
+                val titleStyle = try {
+                    it.getInt(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_TITLE_STYLE))
+                } catch (e: Exception) { 0 }
+                
+                val contentStyle = try {
+                    it.getInt(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_CONTENT_STYLE))
+                } catch (e: Exception) { 0 }
+                
+                val titleUnderline = try {
+                    it.getInt(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_TITLE_UNDERLINE)) == 1
+                } catch (e: Exception) { false }
+                
+                val contentUnderline = try {
+                    it.getInt(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_CONTENT_UNDERLINE)) == 1
+                } catch (e: Exception) { false }
+
+                memoList.add(Memo(
+                    id = id,
+                    title = title,
+                    content = content,
+                    timestamp = timestamp,
+                    updateTime = formattedUpdateTime,
+                    imagePaths = imagePaths,
+                    fontName = fontName,
+                    titleFontName = titleFontName,
+                    titleStyle = titleStyle,
+                    contentStyle = contentStyle,
+                    titleUnderline = titleUnderline,
+                    contentUnderline = contentUnderline
+                ))
             }
         }
 
@@ -106,12 +141,16 @@ class MemoDAO(context: Context) {
 
     // 更新备忘录
     fun updateMemo(
-        id: Int, 
-        title: String, 
-        content: String, 
-        imagePaths: List<String>, 
+        id: Int,
+        title: String,
+        content: String,
+        imagePaths: List<String>,
         fontName: String = "DEFAULT",
-        titleFontName: String = "DEFAULT"
+        titleFontName: String = "DEFAULT",
+        titleStyle: Int = 0,
+        contentStyle: Int = 0,
+        titleUnderline: Boolean = false,
+        contentUnderline: Boolean = false
     ) {
         val db = dbHelper.writableDatabase
         try {
@@ -122,8 +161,12 @@ class MemoDAO(context: Context) {
                 put(MemoDatabaseHelper.COLUMN_IMAGE_PATHS, gson.toJson(imagePaths))
                 put(MemoDatabaseHelper.COLUMN_FONT_NAME, fontName)
                 put(MemoDatabaseHelper.COLUMN_TITLE_FONT_NAME, titleFontName)
+                put(MemoDatabaseHelper.COLUMN_TITLE_STYLE, titleStyle)
+                put(MemoDatabaseHelper.COLUMN_CONTENT_STYLE, contentStyle)
+                put(MemoDatabaseHelper.COLUMN_TITLE_UNDERLINE, if (titleUnderline) 1 else 0)
+                put(MemoDatabaseHelper.COLUMN_CONTENT_UNDERLINE, if (contentUnderline) 1 else 0)
             }
-            db.update(MemoDatabaseHelper.TABLE_NAME, values, 
+            db.update(MemoDatabaseHelper.TABLE_NAME, values,
                 "${MemoDatabaseHelper.COLUMN_ID}=?", arrayOf(id.toString()))
         } catch (e: SQLException) {
             e.printStackTrace()

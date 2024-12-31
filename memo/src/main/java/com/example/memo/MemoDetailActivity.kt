@@ -54,17 +54,9 @@ class MemoDetailActivity : AppCompatActivity() {
         private val FONT_NAMES = arrayOf(
             "默认字体",
             "宋体",
-            "宋体（港繁）",
-            "宋体（繁）",
             "仿宋",
-            "仿宋（港繁）",
-            "仿宋（繁）",
             "黑体",
-            "黑体（港繁）",
-            "黑体（繁）",
             "楷体",
-            "楷体（港繁）",
-            "楷体（繁）",
         )
     }
 
@@ -178,6 +170,18 @@ class MemoDetailActivity : AppCompatActivity() {
         titleBoldButton.setOnClickListener { toggleTextStyle(titleEditText, Typeface.BOLD) }
         titleItalicButton.setOnClickListener { toggleTextStyle(titleEditText, Typeface.ITALIC) }
         titleUnderlineButton.setOnClickListener { toggleUnderline(titleEditText) }
+
+        // 恢复样式
+        val titleStyle = intent.getIntExtra("memo_title_style", Typeface.NORMAL)
+        val contentStyle = intent.getIntExtra("memo_content_style", Typeface.NORMAL)
+        val titleUnderline = intent.getBooleanExtra("memo_title_underline", false)
+        val contentUnderline = intent.getBooleanExtra("memo_content_underline", false)
+
+        // 应用样式
+        titleEditText.setTypeface(titleEditText.typeface, titleStyle)
+        contentEditText.setTypeface(contentEditText.typeface, contentStyle)
+        titleEditText.paint.isUnderlineText = titleUnderline
+        contentEditText.paint.isUnderlineText = contentUnderline
     }
 
     private fun toggleEditMode(edit: Boolean) {
@@ -285,13 +289,24 @@ class MemoDetailActivity : AppCompatActivity() {
         if (memoId != -1) {
             val newTitle = titleEditText.text.toString()
             val newContent = contentEditText.text.toString()
+            
+            // 获取当前样式
+            val titleStyle = titleEditText.typeface?.style ?: Typeface.NORMAL
+            val contentStyle = contentEditText.typeface?.style ?: Typeface.NORMAL
+            val titleUnderline = titleEditText.paint.isUnderlineText
+            val contentUnderline = contentEditText.paint.isUnderlineText
+
             memoDAO.updateMemo(
                 id = memoId,
                 title = newTitle,
                 content = newContent,
                 imagePaths = imagePaths,
                 fontName = currentFontName,
-                titleFontName = currentTitleFontName
+                titleFontName = currentTitleFontName,
+                titleStyle = titleStyle,
+                contentStyle = contentStyle,
+                titleUnderline = titleUnderline,
+                contentUnderline = contentUnderline
             )
             updateTimeTextView.text = "刚刚更新"
         }
@@ -304,17 +319,9 @@ class MemoDetailActivity : AppCompatActivity() {
         // 从 res/font 目录加载字体
         try {
             FONTS.add(ResourcesCompat.getFont(this, R.font.simsunch)!!) // 宋体
-            FONTS.add(ResourcesCompat.getFont(this, R.font.simsunhk)!!) //宋体 港繁
-            FONTS.add(ResourcesCompat.getFont(this, R.font.simsunpro)!!) // 宋体 繁
             FONTS.add(ResourcesCompat.getFont(this, R.font.fasimsunch)!!) //仿宋
-            FONTS.add(ResourcesCompat.getFont(this, R.font.fasimsunhk)!!)
-            FONTS.add(ResourcesCompat.getFont(this, R.font.fasimsunpro)!!)
             FONTS.add(ResourcesCompat.getFont(this, R.font.simheich)!!) // 黑体
-            FONTS.add(ResourcesCompat.getFont(this, R.font.simheihk)!!)
-            FONTS.add(ResourcesCompat.getFont(this, R.font.simheipro)!!)
             FONTS.add(ResourcesCompat.getFont(this, R.font.simkaich)!!) // 楷体
-            FONTS.add(ResourcesCompat.getFont(this, R.font.simkaihk)!!)
-            FONTS.add(ResourcesCompat.getFont(this, R.font.simkaipro)!!)
         } catch (e: Exception) {
             e.printStackTrace()
         }

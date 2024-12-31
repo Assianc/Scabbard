@@ -43,11 +43,21 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 e.printStackTrace()
             }
         }
+        if (oldVersion < 6) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_TITLE_STYLE INTEGER DEFAULT 0")
+                db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_CONTENT_STYLE INTEGER DEFAULT 0")
+                db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_TITLE_UNDERLINE INTEGER DEFAULT 0")
+                db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_CONTENT_UNDERLINE INTEGER DEFAULT 0")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     companion object {
         private const val DATABASE_NAME = "memo.db"
-        private const val DATABASE_VERSION = 5
+        private const val DATABASE_VERSION = 6
 
         // 表和列名
         const val TABLE_NAME = "memo"
@@ -60,6 +70,10 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         const val COLUMN_IMAGE_PATHS = "image_paths"
         const val COLUMN_FONT_NAME = "font_name"
         const val COLUMN_TITLE_FONT_NAME = "title_font_name"
+        const val COLUMN_TITLE_STYLE = "title_style"
+        const val COLUMN_CONTENT_STYLE = "content_style"
+        const val COLUMN_TITLE_UNDERLINE = "title_underline"
+        const val COLUMN_CONTENT_UNDERLINE = "content_underline"
 
         // 创建表语句
         val CREATE_TABLE = """
@@ -71,7 +85,11 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 $COLUMN_UPDATE_TIME TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 $COLUMN_IMAGE_PATHS TEXT,
                 $COLUMN_FONT_NAME TEXT DEFAULT 'DEFAULT',
-                $COLUMN_TITLE_FONT_NAME TEXT DEFAULT 'DEFAULT'
+                $COLUMN_TITLE_FONT_NAME TEXT DEFAULT 'DEFAULT',
+                $COLUMN_TITLE_STYLE INTEGER DEFAULT 0,
+                $COLUMN_CONTENT_STYLE INTEGER DEFAULT 0,
+                $COLUMN_TITLE_UNDERLINE INTEGER DEFAULT 0,
+                $COLUMN_CONTENT_UNDERLINE INTEGER DEFAULT 0
             )
         """.trimIndent()
     }
