@@ -368,6 +368,7 @@ class MemoDetailActivity : AppCompatActivity() {
             FONTS.add(ResourcesCompat.getFont(this, R.font.fasimsunch)!!) //仿宋
             FONTS.add(ResourcesCompat.getFont(this, R.font.simheich)!!) // 黑体
             FONTS.add(ResourcesCompat.getFont(this, R.font.simkaich)!!) // 楷体
+
         } catch (e: Exception) {
             e.printStackTrace()
         }
