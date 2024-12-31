@@ -1,9 +1,12 @@
 package com.example.scabbard
 
+import android.app.DownloadManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.view.View
@@ -95,14 +98,16 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
             val updateInfo = updateChecker.checkForUpdates(this@StartSplashActivity)
             
             updateInfo?.let { info ->
-                if (updateChecker.shouldUpdate(info.latestVersion)) {
+                // 获取当前版本号
+                val currentVersion = updateChecker.getCurrentVersion(this@StartSplashActivity)
+                
+                if (updateChecker.shouldUpdate(info.latestVersion, currentVersion)) {
                     updateChecker.showUpdateDialog(
                         context = this@StartSplashActivity,
                         updateInfo = info,
                         onConfirm = {
                             try {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(info.updateUrl))
-                                startActivity(intent)
+                                startDownload(info.updateUrl, info.latestVersion)
                                 if (info.forceUpdate) {
                                     finish()
                                 }
@@ -121,6 +126,27 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
                 Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
                 continueAppLaunch()
             }
+        }
+    }
+
+    private fun startDownload(downloadUrl: String, version: String) {
+        try {
+            val fileName = "Scabbard-${version}.apk"
+            val request = DownloadManager.Request(Uri.parse(downloadUrl))
+                .setTitle("下载更新")
+                .setDescription("正在下载 Scabbard ${version}")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                .setAllowedOverMetered(true)
+                .setAllowedOverRoaming(true)
+
+            val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            downloadManager.enqueue(request)
+
+            Toast.makeText(this, "开始下载更新", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "下载失败，请稍后重试", Toast.LENGTH_SHORT).show()
         }
     }
 

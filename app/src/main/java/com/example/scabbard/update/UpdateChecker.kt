@@ -1,22 +1,30 @@
 package com.example.scabbard.update
 
+import android.app.Activity
+import android.app.DownloadManager
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.view.ContextThemeWrapper
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.net.URL
 
 class UpdateChecker {
     companion object {
         private const val GITHUB_API_URL = "https://api.github.com/repos/Assianc/Scabbard/releases/latest"
-        private const val CURRENT_VERSION = "3.2.1" // 当前应用版本号
     }
 
     data class UpdateInfo(
@@ -26,9 +34,18 @@ class UpdateChecker {
         val forceUpdate: Boolean
     )
 
+    fun getCurrentVersion(context: Context): String {
+        return try {
+            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            packageInfo.versionName
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.printStackTrace()
+            "0.0.0"
+        }
+    }
+
     suspend fun checkForUpdates(context: Context): UpdateInfo? = withContext(Dispatchers.IO) {
         try {
-            // 在主线程显示检查更新的Toast
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "正在检查更新...", Toast.LENGTH_SHORT).show()
             }
@@ -39,13 +56,11 @@ class UpdateChecker {
             val response = connection.getInputStream().bufferedReader().use { it.readText() }
             val json = JSONObject(response)
             
-            // 从GitHub release获取信息
-            val tagName = json.getString("tag_name").removePrefix("v") // 移除版本号前的'v'前缀
+            val tagName = json.getString("tag_name").removePrefix("v")
             val body = json.getString("body")
             
-            // 获取apk下载链接
-            val assets = json.getJSONArray("assets")
             var apkUrl = ""
+            val assets = json.getJSONArray("assets")
             for (i in 0 until assets.length()) {
                 val asset = assets.getJSONObject(i)
                 if (asset.getString("name").endsWith(".apk")) {
@@ -54,12 +69,10 @@ class UpdateChecker {
                 }
             }
 
-            // 检查更新说明中是否包含强制更新标记
             val forceUpdate = body.contains("[强制更新]")
             
-            // 在主线程显示检查结果的Toast
             withContext(Dispatchers.Main) {
-                val message = if (shouldUpdate(tagName)) {
+                val message = if (shouldUpdate(tagName, getCurrentVersion(context))) {
                     "发现新版本：$tagName"
                 } else {
                     "当前已是最新版本"
@@ -75,7 +88,6 @@ class UpdateChecker {
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            // 在主线程显示错误提示
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "检查更新失败", Toast.LENGTH_SHORT).show()
             }
@@ -83,8 +95,8 @@ class UpdateChecker {
         }
     }
 
-    fun shouldUpdate(latestVersion: String): Boolean {
-        return compareVersions(latestVersion, CURRENT_VERSION) > 0
+    fun shouldUpdate(latestVersion: String, currentVersion: String): Boolean {
+        return compareVersions(latestVersion, currentVersion) > 0
     }
 
     private fun compareVersions(version1: String, version2: String): Int {
@@ -107,12 +119,19 @@ class UpdateChecker {
         onConfirm: () -> Unit,
         onCancel: () -> Unit
     ) {
-        val builder = AlertDialog.Builder(context).apply {
+        val dialogContext = if (context is Activity) {
+            context
+        } else {
+            ContextThemeWrapper(context, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
+        }
+
+        val builder = AlertDialog.Builder(dialogContext).apply {
             setTitle("发现新版本")
             setMessage("是否更新到最新版本？\n\n${updateInfo.updateDescription}")
             setCancelable(!updateInfo.forceUpdate)
             setPositiveButton("更新") { dialog, _ ->
-                onConfirm()
+                startDownload(context, updateInfo.updateUrl, updateInfo.latestVersion)
+                dialog.dismiss()
             }
             if (!updateInfo.forceUpdate) {
                 setNegativeButton("取消") { dialog, _ ->
@@ -123,7 +142,44 @@ class UpdateChecker {
         }
 
         Handler(Looper.getMainLooper()).post {
-            builder.create().show()
+            try {
+                val dialog = builder.create()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+                } else {
+                    dialog.window?.setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT)
+                }
+                dialog.setCanceledOnTouchOutside(false)
+                dialog.show()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                try {
+                    builder.create().show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    private fun startDownload(context: Context, downloadUrl: String, version: String) {
+        try {
+            val fileName = "Scabbard-${version}.apk"
+            val request = DownloadManager.Request(Uri.parse(downloadUrl))
+                .setTitle("下载更新")
+                .setDescription("正在下载 Scabbard ${version}")
+                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                .setAllowedOverMetered(true)
+                .setAllowedOverRoaming(true)
+
+            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            downloadManager.enqueue(request)
+
+            Toast.makeText(context, "开始下载更新", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(context, "下载失败，请稍后重试", Toast.LENGTH_SHORT).show()
         }
     }
 } 
