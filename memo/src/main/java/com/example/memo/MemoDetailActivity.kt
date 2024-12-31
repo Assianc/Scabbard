@@ -56,6 +56,7 @@ class MemoDetailActivity : AppCompatActivity() {
             "楷体",
             "楷体（港繁）",
             "楷体（繁）",
+
         )
     }
 
