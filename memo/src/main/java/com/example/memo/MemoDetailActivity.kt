@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import androidx.core.content.res.ResourcesCompat
+import android.graphics.Paint
 
 class MemoDetailActivity : AppCompatActivity() {
 
@@ -41,6 +42,12 @@ class MemoDetailActivity : AppCompatActivity() {
     private var currentFontName = "DEFAULT"
     private lateinit var titleFontButton: ImageButton
     private var currentTitleFontName = "DEFAULT"
+    private lateinit var boldButton: ImageButton
+    private lateinit var italicButton: ImageButton
+    private lateinit var underlineButton: ImageButton
+    private lateinit var titleBoldButton: ImageButton
+    private lateinit var titleItalicButton: ImageButton
+    private lateinit var titleUnderlineButton: ImageButton
 
     companion object {
         private val FONTS = mutableListOf<Typeface>()
@@ -152,6 +159,25 @@ class MemoDetailActivity : AppCompatActivity() {
         // 获取并设置标题字体
         currentTitleFontName = intent.getStringExtra("memo_title_font_name") ?: "DEFAULT"
         applyTitleFont(currentTitleFontName)
+
+        // 初始化内容样式按钮
+        boldButton = findViewById(R.id.bold_button)
+        italicButton = findViewById(R.id.italic_button)
+        underlineButton = findViewById(R.id.underline_button)
+
+        // 初始化标题样式按钮
+        titleBoldButton = findViewById(R.id.title_bold_button)
+        titleItalicButton = findViewById(R.id.title_italic_button)
+        titleUnderlineButton = findViewById(R.id.title_underline_button)
+
+        // 设置点击事件
+        boldButton.setOnClickListener { toggleTextStyle(contentEditText, Typeface.BOLD) }
+        italicButton.setOnClickListener { toggleTextStyle(contentEditText, Typeface.ITALIC) }
+        underlineButton.setOnClickListener { toggleUnderline(contentEditText) }
+
+        titleBoldButton.setOnClickListener { toggleTextStyle(titleEditText, Typeface.BOLD) }
+        titleItalicButton.setOnClickListener { toggleTextStyle(titleEditText, Typeface.ITALIC) }
+        titleUnderlineButton.setOnClickListener { toggleUnderline(titleEditText) }
     }
 
     private fun toggleEditMode(edit: Boolean) {
@@ -184,6 +210,16 @@ class MemoDetailActivity : AppCompatActivity() {
             showDeleteConfirmationDialog(position)
         }
         imagesRecyclerView.adapter = imageAdapter
+
+        // 显示/隐藏内容样式按钮
+        boldButton.visibility = if (edit) View.VISIBLE else View.GONE
+        italicButton.visibility = if (edit) View.VISIBLE else View.GONE
+        underlineButton.visibility = if (edit) View.VISIBLE else View.GONE
+
+        // 显示/隐藏标题样式按钮
+        titleBoldButton.visibility = if (edit) View.VISIBLE else View.GONE
+        titleItalicButton.visibility = if (edit) View.VISIBLE else View.GONE
+        titleUnderlineButton.visibility = if (edit) View.VISIBLE else View.GONE
     }
 
     private fun showDeleteConfirmationDialog(position: Int) {
@@ -336,5 +372,33 @@ class MemoDetailActivity : AppCompatActivity() {
         if (index >= 0 && index < FONTS.size) {
             titleEditText.typeface = FONTS[index]
         }
+    }
+
+    private fun toggleTextStyle(editText: EditText, style: Int) {
+        val currentTypeface = editText.typeface
+        val currentStyle = currentTypeface?.style ?: Typeface.NORMAL
+        
+        // 计算新的样式
+        val newStyle = if ((currentStyle and style) != 0) {
+            // 如果已有该样式，则移除
+            currentStyle and style.inv()
+        } else {
+            // 如果没有该样式，则添加
+            currentStyle or style
+        }
+        
+        // 应用新样式
+        editText.setTypeface(currentTypeface, newStyle)
+    }
+
+    private fun toggleUnderline(editText: EditText) {
+        val paint = editText.paint
+        val isUnderlined = paint.isUnderlineText
+        
+        // 切换下划线状态
+        paint.isUnderlineText = !isUnderlined
+        
+        // 强制重绘
+        editText.invalidate()
     }
 }
