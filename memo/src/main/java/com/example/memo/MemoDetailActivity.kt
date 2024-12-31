@@ -38,6 +38,7 @@ class MemoDetailActivity : AppCompatActivity() {
     private lateinit var imageAdapter: ImageAdapter
     private val imagePaths = mutableListOf<String>()
     private lateinit var fontButton: ImageButton
+    private var currentFontName = "DEFAULT"
 
     companion object {
         private val FONTS = mutableListOf<Typeface>()
@@ -129,6 +130,10 @@ class MemoDetailActivity : AppCompatActivity() {
 
         // 初始化字体
         initFonts()
+
+        // 获取并设置字体
+        currentFontName = intent.getStringExtra("memo_font_name") ?: "DEFAULT"
+        applyFont(currentFontName)
     }
 
     private fun toggleEditMode(edit: Boolean) {
@@ -225,7 +230,7 @@ class MemoDetailActivity : AppCompatActivity() {
         if (memoId != -1) {
             val newTitle = titleEditText.text.toString()
             val newContent = contentEditText.text.toString()
-            memoDAO.updateMemo(memoId, newTitle, newContent, imagePaths)
+            memoDAO.updateMemo(memoId, newTitle, newContent, imagePaths, currentFontName)
             updateTimeTextView.text = "刚刚更新"
         }
     }
@@ -253,24 +258,24 @@ class MemoDetailActivity : AppCompatActivity() {
         }
     }
 
+    private fun applyFont(fontName: String) {
+        val index = FONT_NAMES.indexOf(fontName)
+        if (index >= 0 && index < FONTS.size) {
+            contentEditText.typeface = FONTS[index]
+        }
+    }
+
     private fun showFontSelectionDialog() {
-        val currentTypeface = contentEditText.typeface
-        var selectedIndex = FONTS.indexOfFirst { it == currentTypeface }.takeIf { it != -1 } ?: 0
+        val currentIndex = FONT_NAMES.indexOf(currentFontName).takeIf { it != -1 } ?: 0
 
         AlertDialog.Builder(this)
             .setTitle("选择字体")
-            .setSingleChoiceItems(FONT_NAMES, selectedIndex) { dialog, which ->
-                selectedIndex = which
-            }
-            .setPositiveButton("确定") { dialog, _ ->
-                if (selectedIndex in 0 until FONTS.size) {
-                    contentEditText.typeface = FONTS[selectedIndex]
-                }
+            .setSingleChoiceItems(FONT_NAMES, currentIndex) { dialog, which ->
+                currentFontName = FONT_NAMES[which]
+                applyFont(currentFontName)
                 dialog.dismiss()
             }
-            .setNegativeButton("取消") { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setNegativeButton("取消", null)
             .show()
     }
 }

@@ -78,7 +78,13 @@ class MemoDAO(context: Context) {
                 val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
                 val formattedUpdateTime = sdf.format(Date(updateTimeMillis))
 
-                memoList.add(Memo(id, title, content, timestamp, formattedUpdateTime, imagePaths))
+                val fontName = try {
+                    it.getString(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_FONT_NAME))
+                } catch (e: Exception) {
+                    "DEFAULT"
+                }
+
+                memoList.add(Memo(id, title, content, timestamp, formattedUpdateTime, imagePaths, fontName))
             }
         }
 
@@ -99,7 +105,7 @@ class MemoDAO(context: Context) {
     }
 
     // 更新备忘录
-    fun updateMemo(id: Int, title: String, content: String, imagePaths: List<String>) {
+    fun updateMemo(id: Int, title: String, content: String, imagePaths: List<String>, fontName: String = "DEFAULT") {
         val db = dbHelper.writableDatabase
         try {
             val values = ContentValues().apply {
@@ -107,6 +113,7 @@ class MemoDAO(context: Context) {
                 put(MemoDatabaseHelper.COLUMN_CONTENT, content)
                 put(MemoDatabaseHelper.COLUMN_UPDATE_TIME, System.currentTimeMillis())
                 put(MemoDatabaseHelper.COLUMN_IMAGE_PATHS, gson.toJson(imagePaths))
+                put(MemoDatabaseHelper.COLUMN_FONT_NAME, fontName)
             }
             db.update(MemoDatabaseHelper.TABLE_NAME, values, 
                 "${MemoDatabaseHelper.COLUMN_ID}=?", arrayOf(id.toString()))

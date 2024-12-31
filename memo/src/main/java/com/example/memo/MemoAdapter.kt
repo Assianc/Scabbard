@@ -56,6 +56,7 @@ class MemoAdapter(
                 putExtra("memo_content", memo.content)
                 putExtra("memo_update_time", "${memo.updateTime} 修改")
                 putStringArrayListExtra("memo_image_paths", ArrayList(memo.imagePaths))
+                putExtra("memo_font_name", memo.fontName)
             }
             context.startActivity(intent)
         }
