@@ -182,9 +182,14 @@ class MemoDetailActivity : AppCompatActivity() {
         applyTitleStyles()
         applyContentStyles()
         
-        // 应用下划线
+        // 应用下划线并强制重绘
         titleEditText.paint.isUnderlineText = titleUnderline
+        titleEditText.text = titleEditText.text
+        titleEditText.invalidate()
+
         contentEditText.paint.isUnderlineText = contentUnderline
+        contentEditText.text = contentEditText.text
+        contentEditText.invalidate()
         
         // 设置按钮点击事件
         titleBoldButton.setOnClickListener { 
@@ -199,6 +204,8 @@ class MemoDetailActivity : AppCompatActivity() {
         
         titleUnderlineButton.setOnClickListener {
             titleEditText.paint.isUnderlineText = !titleEditText.paint.isUnderlineText
+            // 强制重绘整个 EditText
+            titleEditText.text = titleEditText.text
             titleEditText.invalidate()
         }
 
@@ -214,6 +221,8 @@ class MemoDetailActivity : AppCompatActivity() {
         
         underlineButton.setOnClickListener {
             contentEditText.paint.isUnderlineText = !contentEditText.paint.isUnderlineText
+            // 强制重绘整个 EditText
+            contentEditText.text = contentEditText.text
             contentEditText.invalidate()
         }
     }
