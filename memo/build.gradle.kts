@@ -37,6 +37,18 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    // 正确配置 assets 和 res 目录
+    sourceSets {
+        getByName("main") {
+            assets {
+                srcDirs("src/main/assets")
+            }
+            res {
+                srcDirs("src/main/res")
+            }
+        }
+    }
 }
 
 dependencies {

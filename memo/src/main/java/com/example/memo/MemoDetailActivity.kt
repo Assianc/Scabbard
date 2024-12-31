@@ -2,6 +2,7 @@ package com.example.memo
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -18,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import androidx.core.content.res.ResourcesCompat
 
 class MemoDetailActivity : AppCompatActivity() {
 
@@ -35,6 +37,23 @@ class MemoDetailActivity : AppCompatActivity() {
     private lateinit var imagesRecyclerView: RecyclerView
     private lateinit var imageAdapter: ImageAdapter
     private val imagePaths = mutableListOf<String>()
+    private lateinit var fontButton: ImageButton
+
+    companion object {
+        private val FONTS = mutableListOf<Typeface>()
+        private val FONT_NAMES = arrayOf(
+            "默认字体",
+            "宋体",
+            "宋体（繁）",
+            "宋体（港繁）",
+            "仿宋",
+            "仿宋（繁）",
+            "仿宋（港繁）",
+            "黑体",
+            "黑体（繁）",
+            "黑体（港繁）",
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,6 +117,18 @@ class MemoDetailActivity : AppCompatActivity() {
             imagePaths.addAll(paths)
             imageAdapter.notifyDataSetChanged()
         }
+
+        // 初始化字体按钮
+        fontButton = findViewById(R.id.font_button)
+        fontButton.setOnClickListener {
+            showFontSelectionDialog()
+        }
+        
+        // 默认隐藏字体按钮
+        fontButton.visibility = View.GONE
+
+        // 初始化字体
+        initFonts()
     }
 
     private fun toggleEditMode(edit: Boolean) {
@@ -117,6 +148,7 @@ class MemoDetailActivity : AppCompatActivity() {
         editButton.visibility = if (edit) View.GONE else View.VISIBLE
         saveButton.visibility = if (edit) View.VISIBLE else View.GONE
         addImageButton.visibility = if (edit) View.VISIBLE else View.GONE
+        fontButton.visibility = if (edit) View.VISIBLE else View.GONE
         
         // 更新 ImageAdapter 的编辑模式
         imageAdapter = ImageAdapter(
@@ -196,5 +228,49 @@ class MemoDetailActivity : AppCompatActivity() {
             memoDAO.updateMemo(memoId, newTitle, newContent, imagePaths)
             updateTimeTextView.text = "刚刚更新"
         }
+    }
+
+    private fun initFonts() {
+        FONTS.clear()
+        FONTS.add(Typeface.DEFAULT) // 默认字体
+        
+        // 从 res/font 目录加载字体
+        try {
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simsunch)!!) // 宋体
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simsunhk)!!) //宋体 港繁
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simsunpro)!!) // 宋体 繁
+            FONTS.add(ResourcesCompat.getFont(this, R.font.fasimsunch)!!) //仿宋
+            FONTS.add(ResourcesCompat.getFont(this, R.font.fasimsunhk)!!)
+            FONTS.add(ResourcesCompat.getFont(this, R.font.fasimsunpro)!!)
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simheich)!!) // 黑体
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simheihk)!!)
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simheipro)!!)
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simkaich)!!) // 楷体
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simkaihk)!!)
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simkaipro)!!)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun showFontSelectionDialog() {
+        val currentTypeface = contentEditText.typeface
+        var selectedIndex = FONTS.indexOfFirst { it == currentTypeface }.takeIf { it != -1 } ?: 0
+
+        AlertDialog.Builder(this)
+            .setTitle("选择字体")
+            .setSingleChoiceItems(FONT_NAMES, selectedIndex) { dialog, which ->
+                selectedIndex = which
+            }
+            .setPositiveButton("确定") { dialog, _ ->
+                if (selectedIndex in 0 until FONTS.size) {
+                    contentEditText.typeface = FONTS[selectedIndex]
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 }

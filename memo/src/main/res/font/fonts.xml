@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<font-family xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- 宋体 -->
+    <font
+        android:font="@font/simsunch"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/simsunch"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <font
+        android:font="@font/simsunhk"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/simsunhk"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <font
+        android:font="@font/simsunpro"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/simsunpro"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <!-- 黑体 -->
+    <font
+        android:font="@font/simheich"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/simheich"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <font
+        android:font="@font/simheihk"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/simheihk"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <font
+        android:font="@font/simheipro"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/simheipro"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <!-- 楷体 -->
+    <font
+        android:font="@font/simkaich"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/simkaich"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <font
+        android:font="@font/simkaihk"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/simkaihk"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <font
+        android:font="@font/simkaipro"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/simkaipro"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <!-- 仿宋 -->
+    <font
+        android:font="@font/fasimsunch"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/fasimsunch"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <font
+        android:font="@font/fasimsunhk"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/fasimsunhk"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+    <font
+        android:font="@font/fasimsunpro"
+        android:fontStyle="normal"
+        android:fontWeight="400"
+        app:font="@font/fasimsunpro"
+        app:fontStyle="normal"
+        app:fontWeight="400" />
+
+</font-family> 
