@@ -84,23 +84,24 @@
                 android:id="@+id/font_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:background="@drawable/button_background_selector"
                 android:contentDescription="字体"
+                android:padding="8dp"
                 android:src="@drawable/ic_font"
                 android:visibility="gone"/>
 
-            <!-- 这里可以添加更多功能按钮 -->
             <Space
                 android:layout_width="8dp"
                 android:layout_height="wrap_content"/>
 
-            <!-- 示例：加粗按钮 -->
+            <!-- 加粗按钮 -->
             <ImageButton
                 android:id="@+id/bold_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:background="@drawable/button_background_selector"
                 android:contentDescription="加粗"
+                android:padding="8dp"
                 android:src="@android:drawable/ic_menu_edit"
                 android:visibility="gone"/>
 
@@ -108,13 +109,14 @@
                 android:layout_width="8dp"
                 android:layout_height="wrap_content"/>
 
-            <!-- 示例：颜色按钮 -->
+            <!-- 颜色按钮 -->
             <ImageButton
                 android:id="@+id/color_button"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:background="@drawable/button_background_selector"
                 android:contentDescription="颜色"
+                android:padding="8dp"
                 android:src="@android:drawable/ic_menu_edit"
                 android:visibility="gone"/>
 
