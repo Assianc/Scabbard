@@ -434,9 +434,12 @@ class MemoDetailActivity : AppCompatActivity() {
             val currentTypeface = titleEditText.typeface ?: Typeface.DEFAULT
             
             // 计算新样式
-            var newStyle = Typeface.NORMAL
-            if (titleBoldState) newStyle = newStyle or Typeface.BOLD
-            if (titleItalicState) newStyle = newStyle or Typeface.ITALIC
+            val newStyle = when {
+                titleBoldState && titleItalicState -> Typeface.BOLD_ITALIC
+                titleBoldState -> Typeface.BOLD
+                titleItalicState -> Typeface.ITALIC
+                else -> Typeface.NORMAL
+            }
 
             // 创建新的 Typeface
             val newTypeface = Typeface.create(currentTypeface, newStyle)
@@ -453,9 +456,12 @@ class MemoDetailActivity : AppCompatActivity() {
             val currentTypeface = contentEditText.typeface ?: Typeface.DEFAULT
             
             // 计算新样式
-            var newStyle = Typeface.NORMAL
-            if (contentBoldState) newStyle = newStyle or Typeface.BOLD
-            if (contentItalicState) newStyle = newStyle or Typeface.ITALIC
+            val newStyle = when {
+                contentBoldState && contentItalicState -> Typeface.BOLD_ITALIC
+                contentBoldState -> Typeface.BOLD
+                contentItalicState -> Typeface.ITALIC
+                else -> Typeface.NORMAL
+            }
 
             // 创建新的 Typeface
             val newTypeface = Typeface.create(currentTypeface, newStyle)
