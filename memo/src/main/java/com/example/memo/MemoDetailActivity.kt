@@ -45,14 +45,18 @@ class MemoDetailActivity : AppCompatActivity() {
         private val FONT_NAMES = arrayOf(
             "默认字体",
             "宋体",
-            "宋体（繁）",
             "宋体（港繁）",
-            "仿宋",
+            "宋体（繁）",
             "仿宋（繁）",
+            "仿宋",
             "仿宋（港繁）",
             "黑体",
-            "黑体（繁）",
             "黑体（港繁）",
+            "黑体（繁）",
+            "楷体",
+            "楷体（港繁）",
+            "楷体（繁）",
+
         )
     }
 
