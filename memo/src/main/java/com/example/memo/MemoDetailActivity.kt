@@ -270,13 +270,20 @@ class MemoDetailActivity : AppCompatActivity() {
 
     private fun showFontSelectionDialog() {
         val currentIndex = FONT_NAMES.indexOf(currentFontName).takeIf { it != -1 } ?: 0
+        var selectedIndex = currentIndex
 
         AlertDialog.Builder(this)
             .setTitle("选择字体")
-            .setSingleChoiceItems(FONT_NAMES, currentIndex) { dialog, which ->
-                currentFontName = FONT_NAMES[which]
-                applyFont(currentFontName)
-                dialog.dismiss()
+            .setSingleChoiceItems(FONT_NAMES, currentIndex) { _, which ->
+                // 只记录选择的位置，不立即应用
+                selectedIndex = which
+            }
+            .setPositiveButton("确定") { _, _ ->
+                // 用户点击确定后才应用字体
+                if (selectedIndex != currentIndex) {
+                    currentFontName = FONT_NAMES[selectedIndex]
+                    applyFont(currentFontName)
+                }
             }
             .setNegativeButton("取消", null)
             .show()
