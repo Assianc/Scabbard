@@ -105,7 +105,14 @@ class MemoDAO(context: Context) {
     }
 
     // 更新备忘录
-    fun updateMemo(id: Int, title: String, content: String, imagePaths: List<String>, fontName: String = "DEFAULT") {
+    fun updateMemo(
+        id: Int, 
+        title: String, 
+        content: String, 
+        imagePaths: List<String>, 
+        fontName: String = "DEFAULT",
+        titleFontName: String = "DEFAULT"
+    ) {
         val db = dbHelper.writableDatabase
         try {
             val values = ContentValues().apply {
@@ -114,6 +121,7 @@ class MemoDAO(context: Context) {
                 put(MemoDatabaseHelper.COLUMN_UPDATE_TIME, System.currentTimeMillis())
                 put(MemoDatabaseHelper.COLUMN_IMAGE_PATHS, gson.toJson(imagePaths))
                 put(MemoDatabaseHelper.COLUMN_FONT_NAME, fontName)
+                put(MemoDatabaseHelper.COLUMN_TITLE_FONT_NAME, titleFontName)
             }
             db.update(MemoDatabaseHelper.TABLE_NAME, values, 
                 "${MemoDatabaseHelper.COLUMN_ID}=?", arrayOf(id.toString()))

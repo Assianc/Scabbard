@@ -36,11 +36,18 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 e.printStackTrace()
             }
         }
+        if (oldVersion < 5) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_TITLE_FONT_NAME TEXT DEFAULT 'DEFAULT'")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     companion object {
         private const val DATABASE_NAME = "memo.db"
-        private const val DATABASE_VERSION = 4
+        private const val DATABASE_VERSION = 5
 
         // 表和列名
         const val TABLE_NAME = "memo"
@@ -52,6 +59,7 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         const val COLUMN_IMAGE_PATH = "image_path"
         const val COLUMN_IMAGE_PATHS = "image_paths"
         const val COLUMN_FONT_NAME = "font_name"
+        const val COLUMN_TITLE_FONT_NAME = "title_font_name"
 
         // 创建表语句
         val CREATE_TABLE = """
@@ -62,7 +70,8 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 $COLUMN_TIMESTAMP TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 $COLUMN_UPDATE_TIME TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 $COLUMN_IMAGE_PATHS TEXT,
-                $COLUMN_FONT_NAME TEXT DEFAULT 'DEFAULT'
+                $COLUMN_FONT_NAME TEXT DEFAULT 'DEFAULT',
+                $COLUMN_TITLE_FONT_NAME TEXT DEFAULT 'DEFAULT'
             )
         """.trimIndent()
     }

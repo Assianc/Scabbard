@@ -39,6 +39,8 @@ class MemoDetailActivity : AppCompatActivity() {
     private val imagePaths = mutableListOf<String>()
     private lateinit var fontButton: ImageButton
     private var currentFontName = "DEFAULT"
+    private lateinit var titleFontButton: ImageButton
+    private var currentTitleFontName = "DEFAULT"
 
     companion object {
         private val FONTS = mutableListOf<Typeface>()
@@ -137,6 +139,19 @@ class MemoDetailActivity : AppCompatActivity() {
         // 获取并设置字体
         currentFontName = intent.getStringExtra("memo_font_name") ?: "DEFAULT"
         applyFont(currentFontName)
+
+        // 初始化标题字体按钮
+        titleFontButton = findViewById(R.id.title_font_button)
+        titleFontButton.setOnClickListener {
+            showTitleFontSelectionDialog()
+        }
+        
+        // 默认隐藏标题字体按钮
+        titleFontButton.visibility = View.GONE
+
+        // 获取并设置标题字体
+        currentTitleFontName = intent.getStringExtra("memo_title_font_name") ?: "DEFAULT"
+        applyTitleFont(currentTitleFontName)
     }
 
     private fun toggleEditMode(edit: Boolean) {
@@ -157,6 +172,7 @@ class MemoDetailActivity : AppCompatActivity() {
         saveButton.visibility = if (edit) View.VISIBLE else View.GONE
         addImageButton.visibility = if (edit) View.VISIBLE else View.GONE
         fontButton.visibility = if (edit) View.VISIBLE else View.GONE
+        titleFontButton.visibility = if (edit) View.VISIBLE else View.GONE
         
         // 更新 ImageAdapter 的编辑模式
         imageAdapter = ImageAdapter(
@@ -233,7 +249,14 @@ class MemoDetailActivity : AppCompatActivity() {
         if (memoId != -1) {
             val newTitle = titleEditText.text.toString()
             val newContent = contentEditText.text.toString()
-            memoDAO.updateMemo(memoId, newTitle, newContent, imagePaths, currentFontName)
+            memoDAO.updateMemo(
+                id = memoId,
+                title = newTitle,
+                content = newContent,
+                imagePaths = imagePaths,
+                fontName = currentFontName,
+                titleFontName = currentTitleFontName
+            )
             updateTimeTextView.text = "刚刚更新"
         }
     }
@@ -287,5 +310,31 @@ class MemoDetailActivity : AppCompatActivity() {
             }
             .setNegativeButton("取消", null)
             .show()
+    }
+
+    private fun showTitleFontSelectionDialog() {
+        val currentIndex = FONT_NAMES.indexOf(currentTitleFontName).takeIf { it != -1 } ?: 0
+        var selectedIndex = currentIndex
+
+        AlertDialog.Builder(this)
+            .setTitle("选择标题字体")
+            .setSingleChoiceItems(FONT_NAMES, currentIndex) { _, which ->
+                selectedIndex = which
+            }
+            .setPositiveButton("确定") { _, _ ->
+                if (selectedIndex != currentIndex) {
+                    currentTitleFontName = FONT_NAMES[selectedIndex]
+                    applyTitleFont(currentTitleFontName)
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun applyTitleFont(fontName: String) {
+        val index = FONT_NAMES.indexOf(fontName)
+        if (index >= 0 && index < FONTS.size) {
+            titleEditText.typeface = FONTS[index]
+        }
     }
 }
