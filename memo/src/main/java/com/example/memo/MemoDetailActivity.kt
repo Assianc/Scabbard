@@ -48,6 +48,10 @@ class MemoDetailActivity : AppCompatActivity() {
     private lateinit var titleBoldButton: ImageButton
     private lateinit var titleItalicButton: ImageButton
     private lateinit var titleUnderlineButton: ImageButton
+    private var titleBoldState = false
+    private var titleItalicState = false
+    private var contentBoldState = false
+    private var contentItalicState = false
 
     companion object {
         private val FONTS = mutableListOf<Typeface>()
@@ -162,26 +166,56 @@ class MemoDetailActivity : AppCompatActivity() {
         titleItalicButton = findViewById(R.id.title_italic_button)
         titleUnderlineButton = findViewById(R.id.title_underline_button)
 
-        // 设置点击事件
-        boldButton.setOnClickListener { toggleTextStyle(contentEditText, Typeface.BOLD) }
-        italicButton.setOnClickListener { toggleTextStyle(contentEditText, Typeface.ITALIC) }
-        underlineButton.setOnClickListener { toggleUnderline(contentEditText) }
-
-        titleBoldButton.setOnClickListener { toggleTextStyle(titleEditText, Typeface.BOLD) }
-        titleItalicButton.setOnClickListener { toggleTextStyle(titleEditText, Typeface.ITALIC) }
-        titleUnderlineButton.setOnClickListener { toggleUnderline(titleEditText) }
-
-        // 恢复样式
+        // 恢复样式状态
         val titleStyle = intent.getIntExtra("memo_title_style", Typeface.NORMAL)
         val contentStyle = intent.getIntExtra("memo_content_style", Typeface.NORMAL)
         val titleUnderline = intent.getBooleanExtra("memo_title_underline", false)
         val contentUnderline = intent.getBooleanExtra("memo_content_underline", false)
 
+        // 初始化样式状态
+        titleBoldState = (titleStyle and Typeface.BOLD) != 0
+        titleItalicState = (titleStyle and Typeface.ITALIC) != 0
+        contentBoldState = (contentStyle and Typeface.BOLD) != 0
+        contentItalicState = (contentStyle and Typeface.ITALIC) != 0
+
         // 应用样式
-        titleEditText.setTypeface(titleEditText.typeface, titleStyle)
-        contentEditText.setTypeface(contentEditText.typeface, contentStyle)
+        applyTitleStyles()
+        applyContentStyles()
+        
+        // 应用下划线
         titleEditText.paint.isUnderlineText = titleUnderline
         contentEditText.paint.isUnderlineText = contentUnderline
+        
+        // 设置按钮点击事件
+        titleBoldButton.setOnClickListener { 
+            titleBoldState = !titleBoldState
+            applyTitleStyles()
+        }
+        
+        titleItalicButton.setOnClickListener { 
+            titleItalicState = !titleItalicState
+            applyTitleStyles()
+        }
+        
+        titleUnderlineButton.setOnClickListener {
+            titleEditText.paint.isUnderlineText = !titleEditText.paint.isUnderlineText
+            titleEditText.invalidate()
+        }
+
+        boldButton.setOnClickListener { 
+            contentBoldState = !contentBoldState
+            applyContentStyles()
+        }
+        
+        italicButton.setOnClickListener { 
+            contentItalicState = !contentItalicState
+            applyContentStyles()
+        }
+        
+        underlineButton.setOnClickListener {
+            contentEditText.paint.isUnderlineText = !contentEditText.paint.isUnderlineText
+            contentEditText.invalidate()
+        }
     }
 
     private fun toggleEditMode(edit: Boolean) {
@@ -290,11 +324,14 @@ class MemoDetailActivity : AppCompatActivity() {
             val newTitle = titleEditText.text.toString()
             val newContent = contentEditText.text.toString()
             
-            // 获取当前样式
-            val titleStyle = titleEditText.typeface?.style ?: Typeface.NORMAL
-            val contentStyle = contentEditText.typeface?.style ?: Typeface.NORMAL
-            val titleUnderline = titleEditText.paint.isUnderlineText
-            val contentUnderline = contentEditText.paint.isUnderlineText
+            // 计算当前样式
+            var titleStyle = Typeface.NORMAL
+            if (titleBoldState) titleStyle = titleStyle or Typeface.BOLD
+            if (titleItalicState) titleStyle = titleStyle or Typeface.ITALIC
+            
+            var contentStyle = Typeface.NORMAL
+            if (contentBoldState) contentStyle = contentStyle or Typeface.BOLD
+            if (contentItalicState) contentStyle = contentStyle or Typeface.ITALIC
 
             memoDAO.updateMemo(
                 id = memoId,
@@ -305,8 +342,8 @@ class MemoDetailActivity : AppCompatActivity() {
                 titleFontName = currentTitleFontName,
                 titleStyle = titleStyle,
                 contentStyle = contentStyle,
-                titleUnderline = titleUnderline,
-                contentUnderline = contentUnderline
+                titleUnderline = titleEditText.paint.isUnderlineText,
+                contentUnderline = contentEditText.paint.isUnderlineText
             )
             updateTimeTextView.text = "刚刚更新"
         }
@@ -381,31 +418,41 @@ class MemoDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun toggleTextStyle(editText: EditText, style: Int) {
-        val currentTypeface = editText.typeface
-        val currentStyle = currentTypeface?.style ?: Typeface.NORMAL
-        
-        // 计算新的样式
-        val newStyle = if ((currentStyle and style) != 0) {
-            // 如果已有该样式，则移除
-            currentStyle and style.inv()
-        } else {
-            // 如果没有该样式，则添加
-            currentStyle or style
+    private fun applyTitleStyles() {
+        try {
+            // 获取当前字体
+            val currentTypeface = titleEditText.typeface ?: Typeface.DEFAULT
+            
+            // 计算新样式
+            var newStyle = Typeface.NORMAL
+            if (titleBoldState) newStyle = newStyle or Typeface.BOLD
+            if (titleItalicState) newStyle = newStyle or Typeface.ITALIC
+
+            // 创建新的 Typeface
+            val newTypeface = Typeface.create(currentTypeface, newStyle)
+            titleEditText.typeface = newTypeface
+            titleEditText.invalidate()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        
-        // 应用新样式
-        editText.setTypeface(currentTypeface, newStyle)
     }
 
-    private fun toggleUnderline(editText: EditText) {
-        val paint = editText.paint
-        val isUnderlined = paint.isUnderlineText
-        
-        // 切换下划线状态
-        paint.isUnderlineText = !isUnderlined
-        
-        // 强制重绘
-        editText.invalidate()
+    private fun applyContentStyles() {
+        try {
+            // 获取当前字体
+            val currentTypeface = contentEditText.typeface ?: Typeface.DEFAULT
+            
+            // 计算新样式
+            var newStyle = Typeface.NORMAL
+            if (contentBoldState) newStyle = newStyle or Typeface.BOLD
+            if (contentItalicState) newStyle = newStyle or Typeface.ITALIC
+
+            // 创建新的 Typeface
+            val newTypeface = Typeface.create(currentTypeface, newStyle)
+            contentEditText.typeface = newTypeface
+            contentEditText.invalidate()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
