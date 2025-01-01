@@ -13,7 +13,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 3
-        versionName = "3.3.3"
+        versionName = "3.3.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -64,6 +64,7 @@ dependencies {
 
     // 本地模块依赖
     implementation(project(":memo"))
+    implementation(project(":alm"))
 
     implementation(libs.core.ktx)
     testImplementation(libs.junit)
