@@ -1,5 +1,6 @@
 package com.example.scabbard
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -21,6 +22,7 @@ open class StartActivity : AppCompatActivity() {
     private lateinit var moreButton: Button
     private val updateChecker = UpdateChecker()
 
+    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start_allocator)

@@ -154,14 +154,14 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
                     }
                 } ?: run {
                     if (!isFinishing) {
-                        Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
                     }
                     continueAppLaunch()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 if (!isFinishing) {
-                    Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
+//                    Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
                 }
                 continueAppLaunch()
             }
