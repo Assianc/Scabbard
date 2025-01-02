@@ -51,7 +51,7 @@ class AppearanceActivity : AppCompatActivity() {
         try {
             val pm = packageManager
             
-            // 禁用所有图标别名
+            // 先禁用所有图标别名
             iconAliases.forEach { alias ->
                 val component = ComponentName(this, "$packageName.$alias")
                 pm.setComponentEnabledSetting(
@@ -69,7 +69,7 @@ class AppearanceActivity : AppCompatActivity() {
                 PackageManager.DONT_KILL_APP
             )
 
-            // 启用选中的图标
+            // 只启用选中的图标
             val selectedComponent = ComponentName(this, "$packageName.$activityName")
             pm.setComponentEnabledSetting(
                 selectedComponent,
