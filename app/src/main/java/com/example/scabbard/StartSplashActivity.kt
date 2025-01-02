@@ -66,7 +66,7 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
         // 图标缩放动画
         val scaleAnimation = ScaleAnimation(
-            0f, 2.8f, 0f, 2.8f,
+            0f, 2.2f, 0f, 2.2f,
             Animation.RELATIVE_TO_SELF, 0.5f,
             Animation.RELATIVE_TO_SELF, 0.5f
         ).apply {
