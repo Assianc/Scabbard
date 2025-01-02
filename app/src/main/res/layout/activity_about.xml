@@ -8,7 +8,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="@color/colorPrimary"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <ScrollView
@@ -22,11 +22,11 @@
             android:padding="16dp">
 
             <ImageView
+                android:id="@+id/app_icon"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="24dp"
-                android:src="@mipmap/jianqiao5" />
+                android:layout_marginTop="24dp" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -34,6 +34,7 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp"
                 android:text="Scabbard"
+                android:textColor="@color/textColor"
                 android:textSize="24sp"
                 android:textStyle="bold" />
 
@@ -43,6 +44,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:textColor="@android:color/darker_gray"
+                android:textStyle="bold"
                 android:textSize="16sp" />
 
             <TextView
@@ -50,6 +52,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
                 android:text="What's this"
+                android:textStyle="bold"
                 android:textColor="@android:color/darker_gray"
                 android:textSize="14sp" />
 
@@ -58,6 +61,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="Scabbard 剑鞘 —— 愿你我成为生活的高手"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
                 android:textSize="16sp" />
 
             <View
@@ -71,6 +76,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Developers"
+                android:textStyle="bold"
                 android:textColor="@android:color/darker_gray"
                 android:textSize="14sp" />
 
@@ -101,6 +107,7 @@
                         android:layout_height="wrap_content"
                         android:text="Assianc"
                         android:textSize="16sp"
+                        android:textColor="@android:color/black"
                         android:textStyle="bold" />
 
                     <TextView
@@ -139,6 +146,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="zhoubinxin"
+                        android:textColor="@android:color/black"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 

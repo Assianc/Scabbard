@@ -3,10 +3,12 @@ package com.example.scabbard
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import com.example.scabbard.utils.IconManager
 
 class AboutActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +45,9 @@ class AboutActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.dev_2).setOnClickListener {
             openGitHub("Assianc")
         }
+
+        val appIcon = findViewById<ImageView>(R.id.app_icon)
+        appIcon.setImageResource(IconManager.getCurrentIconResourceId(this))
     }
 
     private fun openGitHub(username: String) {

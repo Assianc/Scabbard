@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import android.content.Context
 
 class AppearanceActivity : AppCompatActivity() {
 
@@ -59,6 +60,14 @@ class AppearanceActivity : AppCompatActivity() {
                     PackageManager.DONT_KILL_APP
                 )
             }
+            
+            // 禁用默认图标
+            val defaultComponent = ComponentName(this, "$packageName.MainActivity.Default")
+            pm.setComponentEnabledSetting(
+                defaultComponent,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP
+            )
 
             // 启用选中的图标
             val selectedComponent = ComponentName(this, "$packageName.$activityName")
@@ -67,6 +76,12 @@ class AppearanceActivity : AppCompatActivity() {
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                 PackageManager.DONT_KILL_APP
             )
+
+            // 保存当前选择的图标
+            getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+                .edit()
+                .putString("current_icon", activityName)
+                .apply()
 
             // 显示确认对话框
             AlertDialog.Builder(this)

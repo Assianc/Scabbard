@@ -14,6 +14,7 @@ import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
 import android.view.animation.ScaleAnimation
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.gyf.immersionbar.BarHide
@@ -25,15 +26,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.example.scabbard.update.UpdateChecker
+import com.example.scabbard.utils.IconManager
 
 class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
     companion object {
-        private const val ANIM_TIME = 2100L // 将ANIM_TIME的类型更改为 Long 以避免转换
+        private const val ANIM_TIME = 2100L
     }
 
     private lateinit var mImageView: View
-    private lateinit var mIconView: View
+    private lateinit var mIconView: ImageView
     private lateinit var mNameView: View
     private lateinit var mDebugView: View
     private val handler = Handler(Looper.getMainLooper())
@@ -54,6 +56,8 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
         initView()
         initData()
+
+        mIconView.setImageResource(IconManager.getCurrentIconResourceId(this))
     }
 
     private fun initView() {
@@ -85,9 +89,9 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
         // 使用 ImmersionBar 设置状态栏和导航栏
         ImmersionBar.with(this)
-            .fullScreen(true)                       // 全屏显示
-            .hideBar(BarHide.FLAG_HIDE_STATUS_BAR)   // 隐藏状态栏
-            .transparentNavigationBar()              // 透明导航栏
+            .fullScreen(true)
+            .hideBar(BarHide.FLAG_HIDE_STATUS_BAR)
+            .transparentNavigationBar()
             .init()
     }
 
