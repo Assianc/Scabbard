@@ -11,6 +11,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.example.scabbard.update.UpdateChecker
+import android.widget.ImageView
+import com.example.scabbard.utils.IconManager
 
 open class StartActivity : AppCompatActivity() {
 
@@ -22,6 +24,11 @@ open class StartActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start_allocator)
+
+        // 更新当前图标
+        findViewById<ImageView>(R.id.app_icon)?.setImageResource(
+            IconManager.getCurrentIconResourceId(this)
+        )
 
         startButton = findViewById(R.id.start_button)
         memoButton = findViewById(R.id.memo_button)

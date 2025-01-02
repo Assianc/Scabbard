@@ -118,47 +118,45 @@ class UpdateChecker {
         updateInfo: UpdateInfo,
         onConfirm: () -> Unit,
         onCancel: () -> Unit
-    ) {
+    ): AlertDialog? {
+        if (context is Activity && context.isFinishing) {
+            onCancel()
+            return null
+        }
+
         val dialogContext = if (context is Activity) {
             context
         } else {
             ContextThemeWrapper(context, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
         }
 
-        val builder = AlertDialog.Builder(dialogContext).apply {
-            setTitle("发现新版本")
-            setMessage("是否更新到最新版本？\n\n${updateInfo.updateDescription}")
-            setCancelable(!updateInfo.forceUpdate)
-            setPositiveButton("更新") { dialog, _ ->
-                startDownload(context, updateInfo.updateUrl, updateInfo.latestVersion)
-                dialog.dismiss()
-            }
-            if (!updateInfo.forceUpdate) {
-                setNegativeButton("取消") { dialog, _ ->
-                    onCancel()
+        return try {
+            val dialog = AlertDialog.Builder(dialogContext)
+                .setTitle("发现新版本")
+                .setMessage("是否更新到最新版本？\n\n${updateInfo.updateDescription}")
+                .setCancelable(!updateInfo.forceUpdate)
+                .setPositiveButton("更新") { dialog, _ ->
                     dialog.dismiss()
+                    onConfirm()
                 }
-            }
-        }
+                .apply {
+                    if (!updateInfo.forceUpdate) {
+                        setNegativeButton("取消") { dialog, _ ->
+                            dialog.dismiss()
+                            onCancel()
+                        }
+                    }
+                }
+                .create()
 
-        Handler(Looper.getMainLooper()).post {
-            try {
-                val dialog = builder.create()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-                } else {
-                    dialog.window?.setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT)
-                }
-                dialog.setCanceledOnTouchOutside(false)
+            if (context is Activity && !context.isFinishing) {
                 dialog.show()
-            } catch (e: Exception) {
-                e.printStackTrace()
-                try {
-                    builder.create().show()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
             }
+            dialog
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onCancel()
+            null
         }
     }
 

@@ -17,6 +17,8 @@ import android.view.animation.ScaleAnimation
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import com.gyf.immersionbar.BarHide
 import com.gyf.immersionbar.ImmersionBar
 import com.hjq.permissions.OnPermissionCallback
@@ -101,36 +103,66 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
     }
 
     private fun checkForUpdates() {
+        if (isFinishing) {
+            continueAppLaunch()
+            return
+        }
+
         CoroutineScope(Dispatchers.Main).launch {
-            val updateInfo = updateChecker.checkForUpdates(this@StartSplashActivity)
-            
-            updateInfo?.let { info ->
-                // 获取当前版本号
-                val currentVersion = updateChecker.getCurrentVersion(this@StartSplashActivity)
+            try {
+                val updateInfo = updateChecker.checkForUpdates(this@StartSplashActivity)
                 
-                if (updateChecker.shouldUpdate(info.latestVersion, currentVersion)) {
-                    updateChecker.showUpdateDialog(
-                        context = this@StartSplashActivity,
-                        updateInfo = info,
-                        onConfirm = {
-                            try {
-                                startDownload(info.updateUrl, info.latestVersion)
-                                if (info.forceUpdate) {
-                                    finish()
+                if (isFinishing) {
+                    continueAppLaunch()
+                    return@launch
+                }
+
+                updateInfo?.let { info ->
+                    val currentVersion = updateChecker.getCurrentVersion(this@StartSplashActivity)
+                    
+                    if (updateChecker.shouldUpdate(info.latestVersion, currentVersion)) {
+                        if (!isFinishing) {
+                            val dialog = updateChecker.showUpdateDialog(
+                                context = this@StartSplashActivity,
+                                updateInfo = info,
+                                onConfirm = {
+                                    try {
+                                        startDownload(info.updateUrl, info.latestVersion)
+                                        if (info.forceUpdate) {
+                                            finish()
+                                        }
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                },
+                                onCancel = {
+                                    continueAppLaunch()
                                 }
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        },
-                        onCancel = {
+                            )
+                            
+                            // 在 Activity 销毁时关闭对话框
+                            lifecycle.addObserver(object : DefaultLifecycleObserver {
+                                override fun onDestroy(owner: LifecycleOwner) {
+                                    dialog?.dismiss()
+                                }
+                            })
+                        } else {
                             continueAppLaunch()
                         }
-                    )
-                } else {
+                    } else {
+                        continueAppLaunch()
+                    }
+                } ?: run {
+                    if (!isFinishing) {
+                        Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
+                    }
                     continueAppLaunch()
                 }
-            } ?: run {
-                Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                if (!isFinishing) {
+                    Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
+                }
                 continueAppLaunch()
             }
         }
@@ -158,41 +190,62 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
     }
 
     private fun continueAppLaunch() {
-        // 原有的启动逻辑
-        requestPermission()
+        if (!isFinishing) {
+            requestPermission()
+        } else {
+            startStartActivity()
+        }
     }
 
     private fun requestPermission() {
+        if (isFinishing) {
+            startStartActivity()
+            return
+        }
+
         val requiredPermissions = getRequiredPermissions()
 
-        XXPermissions.with(this)
-            .permission(*requiredPermissions)  // 使用 getRequiredPermissions 返回的权限列表
-            .request(object : OnPermissionCallback {
-                override fun onGranted(permissions: List<String>, all: Boolean) {
-                    hasPermissionGranted = true
-                    if (isAnimationEnded) {
-                        startStartActivity()
+        try {
+            XXPermissions.with(this)
+                .permission(*requiredPermissions)
+                .request(object : OnPermissionCallback {
+                    override fun onGranted(permissions: List<String>, all: Boolean) {
+                        if (!isFinishing) {
+                            hasPermissionGranted = true
+                            if (isAnimationEnded) {
+                                startStartActivity()
+                            }
+                        }
                     }
-                }
 
-                override fun onDenied(permissions: List<String>, quick: Boolean) {
-                    if (quick) {
-                        Toast.makeText(
-                            this@StartSplashActivity,
-                            R.string.common_permission_fail,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        XXPermissions.startPermissionActivity(this@StartSplashActivity, permissions)
-                    } else {
-                        Toast.makeText(
-                            this@StartSplashActivity,
-                            R.string.common_permission_hint,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        handler.postDelayed({ requestPermission() }, 1000)
+                    override fun onDenied(permissions: List<String>, quick: Boolean) {
+                        if (isFinishing) return
+                        
+                        if (quick) {
+                            Toast.makeText(
+                                this@StartSplashActivity,
+                                R.string.common_permission_fail,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            XXPermissions.startPermissionActivity(this@StartSplashActivity, permissions)
+                        } else {
+                            Toast.makeText(
+                                this@StartSplashActivity,
+                                R.string.common_permission_hint,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            handler.postDelayed({ 
+                                if (!isFinishing) {
+                                    requestPermission() 
+                                }
+                            }, 1000)
+                        }
                     }
-                }
-            })
+                })
+        } catch (e: Exception) {
+            e.printStackTrace()
+            startStartActivity()
+        }
     }
 
     private fun getRequiredPermissions(): Array<String> {
@@ -221,8 +274,14 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
     }
 
     private fun startStartActivity() {
-        startActivity(Intent(this@StartSplashActivity, StartActivity::class.java))
-        finish()
+        try {
+            if (!isFinishing) {
+                startActivity(Intent(this@StartSplashActivity, StartActivity::class.java))
+                finish()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     override fun onAnimationStart(animation: Animation) {}

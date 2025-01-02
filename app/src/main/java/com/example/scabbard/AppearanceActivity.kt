@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import android.content.Context
+import com.example.scabbard.utils.IconManager
 
 class AppearanceActivity : AppCompatActivity() {
 
@@ -22,6 +23,8 @@ class AppearanceActivity : AppCompatActivity() {
         "MainActivity.IconAlternative6",
         "MainActivity.IconAlternative7"
     )
+
+    private var dialog: AlertDialog? = null  // 添加对话框引用
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,52 +52,24 @@ class AppearanceActivity : AppCompatActivity() {
 
     private fun changeAppIcon(activityName: String) {
         try {
-            val pm = packageManager
-            
-            // 先禁用所有图标别名
-            iconAliases.forEach { alias ->
-                val component = ComponentName(this, "$packageName.$alias")
-                pm.setComponentEnabledSetting(
-                    component,
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    PackageManager.DONT_KILL_APP
-                )
-            }
-            
-            // 禁用默认图标
-            val defaultComponent = ComponentName(this, "$packageName.MainActivity.Default")
-            pm.setComponentEnabledSetting(
-                defaultComponent,
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                PackageManager.DONT_KILL_APP
-            )
-
-            // 只启用选中的图标
-            val selectedComponent = ComponentName(this, "$packageName.$activityName")
-            pm.setComponentEnabledSetting(
-                selectedComponent,
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                PackageManager.DONT_KILL_APP
-            )
-
-            // 保存当前选择的图标
-            getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-                .edit()
-                .putString("current_icon", activityName)
-                .apply()
+            // 使用 IconManager 设置图标
+            IconManager.setCurrentIcon(this, activityName)
 
             // 显示确认对话框
-            AlertDialog.Builder(this)
+            dialog = AlertDialog.Builder(this)
                 .setTitle("更换图标")
                 .setMessage("图标更换成功，需要重启应用才能生效，是否立即重启？")
-                .setPositiveButton("重启") { _, _ ->
+                .setPositiveButton("重启") { dialog, _ ->
+                    dialog.dismiss()
                     restartApp()
                 }
                 .setNegativeButton("稍后") { dialog, _ ->
                     dialog.dismiss()
                     Toast.makeText(this, "请手动重启应用以完成图标更换", Toast.LENGTH_SHORT).show()
                 }
-                .show()
+                .create()
+            
+            dialog?.show()
 
         } catch (e: Exception) {
             Toast.makeText(this, "更改图标失败: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -103,12 +78,25 @@ class AppearanceActivity : AppCompatActivity() {
     }
 
     private fun restartApp() {
-        val intent = Intent(this, StartSplashActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        try {
+            dialog?.dismiss()  // 确保对话框关闭
+            val intent = Intent(this, StartSplashActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            
+            finishAffinity() // 结束所有 Activity
+            startActivity(intent)
+            Runtime.getRuntime().exit(0)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "重启失败，请手动重启应用", Toast.LENGTH_SHORT).show()
         }
-        startActivity(intent)
-        finish()
-        Runtime.getRuntime().exit(0)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dialog?.dismiss()  // 在 Activity 销毁时关闭对话框
     }
 
     override fun onSupportNavigateUp(): Boolean {
