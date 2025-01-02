@@ -1,6 +1,10 @@
 package com.example.scabbard
 
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Shader
 import android.net.Uri
 import android.os.Bundle
 import android.widget.ImageView
@@ -11,6 +15,7 @@ import androidx.appcompat.widget.Toolbar
 import com.example.scabbard.utils.IconManager
 
 class AboutActivity : AppCompatActivity() {
+    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_about)
@@ -48,6 +53,25 @@ class AboutActivity : AppCompatActivity() {
 
         val appIcon = findViewById<ImageView>(R.id.app_icon)
         appIcon.setImageResource(IconManager.getCurrentIconResourceId(this))
+
+        // 找到 Scabbard 文字的 TextView
+        val scabbardText = findViewById<TextView>(R.id.scabbard_title)
+        
+        // 创建渐变色画笔
+        val paint = scabbardText.paint
+        val width = paint.measureText(scabbardText.text.toString())
+        val textShader = LinearGradient(
+            0f, 0f, width, scabbardText.textSize,
+            intArrayOf(
+                Color.parseColor("#2196F3"),  // 起始颜色
+                Color.parseColor("#9C27B0")   // 结束颜色
+            ),
+            null,
+            Shader.TileMode.CLAMP
+        )
+        
+        // 应用渐变效果
+        scabbardText.paint.shader = textShader
     }
 
     private fun openGitHub(username: String) {

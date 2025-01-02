@@ -27,7 +27,7 @@ class UpdateChecker {
         private const val GITHUB_API_URL = "https://api.github.com/repos/Assianc/Scabbard/releases/latest"
         private const val LANZOU_DOWNLOAD_URL = "https://assiance.lanzoub.com/ieJib2jrw5xe"
         private const val LANZOU_PASSWORD = "gxbx"
-        private const val LANZOU_VERSION = "3.4.1"
+        private const val LANZOU_VERSION = "3.4.2"
     }
 
     data class UpdateInfo(
@@ -53,17 +53,18 @@ class UpdateChecker {
                 Toast.makeText(context, "正在检查更新...", Toast.LENGTH_SHORT).show()
             }
             
+            val currentVersion = getCurrentVersion(context)
+            
             // 先尝试从 GitHub 获取更新
             val githubUpdate = checkGithubUpdate()
-            if (githubUpdate != null) {
+            if (githubUpdate != null && shouldUpdate(githubUpdate.latestVersion, currentVersion)) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "发现新版本", Toast.LENGTH_SHORT).show()
                 }
                 return@withContext githubUpdate
             }
 
-            // GitHub 获取失败，检查蓝奏云版本
-            val currentVersion = getCurrentVersion(context)
+            // GitHub 获取失败或没有更新，检查蓝奏云版本
             if (shouldUpdate(LANZOU_VERSION, currentVersion)) {
                 val lanzouUpdate = checkLanzouUpdate()
                 if (lanzouUpdate != null) {
@@ -74,6 +75,7 @@ class UpdateChecker {
                 }
             }
 
+            // 没有更新时显示提示
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "当前已是最新版本", Toast.LENGTH_SHORT).show()
             }
@@ -144,21 +146,37 @@ class UpdateChecker {
     }
 
     fun shouldUpdate(latestVersion: String, currentVersion: String): Boolean {
-        return compareVersions(latestVersion, currentVersion) > 0
+        return try {
+            compareVersions(latestVersion, currentVersion) > 0
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false  // 如果比较出错，默认不更新
+        }
     }
 
     private fun compareVersions(version1: String, version2: String): Int {
-        val v1Parts = version1.split(".")
-        val v2Parts = version2.split(".")
-        
-        for (i in 0 until minOf(v1Parts.size, v2Parts.size)) {
-            val v1 = v1Parts[i].toIntOrNull() ?: 0
-            val v2 = v2Parts[i].toIntOrNull() ?: 0
-            if (v1 != v2) {
-                return v1.compareTo(v2)
+        try {
+            val v1Parts = version1.split(".").map { it.toInt() }
+            val v2Parts = version2.split(".").map { it.toInt() }
+            
+            // 补齐版本号长度，较短的版本号后面补0
+            val maxLength = maxOf(v1Parts.size, v2Parts.size)
+            val v1Complete = v1Parts + List(maxLength - v1Parts.size) { 0 }
+            val v2Complete = v2Parts + List(maxLength - v2Parts.size) { 0 }
+            
+            // 逐位比较版本号
+            for (i in 0 until maxLength) {
+                val compare = v1Complete[i].compareTo(v2Complete[i])
+                if (compare != 0) {
+                    return compare
+                }
             }
+            return 0
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // 如果解析失败，返回0表示版本相同
+            return 0
         }
-        return v1Parts.size.compareTo(v2Parts.size)
     }
 
     fun showUpdateDialog(
