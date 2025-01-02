@@ -25,6 +25,9 @@ import java.net.URL
 class UpdateChecker {
     companion object {
         private const val GITHUB_API_URL = "https://api.github.com/repos/Assianc/Scabbard/releases/latest"
+        private const val LANZOU_DOWNLOAD_URL = "https://assiance.lanzoub.com/ieJib2jrw5xe"
+        private const val LANZOU_PASSWORD = "gxbx"
+        private const val LANZOU_VERSION = "3.4.1"
     }
 
     data class UpdateInfo(
@@ -50,6 +53,42 @@ class UpdateChecker {
                 Toast.makeText(context, "正在检查更新...", Toast.LENGTH_SHORT).show()
             }
             
+            // 先尝试从 GitHub 获取更新
+            val githubUpdate = checkGithubUpdate()
+            if (githubUpdate != null) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "发现新版本", Toast.LENGTH_SHORT).show()
+                }
+                return@withContext githubUpdate
+            }
+
+            // GitHub 获取失败，检查蓝奏云版本
+            val currentVersion = getCurrentVersion(context)
+            if (shouldUpdate(LANZOU_VERSION, currentVersion)) {
+                val lanzouUpdate = checkLanzouUpdate()
+                if (lanzouUpdate != null) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "发现新版本", Toast.LENGTH_SHORT).show()
+                    }
+                    return@withContext lanzouUpdate
+                }
+            }
+
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "当前已是最新版本", Toast.LENGTH_SHORT).show()
+            }
+            return@withContext null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "检查更新失败", Toast.LENGTH_SHORT).show()
+            }
+            return@withContext null
+        }
+    }
+
+    private suspend fun checkGithubUpdate(): UpdateInfo? = withContext(Dispatchers.IO) {
+        try {
             val connection = URL(GITHUB_API_URL).openConnection()
             connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
             
@@ -71,15 +110,6 @@ class UpdateChecker {
 
             val forceUpdate = body.contains("[强制更新]")
             
-            withContext(Dispatchers.Main) {
-                val message = if (shouldUpdate(tagName, getCurrentVersion(context))) {
-                    "发现新版本：$tagName"
-                } else {
-                    "当前已是最新版本"
-                }
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-            }
-            
             return@withContext UpdateInfo(
                 latestVersion = tagName,
                 updateUrl = apkUrl,
@@ -88,9 +118,20 @@ class UpdateChecker {
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, "检查更新失败", Toast.LENGTH_SHORT).show()
-            }
+            return@withContext null
+        }
+    }
+
+    private suspend fun checkLanzouUpdate(): UpdateInfo? = withContext(Dispatchers.IO) {
+        try {
+            return@withContext UpdateInfo(
+                latestVersion = LANZOU_VERSION,
+                updateUrl = LANZOU_DOWNLOAD_URL,
+                updateDescription = "下载密码：$LANZOU_PASSWORD",
+                forceUpdate = true
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
             return@withContext null
         }
     }
@@ -134,18 +175,20 @@ class UpdateChecker {
             val dialog = AlertDialog.Builder(dialogContext)
                 .setTitle("发现新版本")
                 .setMessage("是否更新到最新版本？\n\n${updateInfo.updateDescription}")
-                .setCancelable(!updateInfo.forceUpdate)
+                .setCancelable(false)
                 .setPositiveButton("更新") { dialog, _ ->
                     dialog.dismiss()
-                    onConfirm()
-                }
-                .apply {
-                    if (!updateInfo.forceUpdate) {
-                        setNegativeButton("取消") { dialog, _ ->
-                            dialog.dismiss()
-                            onCancel()
-                        }
+                    if (updateInfo.updateUrl.contains("lanzoub.com")) {
+                        // 如果是蓝奏云链接，直接在浏览器中打开
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.updateUrl))
+                        context.startActivity(intent)
+                    } else {
+                        onConfirm()
                     }
+                }
+                .setNegativeButton("取消") { dialog, _ ->
+                    dialog.dismiss()
+                    onCancel()
                 }
                 .create()
 
