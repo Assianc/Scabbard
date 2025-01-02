@@ -1,98 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- 请求的权限声明 -->
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="false" />
-
-    <!-- Android 10（API 29）及更低版本的权限 -->
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32"
-        tools:ignore="ScopedStorage" />
-    <uses-permission
-        android:name="android.permission.READ_EXTERNAL_STORAGE"
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
         android:maxSdkVersion="32" />
-
-    <uses-permission android:name="android.permission.CAMERA" />
-
-    <!-- Android 13（API 33）以上使用这些权限 -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
-        android:hardwareAccelerated="true"
-        android:icon="@drawable/jianqiao5"
+        android:icon="@mipmap/jianqiao5"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/jianqiao5"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Scabbard"
-        android:usesCleartextTraffic="true"
-        tools:targetApi="31">
+        android:theme="@style/Theme.Scabbard">
 
-        <!-- 启动画面 -->
+        <!-- Splash Activity -->
         <activity
             android:name=".StartSplashActivity"
-            android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- 启动界面 -->
-        <activity
-            android:name=".StartActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Scabbard" />
+        <!-- Main Activities -->
+        <activity android:name=".StartActivity" android:exported="false" />
+        <activity android:name=".MainActivity" android:exported="false" />
+        <activity android:name=".AboutActivity" android:exported="false" />
+        <activity android:name=".AppearanceActivity" android:exported="false" />
+        <activity android:name=".PlayerSelectionActivity" android:exported="false" />
 
-        <!-- 分类功能界面 -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Scabbard" />
+        <!-- Memo Module Activities -->
+        <activity android:name="com.example.memo.MainActivityMemo" android:exported="false" />
+        <activity android:name="com.example.memo.AddMemoActivity" android:exported="false" />
+        <activity android:name="com.example.memo.MemoDetailActivity" android:exported="false" />
 
-        <activity android:name=".PlayerSelectionActivity" />
-
-        <!-- 备忘录功能界面 -->
-        <activity
-            android:name="com.example.memo.MainActivityMemo"
-            android:exported="true"
-            tools:replace="android:exported"
-            android:theme="@style/Theme.Scabbard" />
-
-        <activity
-            android:name="com.example.memo.AddMemoActivity"
-            android:exported="false" />
-
-        <activity
-            android:name="com.example.memo.MemoDetailActivity"
-            android:exported="false" />
-
-        <!--        关于界面-->
-        <activity
-            android:name=".AboutActivity"
-            android:label="关于"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
-
-        <activity
-            android:name=".AppearanceActivity"
-            android:exported="false" />
-
-        <!-- 添加主启动器 Activity -->
+        <!-- App Icon Aliases -->
         <activity-alias
             android:name=".MainActivity.Default"
-            android:enabled="true"
+            android:enabled="false"
             android:exported="true"
             android:icon="@mipmap/jianqiao5"
             android:targetActivity=".StartSplashActivity">
@@ -102,13 +54,11 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- 替代图标 -->
         <activity-alias
             android:name=".MainActivity.IconAlternative1"
             android:enabled="false"
             android:exported="true"
             android:icon="@mipmap/jianqiao1"
-            android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -138,7 +88,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-       </activity-alias>
+        </activity-alias>
 
         <activity-alias
             android:name=".MainActivity.IconAlternative4"
@@ -150,7 +100,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-      </activity-alias>
+        </activity-alias>
 
         <activity-alias
             android:name=".MainActivity.IconAlternative5"
@@ -174,7 +124,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-       </activity-alias>
+        </activity-alias>
 
         <activity-alias
             android:name=".MainActivity.IconAlternative7"
@@ -186,8 +136,18 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-      </activity-alias>
+        </activity-alias>
+
+        <!-- FileProvider -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
-
 </manifest>
