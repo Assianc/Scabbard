@@ -1,6 +1,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <!-- 背景图片 -->
     <ImageView
@@ -9,6 +10,25 @@
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:src="@drawable/background4" />
+
+    <!-- 关于更多 -->
+    <Button
+        android:id="@+id/toolbar"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="10dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginTop="9dp"
+        android:layout_marginEnd="40dp"
+        android:layout_marginRight="40dp"
+        android:layout_marginBottom="40dp"
+        android:background="@drawable/gengduo"
+        android:backgroundTint="@null"
+        android:padding="16dp"
+        android:textColor="@android:color/black"
+        android:textSize="18sp" />
 
     <!-- 分类器 按钮 -->
     <Button

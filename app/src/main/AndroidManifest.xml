@@ -79,6 +79,12 @@
             android:name="com.example.memo.MemoDetailActivity"
             android:exported="false" />
 
+        <!--        关于界面-->
+        <activity
+            android:name=".AboutActivity"
+            android:label="关于"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
     </application>
 
 </manifest>

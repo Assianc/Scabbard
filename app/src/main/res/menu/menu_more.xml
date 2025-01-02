@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <item
+        android:id="@+id/menu_about"
+        android:title="关于"
+        android:icon="@drawable/ic_docs"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/menu_appearance"
+        android:title="外观"
+        android:icon="@drawable/ic_edit"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/menu_update"
+        android:title="获取更新"
+        android:icon="@drawable/diancilu"
+        app:showAsAction="never"/>
+</menu> 
