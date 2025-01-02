@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:src="@drawable/preview" />
+        android:src="@drawable/preview1" />
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -28,7 +28,7 @@
             android:layout_centerHorizontal="true"
             android:layout_marginStart="27dp"
             android:layout_marginBottom="473dp"
-            android:src="@drawable/ic_add2" />
+            android:src="@drawable/jianqiao7" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/iv_splash_name"

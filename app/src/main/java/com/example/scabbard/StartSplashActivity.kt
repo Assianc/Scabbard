@@ -66,10 +66,13 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
         // 图标缩放动画
         val scaleAnimation = ScaleAnimation(
-            0f, 1f, 0f, 1f,
+            0f, 1.2f, 0f, 1.2f,
             Animation.RELATIVE_TO_SELF, 0.5f,
             Animation.RELATIVE_TO_SELF, 0.5f
-        ).apply { duration = ANIM_TIME }
+        ).apply {
+            duration = ANIM_TIME
+            fillAfter = true // 保持动画结束时的状态
+        }
         mIconView.startAnimation(scaleAnimation)
 
         // 名称旋转动画
@@ -77,7 +80,9 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
             180f, 360f,
             Animation.RELATIVE_TO_SELF, 0.5f,
             Animation.RELATIVE_TO_SELF, 0.5f
-        ).apply { duration = ANIM_TIME }
+        ).apply {
+            duration = ANIM_TIME
+        }
         mNameView.startAnimation(rotateAnimation)
 
         // 使用 ImmersionBar 设置状态栏和导航栏
