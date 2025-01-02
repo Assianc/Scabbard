@@ -30,7 +30,7 @@ class AboutActivity : AppCompatActivity() {
                 @Suppress("DEPRECATION")
                 packageInfo.versionCode.toLong()
             }
-            versionInfo.text = "Version $versionName ($versionCode)"
+            versionInfo.text = "Version $versionName"
         } catch (e: Exception) {
             versionInfo.text = "Version 未知"
         }

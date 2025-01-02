@@ -54,7 +54,7 @@ open class StartActivity : AppCompatActivity() {
                     true
                 }
                 R.id.menu_appearance -> {
-                    // TODO: 实现外观设置功能
+                    startActivity(Intent(this, AppearanceActivity::class.java))
                     true
                 }
                 R.id.menu_update -> {
