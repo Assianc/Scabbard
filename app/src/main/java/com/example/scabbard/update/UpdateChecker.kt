@@ -127,7 +127,14 @@ class UpdateChecker {
             return@withContext UpdateInfo(
                 latestVersion = LANZOU_VERSION,
                 updateUrl = LANZOU_DOWNLOAD_URL,
-                updateDescription = "下载密码：$LANZOU_PASSWORD",
+                updateDescription = """
+                    下载说明：
+                    1. 点击更新后将跳转到蓝奏云网页
+                    2. 输入提取码：$LANZOU_PASSWORD
+                    3. 下载完成后安装即可
+                    
+                    注意：请在电脑模式下预览，否则可能无法正常下载
+                """.trimIndent(),
                 forceUpdate = true
             )
         } catch (e: Exception) {
@@ -173,8 +180,8 @@ class UpdateChecker {
 
         return try {
             val dialog = AlertDialog.Builder(dialogContext)
-                .setTitle("发现新版本")
-                .setMessage("是否更新到最新版本？\n\n${updateInfo.updateDescription}")
+                .setTitle("发现新版本 ${updateInfo.latestVersion}")
+                .setMessage(updateInfo.updateDescription)
                 .setCancelable(false)
                 .setPositiveButton("更新") { dialog, _ ->
                     dialog.dismiss()
