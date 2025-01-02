@@ -24,7 +24,7 @@ class AppearanceActivity : AppCompatActivity() {
         "MainActivity.IconAlternative7"
     )
 
-    private var dialog: AlertDialog? = null  // 添加对话框引用
+    private var dialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,20 +52,17 @@ class AppearanceActivity : AppCompatActivity() {
 
     private fun changeAppIcon(activityName: String) {
         try {
-            // 使用 IconManager 设置图标
-            IconManager.setCurrentIcon(this, activityName)
-
-            // 显示确认对话框
             dialog = AlertDialog.Builder(this)
                 .setTitle("更换图标")
-                .setMessage("图标更换成功，需要重启应用才能生效，是否立即重启？")
-                .setPositiveButton("重启") { dialog, _ ->
+                .setMessage("确定要更换应用图标吗？更换后需要重启应用才能生效。")
+                .setPositiveButton("确定") { dialog, _ ->
                     dialog.dismiss()
+                    // 执行图标切换并重启
+                    IconManager.setCurrentIcon(this, activityName)
                     restartApp()
                 }
-                .setNegativeButton("稍后") { dialog, _ ->
+                .setNegativeButton("取消") { dialog, _ ->
                     dialog.dismiss()
-                    Toast.makeText(this, "请手动重启应用以完成图标更换", Toast.LENGTH_SHORT).show()
                 }
                 .create()
             
@@ -79,15 +76,25 @@ class AppearanceActivity : AppCompatActivity() {
 
     private fun restartApp() {
         try {
-            dialog?.dismiss()  // 确保对话框关闭
-            val intent = Intent(this, StartSplashActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            }
+            dialog?.dismiss()
+            
+            // 使用 PackageManager 重启应用
+            val packageManager = packageManager
+            val intent = packageManager.getLaunchIntentForPackage(packageName)
+            intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
             
             finishAffinity() // 结束所有 Activity
-            startActivity(intent)
-            Runtime.getRuntime().exit(0)
+            
+            if (intent != null) {
+                startActivity(intent)
+            }
+            
+            // 使用 Handler 延迟结束进程，确保新的 Intent 能够启动
+            android.os.Handler(mainLooper).postDelayed({
+                android.os.Process.killProcess(android.os.Process.myPid())
+            }, 100)
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "重启失败，请手动重启应用", Toast.LENGTH_SHORT).show()
@@ -96,7 +103,7 @@ class AppearanceActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        dialog?.dismiss()  // 在 Activity 销毁时关闭对话框
+        dialog?.dismiss()
     }
 
     override fun onSupportNavigateUp(): Boolean {
