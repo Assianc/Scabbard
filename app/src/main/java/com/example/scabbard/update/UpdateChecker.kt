@@ -52,19 +52,33 @@ class UpdateChecker {
             withContext(Dispatchers.Main) {
                 Toast.makeText(context, "正在检查更新...", Toast.LENGTH_SHORT).show()
             }
-            
+
             val currentVersion = getCurrentVersion(context)
-            
+
             // 先尝试从 GitHub 获取更新
             val githubUpdate = checkGithubUpdate()
-            if (githubUpdate != null && shouldUpdate(githubUpdate.latestVersion, currentVersion)) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "发现新版本", Toast.LENGTH_SHORT).show()
+            if (githubUpdate != null) {
+                // 如果成功获取到 GitHub 更新信息
+                if (shouldUpdate(githubUpdate.latestVersion, currentVersion)) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "发现新版本", Toast.LENGTH_SHORT).show()
+                    }
+                    return@withContext githubUpdate
+                } else {
+                    // GitHub 检查成功但是已是最新版本
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "当前已是最新版本", Toast.LENGTH_SHORT).show()
+                    }
+                    return@withContext null
                 }
-                return@withContext githubUpdate
             }
 
-            // GitHub 获取失败或没有更新，检查蓝奏云版本
+            // GitHub 检查失败，尝试蓝奏云更新
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "正在从备用源检查更新...", Toast.LENGTH_SHORT).show()
+            }
+
+            // 检查蓝奏云版本
             if (shouldUpdate(LANZOU_VERSION, currentVersion)) {
                 val lanzouUpdate = checkLanzouUpdate()
                 if (lanzouUpdate != null) {
@@ -73,11 +87,16 @@ class UpdateChecker {
                     }
                     return@withContext lanzouUpdate
                 }
+            } else {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "当前已是最新版本", Toast.LENGTH_SHORT).show()
+                }
+                return@withContext null
             }
 
-            // 没有更新时显示提示
+            // 如果所有更新源都检查失败
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "当前已是最新版本", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "检查更新失败", Toast.LENGTH_SHORT).show()
             }
             return@withContext null
         } catch (e: Exception) {
