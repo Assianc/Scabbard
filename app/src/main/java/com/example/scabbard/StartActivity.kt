@@ -71,10 +71,10 @@ open class StartActivity : AppCompatActivity() {
     private fun checkForUpdates() {
         CoroutineScope(Dispatchers.Main).launch {
             val updateInfo = updateChecker.checkForUpdates(this@StartActivity)
-            
+
             updateInfo?.let { info ->
                 val currentVersion = updateChecker.getCurrentVersion(this@StartActivity)
-                
+
                 if (updateChecker.shouldUpdate(info.latestVersion, currentVersion)) {
                     updateChecker.showUpdateDialog(
                         context = this@StartActivity,

@@ -29,7 +29,7 @@ import com.example.scabbard.update.UpdateChecker
 class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
     companion object {
-        private const val ANIM_TIME = 1700L // 将ANIM_TIME的类型更改为 Long 以避免转换
+        private const val ANIM_TIME = 2100L // 将ANIM_TIME的类型更改为 Long 以避免转换
     }
 
     private lateinit var mImageView: View
@@ -66,12 +66,12 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
 
         // 图标缩放动画
         val scaleAnimation = ScaleAnimation(
-            0f, 1.2f, 0f, 1.2f,
+            0f, 2.8f, 0f, 2.8f,
             Animation.RELATIVE_TO_SELF, 0.5f,
             Animation.RELATIVE_TO_SELF, 0.5f
         ).apply {
             duration = ANIM_TIME
-            fillAfter = true // 保持动画结束时的状态
+            fillAfter = true
         }
         mIconView.startAnimation(scaleAnimation)
 
@@ -80,9 +80,7 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
             180f, 360f,
             Animation.RELATIVE_TO_SELF, 0.5f,
             Animation.RELATIVE_TO_SELF, 0.5f
-        ).apply {
-            duration = ANIM_TIME
-        }
+        ).apply { duration = ANIM_TIME }
         mNameView.startAnimation(rotateAnimation)
 
         // 使用 ImmersionBar 设置状态栏和导航栏

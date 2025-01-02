@@ -71,11 +71,11 @@
             tools:replace="android:exported"
             android:theme="@style/Theme.Scabbard" />
 
-        <activity 
+        <activity
             android:name="com.example.memo.AddMemoActivity"
             android:exported="false" />
-            
-        <activity 
+
+        <activity
             android:name="com.example.memo.MemoDetailActivity"
             android:exported="false" />
 
