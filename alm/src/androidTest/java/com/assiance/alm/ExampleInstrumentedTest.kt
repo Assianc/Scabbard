@@ -1,4 +1,4 @@
-package com.azure.alm
+package com.assiance.alm
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.azure.alm.test", appContext.packageName)
+        assertEquals("com.assiance.alm.test", appContext.packageName)
     }
 }

@@ -1,4 +1,4 @@
-package com.azure.alm
+package com.assiance.alm
 
 class MainActivityAlm {
 }

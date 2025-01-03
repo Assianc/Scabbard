@@ -1,4 +1,4 @@
-package com.example.scabbard.utils
+package com.assiance.scabbard.utils
 
 import android.content.Context
 import android.graphics.Color
