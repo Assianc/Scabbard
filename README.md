@@ -39,7 +39,7 @@ Scabbard 剑鞘 —— 愿你我成为生活的高手
 - [@cuxt](https://github.com/cuxt)
 - [@Assianc](https://github.com/Assianc)
 
-## 设计者
+## 提供与设计
 
 - [@sy]()
 
