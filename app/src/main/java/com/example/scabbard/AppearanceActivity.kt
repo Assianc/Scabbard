@@ -51,27 +51,73 @@ class AppearanceActivity : AppCompatActivity() {
     }
 
     private fun changeAppIcon(activityName: String) {
-        try {
-            dialog = AlertDialog.Builder(this)
-                .setTitle("更换图标")
-                .setMessage("确定要更换应用图标吗？更换后需要重启应用才能生效。")
-                .setPositiveButton("确定") { dialog, _ ->
-                    dialog.dismiss()
-                    // 执行图标切换并重启
-                    IconManager.setCurrentIcon(this, activityName)
-                    restartApp()
+        val options = arrayOf(
+            "仅更换应用图标", 
+            "仅更换开场动画图标",
+            "更换所有图标"
+        )
+        
+        AlertDialog.Builder(this)
+            .setTitle("图标更换选项")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> changeOnlyAppIcon(activityName)
+                    1 -> changeSplashIcon(activityName)
+                    2 -> changeAllIcons(activityName)
                 }
-                .setNegativeButton("取消") { dialog, _ ->
-                    dialog.dismiss()
-                }
-                .create()
-            
-            dialog?.show()
+            }
+            .show()
+    }
 
-        } catch (e: Exception) {
-            Toast.makeText(this, "更改图标失败: ${e.message}", Toast.LENGTH_SHORT).show()
-            e.printStackTrace()
-        }
+    private fun changeOnlyAppIcon(activityName: String) {
+        AlertDialog.Builder(this)
+            .setTitle("更换应用图标")
+            .setMessage("确定要更换应用图标吗？更换后需要重启应用才能生效。")
+            .setPositiveButton("确定") { dialog, _ ->
+                dialog.dismiss()
+                // 只执行图标切换
+                IconManager.setCurrentIcon(this, activityName)
+                restartApp()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+    }
+
+    private fun changeAllIcons(activityName: String) {
+        AlertDialog.Builder(this)
+            .setTitle("更换所有图标")
+            .setMessage("确定要更换所有图标（包括应用图标、启动图标和关于界面图标）吗？更换后需要重启应用才能生效。")
+            .setPositiveButton("确定") { dialog, _ ->
+                dialog.dismiss()
+                // 执行所有图标切换
+                IconManager.setAllIcons(this, activityName)
+                restartApp()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+    }
+
+    private fun changeSplashIcon(activityName: String) {
+        AlertDialog.Builder(this)
+            .setTitle("更换开场动画图标")
+            .setMessage("确定要更换开场动画图标吗？更换后需要重启应用才能生效。")
+            .setPositiveButton("确定") { dialog, _ ->
+                dialog.dismiss()
+                // 只执行开场动画图标的切换
+                IconManager.setSplashIconOnly(this, activityName)
+                restartApp()
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
     }
 
     private fun restartApp() {

@@ -25,8 +25,8 @@ import java.net.URL
 class UpdateChecker {
     companion object {
         private const val GITHUB_API_URL = "https://api.github.com/repos/Assianc/Scabbard/releases/latest"
-        private const val LANZOU_DOWNLOAD_URL = "https://assiance.lanzoub.com/iL4KD2js2zxa"
-        private const val LANZOU_PASSWORD = "7bjw"
+        private const val LANZOU_DOWNLOAD_URL = "https://assiance.lanzoub.com/b00y9rfbud"
+        private const val LANZOU_PASSWORD = "7rwd"
         private const val LANZOU_VERSION = "3.4.2"
     }
 

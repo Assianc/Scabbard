@@ -1,7 +1,10 @@
 package com.example.scabbard
 
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Shader
@@ -15,6 +18,15 @@ import androidx.appcompat.widget.Toolbar
 import com.example.scabbard.utils.IconManager
 
 class AboutActivity : AppCompatActivity() {
+    private lateinit var appIcon: ImageView
+    private val iconChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "com.example.scabbard.ACTION_ICON_CHANGED") {
+                appIcon.setImageResource(IconManager.getCurrentIconResourceId(this@AboutActivity))
+            }
+        }
+    }
+
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +63,7 @@ class AboutActivity : AppCompatActivity() {
             openGitHub("Assianc")
         }
 
-        val appIcon = findViewById<ImageView>(R.id.app_icon)
+        appIcon = findViewById<ImageView>(R.id.app_icon)
         appIcon.setImageResource(IconManager.getCurrentIconResourceId(this))
 
         // 找到 Scabbard 文字的 TextView
@@ -72,6 +84,19 @@ class AboutActivity : AppCompatActivity() {
         
         // 应用渐变效果
         scabbardText.paint.shader = textShader
+
+        // 修改广播注册代码，添加 exported 标志
+        val filter = IntentFilter("com.example.scabbard.ACTION_ICON_CHANGED")
+        registerReceiver(iconChangeReceiver, filter, RECEIVER_NOT_EXPORTED)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(iconChangeReceiver)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun openGitHub(username: String) {

@@ -59,7 +59,7 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
         initView()
         initData()
 
-        mIconView.setImageResource(IconManager.getCurrentIconResourceId(this))
+        mIconView.setImageResource(IconManager.getSplashIconResourceId(this))
     }
 
     private fun initView() {
