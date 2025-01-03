@@ -1,7 +1,9 @@
 package com.assiance.scabbard
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -20,10 +22,18 @@ class AppearanceActivity : AppCompatActivity() {
         "MainActivity.IconAlternative4",
         "MainActivity.IconAlternative5",
         "MainActivity.IconAlternative6",
-        "MainActivity.IconAlternative7"
+        "MainActivity.IconAlternative7",
+        "MainActivity.IconAlternative8",
+        "MainActivity.IconAlternative9",
+        "MainActivity.IconAlternative10",
+        "MainActivity.IconAlternative11",
+        "MainActivity.IconAlternative12",
+        "MainActivity.IconAlternative13",
+        "MainActivity.IconAlternative14"
     )
 
     private var dialog: AlertDialog? = null
+    private var currentSelectedIcon: View? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,16 +45,63 @@ class AppearanceActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "外观设置"
 
-        // 设置图标点击事件
-        val iconIds = listOf(
-            R.id.icon_1, R.id.icon_2, R.id.icon_3,
-            R.id.icon_4, R.id.icon_5, R.id.icon_6,
-            R.id.icon_7
+        // 获取当前使用的图标
+        val currentIconAlias = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+            .getString("current_icon", "MainActivity.Default")
+
+        // 设置图标点击事件和初始选中状态
+        val iconContainers = listOf(
+            findViewById<View>(R.id.icon_1).parent as View,
+            findViewById<View>(R.id.icon_2).parent as View,
+            findViewById<View>(R.id.icon_3).parent as View,
+            findViewById<View>(R.id.icon_4).parent as View,
+            findViewById<View>(R.id.icon_5).parent as View,
+            findViewById<View>(R.id.icon_6).parent as View,
+            findViewById<View>(R.id.icon_7).parent as View,
+            findViewById<View>(R.id.icon_8).parent as View,
+            findViewById<View>(R.id.icon_9).parent as View,
+            findViewById<View>(R.id.icon_10).parent as View,
+            findViewById<View>(R.id.icon_11).parent as View,
+            findViewById<View>(R.id.icon_12).parent as View,
+            findViewById<View>(R.id.icon_13).parent as View,
+            findViewById<View>(R.id.icon_14).parent as View
         )
 
-        iconIds.forEachIndexed { index, iconId ->
-            findViewById<ImageView>(iconId)?.setOnClickListener {
-                changeAppIcon(iconAliases[index])
+        // 设置初始选中状态
+        iconContainers.forEachIndexed { index, container ->
+            if (iconAliases[index] == currentIconAlias) {
+                container.animate()
+                    .scaleX(1.2f)
+                    .scaleY(1.2f)
+                    .setDuration(0)
+                    .start()
+                currentSelectedIcon = container
+            }
+        }
+
+        // 设置点击事件
+        iconContainers.forEachIndexed { index, container ->
+            container.setOnClickListener {
+                if (currentSelectedIcon != container) {
+                    // 缩小之前选中的图标
+                    currentSelectedIcon?.animate()
+                        ?.scaleX(1f)
+                        ?.scaleY(1f)
+                        ?.setDuration(200)
+                        ?.start()
+
+                    // 放大新选中的图标
+                    container.animate()
+                        .scaleX(1.2f)
+                        .scaleY(1.2f)
+                        .setDuration(200)
+                        .start()
+
+                    currentSelectedIcon = container
+                    
+                    // 显示图标切换对话框
+                    changeAppIcon(iconAliases[index])
+                }
             }
         }
 

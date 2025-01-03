@@ -29,15 +29,20 @@ object GradientAnimManager {
                 Color.parseColor("#00FF00"),  // 绿
                 Color.parseColor("#0000FF"),  // 蓝
                 Color.parseColor("#4B0082"),  // 靛
-                Color.parseColor("#9400D3"),  // 紫 *
-                Color.parseColor("#FF0000"),  // 红
+                Color.parseColor("#9400D3"),  // 紫
+                Color.parseColor("#FF0000"),  // 红（重复以实现平滑过渡）
                 Color.parseColor("#FF7F00"),  // 橙
                 Color.parseColor("#FFFF00"),  // 黄
                 Color.parseColor("#00FF00"),  // 绿
-
+                Color.parseColor("#0000FF"),  // 蓝
+                Color.parseColor("#4B0082"),  // 靛
+                Color.parseColor("#9400D3"),  // 紫
+                Color.parseColor("#FF0000")   // 红
             ),
-            floatArrayOf(0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f,
-                0.7f, 0.8f, 0.9f, 1f)
+            floatArrayOf(
+                0f, 0.0667f, 0.1334f, 0.2f, 0.2667f, 0.3334f, 0.4f,
+                0.4667f, 0.5334f, 0.6f, 0.6667f, 0.7334f, 0.8f, 0.8667f, 1f
+            )
         ),
         
         SUNSET(

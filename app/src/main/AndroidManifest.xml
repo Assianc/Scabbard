@@ -142,6 +142,97 @@
             </intent-filter>
         </activity-alias>
 
+        <activity-alias
+            android:name=".MainActivity.IconAlternative8"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/jianqiao21"
+            android:targetActivity=".StartSplashActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivity.IconAlternative9"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/jianqiao22"
+            android:targetActivity=".StartSplashActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivity.IconAlternative10"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/jianqiao23"
+            android:targetActivity=".StartSplashActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivity.IconAlternative11"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/jianqiao24"
+            android:targetActivity=".StartSplashActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivity.IconAlternative12"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/jianqiao25"
+            android:targetActivity=".StartSplashActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivity.IconAlternative13"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/jianqiao26"
+            android:targetActivity=".StartSplashActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivity.IconAlternative14"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/jianqiao27"
+            android:targetActivity=".StartSplashActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <!-- FileProvider -->
         <provider
             android:name="androidx.core.content.FileProvider"
