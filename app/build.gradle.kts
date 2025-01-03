@@ -7,7 +7,6 @@ android {
     namespace = "com.example.scabbard"
     compileSdk = 34
 
-
     defaultConfig {
         applicationId = "com.example.scabbard"
         minSdk = 26
