@@ -1,4 +1,4 @@
-# Scabbard - 简约分组工具
+# Scabbard - 剑鞘
 
 <p align="center">
   <img src="app/src/main/res/mipmap-hdpi/jianqiao24.png" width="128" height="128" alt="App Icon"/>
