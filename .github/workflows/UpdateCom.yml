@@ -1,1 +1,40 @@
-
+            - name: Hub Mirror Action.
+  # You may pin to the exact commit or the version.
+  # uses: Yikun/hub-mirror-action@f88730a07179948fd05e338c40971ae33edffeeb
+  uses: Yikun/hub-mirror-action@v1.4
+  with:
+    # The private SSH key which is used to to push code in destination hub.
+    dst_key: 
+    # The app token which is used to  create repo in destination hub.
+    dst_token: 
+    # Destination name. Such as `gitee/kunpengcompute`.
+    dst: 
+    # Source name. Such as `github/kunpengcompute`.
+    src: 
+    # The account type. Such as org, user.
+    account_type: # optional, default is user
+    # The src account type. Such as org, user.
+    src_account_type: # optional, default is 
+    # The dst account type. Such as org, user.
+    dst_account_type: # optional, default is 
+    # The git clone style, https or ssh.
+    clone_style: # optional, default is https
+    # The path to cache the source repos code.
+    cache_path: # optional, default is /github/workspace/hub-mirror-cache
+    # Hight priority, the back list of mirror repo. like 'repo1,repo2,repo3'
+    black_list: # optional, default is 
+    # Low priority, the white list of mirror repo. like 'repo1,repo2,repo3'
+    white_list: # optional, default is 
+    # Only mirror repo in the static list, but don't get from repo api (the white/black list is still available). like 'repo1,repo2,repo3'
+    static_list: # optional, default is 
+    # Force to update the destination repo, use '-f' flag do 'git push'
+    force_update: # optional
+    # Enable the debug flag to show detail log
+    debug: # optional
+    # Set the timeout for every git command, like '600'=>600s, '30m'=>30 mins, '1h'=>1 hours
+    timeout: # optional, default is 30m
+    # The source repos mappings, such as 'A=>B, C=>CC', source repo name would be mapped follow the rule: A to B, C to CC. Mapping is not transitive.
+    mappings: # optional, default is 
+    # Enable Git LFS support.
+    lfs: # optional
+          
