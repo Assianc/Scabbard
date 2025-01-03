@@ -13,29 +13,27 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      # 检出代码
-      - name: Checkout source code
+      - name: Checkout
         uses: actions/checkout@v3
 
-      # 配置 SSH
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.GITEE_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan gitee.com >> ~/.ssh/known_hosts
-
-      # 同步到 Gitee
       - name: Mirror to Gitee
         uses: Yikun/hub-mirror-action@v1.4
         with:
+          # 源和目标
           src: github/Assianc
           dst: gitee/Assianc
-          dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}
+          
+          # 使用 HTTPS 而不是 SSH
+          clone_style: https
+          
+          # Gitee 私人令牌
           dst_token: ${{ secrets.GITEE_TOKEN }}
+          
+          # 基本配置
           account_type: user
-          clone_style: ssh
           force_update: true
           debug: true
           timeout: '30m'
-          static_list: ""  # 如果需要指定仓库，在这里添加，用逗号分隔
+          
+          # 缓存配置
+          cache_path: /github/workspace/hub-mirror-cache
