@@ -1,15 +1,15 @@
 package com.assiance.scabbard
 
-import android.content.ComponentName
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.assiance.scabbard.utils.IconManager
+import com.assiance.scabbard.utils.GradientAnimManager
 
 class AppearanceActivity : AppCompatActivity() {
 
@@ -37,8 +37,8 @@ class AppearanceActivity : AppCompatActivity() {
 
         // 设置图标点击事件
         val iconIds = listOf(
-            R.id.icon_1, R.id.icon_2, R.id.icon_3, 
-            R.id.icon_4, R.id.icon_5, R.id.icon_6, 
+            R.id.icon_1, R.id.icon_2, R.id.icon_3,
+            R.id.icon_4, R.id.icon_5, R.id.icon_6,
             R.id.icon_7
         )
 
@@ -47,15 +47,20 @@ class AppearanceActivity : AppCompatActivity() {
                 changeAppIcon(iconAliases[index])
             }
         }
+
+        // 添加渐变样式容器的点击事件
+        findViewById<LinearLayout>(R.id.gradient_style_container).setOnClickListener {
+            showGradientStyleDialog()
+        }
     }
 
     private fun changeAppIcon(activityName: String) {
         val options = arrayOf(
-            "仅更换应用图标", 
+            "仅更换应用图标",
             "仅更换开场动画图标",
             "更换所有图标"
         )
-        
+
         AlertDialog.Builder(this)
             .setTitle("图标更换选项")
             .setItems(options) { _, which ->
@@ -122,20 +127,20 @@ class AppearanceActivity : AppCompatActivity() {
     private fun restartApp() {
         try {
             dialog?.dismiss()
-            
+
             // 使用 PackageManager 重启应用
             val packageManager = packageManager
             val intent = packageManager.getLaunchIntentForPackage(packageName)
             intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            
+
             finishAffinity() // 结束所有 Activity
-            
+
             if (intent != null) {
                 startActivity(intent)
             }
-            
+
             // 使用 Handler 延迟结束进程，确保新的 Intent 能够启动
             android.os.Handler(mainLooper).postDelayed({
                 android.os.Process.killProcess(android.os.Process.myPid())
@@ -155,4 +160,23 @@ class AppearanceActivity : AppCompatActivity() {
         onBackPressed()
         return true
     }
-} 
+
+    private fun showGradientStyleDialog() {
+        val styles = GradientAnimManager.GradientStyle.entries.toTypedArray()
+        val titles = styles.map { it.title }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("选择标题渐变样式")
+            .setItems(titles) { dialog, which ->
+                val selectedStyle = styles[which]
+                GradientAnimManager.setCurrentStyle(this, selectedStyle)
+
+                // 发送广播通知 AboutActivity 更新渐变样式
+                val intent = Intent("com.assiance.scabbard.ACTION_GRADIENT_CHANGED")
+                sendBroadcast(intent)
+
+                Toast.makeText(this, "渐变样式已更改为：${selectedStyle.title}", Toast.LENGTH_SHORT).show()
+            }
+            .show()
+    }
+}
