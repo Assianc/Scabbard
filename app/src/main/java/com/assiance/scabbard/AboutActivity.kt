@@ -113,7 +113,7 @@ class AboutActivity : AppCompatActivity() {
         // 创建动画
         gradientAnimator = ValueAnimator.ofFloat(0f, width)  // 只需要移动一个宽度的距离
         gradientAnimator?.apply {
-            duration = 2000 // 稍微加快动画速度
+            duration = 2100 // 稍微加快动画速度
             repeatCount = ValueAnimator.INFINITE
             repeatMode = ValueAnimator.RESTART  // 使用 RESTART 模式
             interpolator = LinearInterpolator()

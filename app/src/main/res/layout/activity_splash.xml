@@ -28,7 +28,7 @@
             android:layout_centerHorizontal="true"
             android:layout_marginStart="153dp"
             android:layout_marginBottom="335dp"
-            android:src="@drawable/jianqiao3" />
+            android:src="@drawable/jianqiao13" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/iv_splash_name"

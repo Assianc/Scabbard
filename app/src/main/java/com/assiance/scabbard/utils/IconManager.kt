@@ -8,17 +8,17 @@ import com.assiance.scabbard.R
 
 object IconManager {
     private val iconMap = mapOf(
-        "MainActivity.IconAlternative1" to R.mipmap.jianqiao1,
-        "MainActivity.IconAlternative2" to R.mipmap.jianqiao2,
-        "MainActivity.IconAlternative3" to R.mipmap.jianqiao3,
-        "MainActivity.IconAlternative4" to R.mipmap.jianqiao4,
-        "MainActivity.IconAlternative5" to R.mipmap.jianqiao5,
-        "MainActivity.IconAlternative6" to R.mipmap.jianqiao6,
-        "MainActivity.IconAlternative7" to R.mipmap.jianqiao7,
-        "MainActivity.Default" to R.mipmap.jianqiao5
+        "MainActivity.IconAlternative1" to R.mipmap.jianqiao11,
+        "MainActivity.IconAlternative2" to R.mipmap.jianqiao12,
+        "MainActivity.IconAlternative3" to R.mipmap.jianqiao13,
+        "MainActivity.IconAlternative4" to R.mipmap.jianqiao14,
+        "MainActivity.IconAlternative5" to R.mipmap.jianqiao15,
+        "MainActivity.IconAlternative6" to R.mipmap.jianqiao16,
+        "MainActivity.IconAlternative7" to R.mipmap.jianqiao17,
+        "MainActivity.Default" to R.mipmap.jianqiao15
     )
 
-    private var splashIconResourceId: Int = R.mipmap.jianqiao5
+    private var splashIconResourceId: Int = R.mipmap.jianqiao15
 
     fun getCurrentIconResourceId(context: Context): Int {
         // 先检查是否有其他图标设置（关于界面和启动动画）
@@ -26,7 +26,7 @@ object IconManager {
             .getString("other_icon", null)
         
         if (!otherIcon.isNullOrEmpty()) {
-            return iconMap[otherIcon] ?: R.mipmap.jianqiao5
+            return iconMap[otherIcon] ?: R.mipmap.jianqiao15
         }
 
         // 如果没有其他图标设置，则返回应用图标
@@ -34,7 +34,7 @@ object IconManager {
             .getString("current_icon", null)
             
         if (!savedIcon.isNullOrEmpty()) {
-            return iconMap[savedIcon] ?: R.mipmap.jianqiao5
+            return iconMap[savedIcon] ?: R.mipmap.jianqiao15
         }
 
         // 如果没有保存的设置，检查当前启用的组件
@@ -61,7 +61,7 @@ object IconManager {
             .edit()
             .putString("current_icon", "MainActivity.Default")
             .apply()
-        return R.mipmap.jianqiao5
+        return R.mipmap.jianqiao15
     }
 
     fun setCurrentIcon(context: Context, activityName: String) {
@@ -103,7 +103,7 @@ object IconManager {
 
     fun getSplashIconResourceId(context: Context): Int {
         return context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-            .getInt("splash_icon", R.mipmap.jianqiao5)
+            .getInt("splash_icon", R.mipmap.jianqiao15)
     }
 
     fun setSplashIconResourceId(context: Context, resourceId: Int) {
@@ -118,7 +118,7 @@ object IconManager {
         setCurrentIcon(context, activityName)
         
         // 设置启动图标
-        setSplashIconResourceId(context, iconMap[activityName] ?: R.mipmap.jianqiao5)
+        setSplashIconResourceId(context, iconMap[activityName] ?: R.mipmap.jianqiao15)
         
         // 清除其他图标设置
         context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
@@ -134,7 +134,7 @@ object IconManager {
     // 添加新方法：只设置关于界面和启动图标
     fun setOtherIcons(context: Context, activityName: String) {
         // 设置启动图标
-        setSplashIconResourceId(context, iconMap[activityName] ?: R.mipmap.jianqiao5)
+        setSplashIconResourceId(context, iconMap[activityName] ?: R.mipmap.jianqiao15)
         
         // 保存其他图标设置
         context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
@@ -149,6 +149,6 @@ object IconManager {
 
     fun setSplashIconOnly(context: Context, activityName: String) {
         // 只设置启动图标
-        setSplashIconResourceId(context, iconMap[activityName] ?: R.mipmap.jianqiao5)
+        setSplashIconResourceId(context, iconMap[activityName] ?: R.mipmap.jianqiao15)
     }
 } 

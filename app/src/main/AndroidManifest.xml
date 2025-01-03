@@ -14,7 +14,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/jianqiao5"
+        android:icon="@mipmap/jianqiao14"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.Scabbard">
@@ -42,7 +42,7 @@
             android:name=".MainActivity.Default"
             android:enabled="true"
             android:exported="true"
-            android:icon="@mipmap/jianqiao5"
+            android:icon="@mipmap/jianqiao14"
             android:targetActivity=".StartSplashActivity"
             android:label="@string/app_name">
             <intent-filter>
@@ -55,7 +55,7 @@
             android:name=".MainActivity.IconAlternative1"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao1"
+            android:icon="@mipmap/jianqiao11"
             android:targetActivity=".StartSplashActivity"
             android:label="@string/app_name">
             <intent-filter>
@@ -68,7 +68,7 @@
             android:name=".MainActivity.IconAlternative2"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao2"
+            android:icon="@mipmap/jianqiao12"
             android:targetActivity=".StartSplashActivity"
             android:label="@string/app_name">
             <intent-filter>
@@ -81,7 +81,7 @@
             android:name=".MainActivity.IconAlternative3"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao3"
+            android:icon="@mipmap/jianqiao13"
             android:targetActivity=".StartSplashActivity"
             android:label="@string/app_name">
             <intent-filter>
@@ -94,7 +94,7 @@
             android:name=".MainActivity.IconAlternative4"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao4"
+            android:icon="@mipmap/jianqiao14"
             android:targetActivity=".StartSplashActivity"
             android:label="@string/app_name">
             <intent-filter>
@@ -107,7 +107,7 @@
             android:name=".MainActivity.IconAlternative5"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao5"
+            android:icon="@mipmap/jianqiao15"
             android:targetActivity=".StartSplashActivity"
             android:label="@string/app_name">
             <intent-filter>
@@ -120,7 +120,7 @@
             android:name=".MainActivity.IconAlternative6"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao6"
+            android:icon="@mipmap/jianqiao16"
             android:targetActivity=".StartSplashActivity"
             android:label="@string/app_name">
             <intent-filter>
@@ -133,7 +133,7 @@
             android:name=".MainActivity.IconAlternative7"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao7"
+            android:icon="@mipmap/jianqiao17"
             android:targetActivity=".StartSplashActivity"
             android:label="@string/app_name">
             <intent-filter>

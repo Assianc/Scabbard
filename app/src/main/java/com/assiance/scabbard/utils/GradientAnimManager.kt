@@ -34,18 +34,10 @@ object GradientAnimManager {
                 Color.parseColor("#FF7F00"),  // 橙
                 Color.parseColor("#FFFF00"),  // 黄
                 Color.parseColor("#00FF00"),  // 绿
-                Color.parseColor("#0000FF"),  // 蓝
-                Color.parseColor("#4B0082"),  // 靛
-                Color.parseColor("#9400D3"),  // 紫 *
-                Color.parseColor("#FF0000"),  // 红
-                Color.parseColor("#FF7F00"),  // 橙
-                Color.parseColor("#FFFF00"),  // 黄
-                Color.parseColor("#00FF00"),  // 绿
-                Color.parseColor("#0000FF"),  // 蓝
+
             ),
-            floatArrayOf(0f, 0.2f, 0.4f, 0.6f, 0.8f, 1.0f, 1.2f,
-                1.4f, 1.6f, 1.8f, 2.0f, 2.2f, 2.4f, 2.6f,
-                2.8f , 3.0f, 3.2f, 3.4f, 3.6f)
+            floatArrayOf(0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f,
+                0.7f, 0.8f, 0.9f, 1f)
         ),
         
         SUNSET(

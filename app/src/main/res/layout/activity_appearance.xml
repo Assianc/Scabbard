@@ -39,7 +39,7 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:layout_margin="8dp"
-                    android:src="@mipmap/jianqiao1"
+                    android:src="@mipmap/jianqiao11"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true" />
@@ -49,7 +49,7 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:layout_margin="8dp"
-                    android:src="@mipmap/jianqiao2"
+                    android:src="@mipmap/jianqiao12"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true" />
@@ -59,7 +59,7 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:layout_margin="8dp"
-                    android:src="@mipmap/jianqiao3"
+                    android:src="@mipmap/jianqiao13"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true" />
@@ -69,7 +69,7 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:layout_margin="8dp"
-                    android:src="@mipmap/jianqiao4"
+                    android:src="@mipmap/jianqiao14"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true" />
@@ -79,7 +79,7 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:layout_margin="8dp"
-                    android:src="@mipmap/jianqiao5"
+                    android:src="@mipmap/jianqiao15"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true" />
@@ -89,7 +89,7 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:layout_margin="8dp"
-                    android:src="@mipmap/jianqiao6"
+                    android:src="@mipmap/jianqiao16"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true" />
@@ -99,7 +99,7 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:layout_margin="8dp"
-                    android:src="@mipmap/jianqiao7"
+                    android:src="@mipmap/jianqiao17"
                     android:background="?attr/selectableItemBackground"
                     android:clickable="true"
                     android:focusable="true" />
@@ -126,7 +126,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="更改关于界面标题的渐变动画样式"
+                    android:text="更改标题的渐变动画样式"
                     android:textSize="14sp"
                     android:textColor="?android:attr/textColorSecondary"/>
 
