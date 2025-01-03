@@ -25,9 +25,9 @@ import java.net.URL
 class UpdateChecker {
     companion object {
         private const val GITHUB_API_URL = "https://api.github.com/repos/Assianc/Scabbard/releases/latest"
-        private const val LANZOU_DOWNLOAD_URL = "https://assiance.lanzoub.com/b00y9rfbud"
-        private const val LANZOU_PASSWORD = "7rwd"
-        private const val LANZOU_VERSION = "3.4.3"
+        const val LANZOU_DOWNLOAD_URL = "https://assiance.lanzoub.com/b00y9rfbud"
+        const val LANZOU_PASSWORD = "7rwd"
+        const val LANZOU_VERSION = "3.4.3"
     }
 
     data class UpdateInfo(
@@ -220,15 +220,9 @@ class UpdateChecker {
                 .setTitle("发现新版本 ${updateInfo.latestVersion}")
                 .setMessage(updateInfo.updateDescription)
                 .setCancelable(false)
-                .setPositiveButton("更新") { dialog, _ ->
+                .setPositiveButton("确定") { dialog, _ ->
                     dialog.dismiss()
-                    if (updateInfo.updateUrl.contains("lanzoub.com")) {
-                        // 如果是蓝奏云链接，直接在浏览器中打开
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.updateUrl))
-                        context.startActivity(intent)
-                    } else {
-                        onConfirm()
-                    }
+                    onConfirm()  // 只调用 onConfirm 回调，不执行下载
                 }
                 .setNegativeButton("取消") { dialog, _ ->
                     dialog.dismiss()

@@ -126,13 +126,10 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
                                 context = this@StartSplashActivity,
                                 updateInfo = info,
                                 onConfirm = {
-                                    try {
-                                        startDownload(info.updateUrl, info.latestVersion)
-                                        if (info.forceUpdate) {
-                                            finish()
-                                        }
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
+                                    if (info.forceUpdate) {
+                                        finish()
+                                    } else {
+                                        continueAppLaunch()
                                     }
                                 },
                                 onCancel = {
