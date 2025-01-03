@@ -1,7 +1,7 @@
 # Scabbard - 简约分组工具
 
 <p align="center">
-  <img src="app/src/main/res/mipmap-xxxhdpi/jianqiao24.png" width="128" height="128" alt="App Icon"/>
+  <img src="app/src/main/res/mipmap-hdpi/jianqiao24.png" width="128" height="128" alt="App Icon"/>
 </p>
 
 > 愿你我成为生活的高手
