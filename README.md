@@ -1,10 +1,29 @@
-# Scabbard - 剑鞘
+<div align="center">
+  <img src="app/src/main/res/mipmap-hdpi/jianqiao24.png" width="128" height="128"/>
+  <h1>Scabbard</h1>
+  <p>愿你我成为生活的高手</p>
+</div>
 
-<p align="center">
-  <img src="app/src/main/res/mipmap-hdpi/jianqiao24.png" width="128" height="128" alt="App Icon"/>
-</p>
+<div align="center">
+  <a href="https://developer.android.com/about/versions/lollipop">
+    <img src="https://img.shields.io/badge/Android-5.0%2B-brightgreen.svg" alt="Android Version">
+  </a>
+  <a href="https://kotlinlang.org">
+    <img src="https://img.shields.io/badge/Kotlin-1.9.0-blue.svg" alt="Kotlin Version">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
+  </a>
+</div>
 
-> 愿你我成为生活的高手
+
+## 📖 目录
+
+- [特色功能](#-特色功能)
+- [开始使用](#-开始使用)
+- [关于我们](#-关于我们)
+- [反馈建议](#-反馈建议)
+- [开源协议](#-开源协议)
 
 ## ✨ 特色功能
 
@@ -22,11 +41,11 @@
 ### 🎨 个性化
 - 14款精美图标任意切换
 - 5种动态渐变主题：
-    - 🌈 彩虹渐变
-    - 🌅 日落渐变
-    - 🌊 海洋渐变
-    - 💫 霓虹渐变
-    - 💜 蓝紫渐变
+  - 🌈 彩虹渐变
+  - 🌅 日落渐变
+  - 🌊 海洋渐变
+  - 💫 霓虹渐变
+  - 💜 蓝紫渐变
 
 
 ## 🚀 开始使用
@@ -44,7 +63,7 @@
 
 ## 💡 反馈建议
 
-如果你有任何问题或建议，欢迎：
+部分图片素材来自网络，如果你有任何问题或建议，欢迎：
 - 提交 [Issue](https://github.com/YourUsername/Scabbard/issues)
 - 通过 GitHub 联系开发者
 
