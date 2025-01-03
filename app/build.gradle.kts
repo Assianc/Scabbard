@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.scabbard"
-    compileSdk = 34
+    namespace = "com.assiance.scabbard"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.scabbard"
+        applicationId = "com.assiance.scabbard"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 3
         versionName = "3.4.4"
 
@@ -54,24 +54,24 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
+    implementation(libs.core.ktx.v1150)
+    implementation(libs.appcompat)
+    implementation(libs.material)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.navigation.fragment)
-    implementation("com.github.getActivity:XXPermissions:20.0")
+    implementation(libs.getactivity.xxpermissions)
 
     // 基础依赖包，必须要依赖
-    implementation("com.geyifeng.immersionbar:immersionbar:3.2.2")
+    implementation(libs.geyifeng.immersionbar)
 
     // AndroidX 基础库
-    implementation("androidx.fragment:fragment-ktx:1.8.4")
+    implementation(libs.fragment.ktx)
 
     // ImmersionBar（状态栏管理）
-    implementation("com.geyifeng.immersionbar:immersionbar:3.2.2")
+    implementation(libs.geyifeng.immersionbar)
 
     // 本地模块依赖
     implementation(project(":memo"))

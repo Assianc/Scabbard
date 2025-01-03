@@ -1,19 +1,36 @@
 [versions]
 agp = "8.7.1"
+androidxCoreKtx = "1.15.0"
+appcompatVersion = "1.7.0"
+coreKtxVersion = "1.15.0"
+fragmentKtx = "1.8.5"
+glide = "4.16.0"
+gson = "2.10.1"
 immersionbar = "3.2.2"
+immersionbarVersion = "3.2.2"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 material = "1.12.0"
 activity = "1.9.3"
-constraintlayout = "2.1.4"
-navigationFragment = "2.8.3"
+constraintlayout = "2.2.0"
+materialVersion = "1.12.0"
+navigationFragment = "2.8.5"
 xxpermissions = "20.0"
 kotlin = "2.0.21"
-coreKtx = "1.13.1"
+coreKtx = "1.15.0"
+xxpermissionsVersion = "20.0"
 
 [libraries]
+appcompat-v161 = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
+core-ktx-v1101 = { module = "androidx.core:core-ktx", version.ref = "androidxCoreKtx" }
+core-ktx-v1150 = { module = "androidx.core:core-ktx", version.ref = "coreKtxVersion" }
+fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
+getactivity-xxpermissions = { module = "com.github.getActivity:XXPermissions", version.ref = "xxpermissionsVersion" }
+geyifeng-immersionbar = { module = "com.geyifeng.immersionbar:immersionbar", version.ref = "immersionbarVersion" }
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 immersionbar = { module = "com.gyf.immersionbar:immersionbar", version.ref = "immersionbar" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -22,6 +39,7 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+material-v190 = { module = "com.google.android.material:material", version.ref = "materialVersion" }
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 xxpermissions = { module = "com.hjq:xxpermissions", version.ref = "xxpermissions" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

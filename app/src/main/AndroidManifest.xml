@@ -33,9 +33,9 @@
         <activity android:name=".PlayerSelectionActivity" android:exported="false" />
 
         <!-- Memo Module Activities -->
-        <activity android:name="com.example.memo.MainActivityMemo" android:exported="false" />
-        <activity android:name="com.example.memo.AddMemoActivity" android:exported="false" />
-        <activity android:name="com.example.memo.MemoDetailActivity" android:exported="false" />
+        <activity android:name="com.assiance.memo.MainActivityMemo" android:exported="false" />
+        <activity android:name="com.assiance.memo.AddMemoActivity" android:exported="false" />
+        <activity android:name="com.assiance.memo.MemoDetailActivity" android:exported="false" />
 
         <!-- App Icon Aliases -->
         <activity-alias

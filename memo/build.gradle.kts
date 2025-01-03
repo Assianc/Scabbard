@@ -4,8 +4,8 @@ plugins {
 }
 
 android {
-    namespace = "com.example.memo"
-    compileSdk = 34
+    namespace = "com.assiance.memo"
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24
@@ -52,9 +52,9 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.9.0")
+    implementation(libs.core.ktx.v1101)
+    implementation(libs.appcompat.v161)
+    implementation(libs.material.v190)
 
     // 检查 libs 引用是否正确
     implementation(libs.appcompat)
@@ -66,6 +66,6 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
 
     // 添加 Glide 依赖
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation(libs.glide)
+    implementation(libs.gson)
 }
