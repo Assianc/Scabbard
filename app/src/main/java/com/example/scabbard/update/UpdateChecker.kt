@@ -150,7 +150,7 @@ class UpdateChecker {
                 updateUrl = LANZOU_DOWNLOAD_URL,
                 updateDescription = """
                     下载说明：
-                    1. 请优先访问作者github主页，在Scabbard中获取最新更新
+                    1. 请优先访问作者github主页，在Scabbard中获取最新版本以及更新说明
                     2. 点击更新后将跳转到蓝奏云获取最新版.
                     3. 输入提取码：$LANZOU_PASSWORD
                     
