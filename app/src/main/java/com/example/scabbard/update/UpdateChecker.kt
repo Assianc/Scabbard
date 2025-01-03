@@ -27,7 +27,7 @@ class UpdateChecker {
         private const val GITHUB_API_URL = "https://api.github.com/repos/Assianc/Scabbard/releases/latest"
         private const val LANZOU_DOWNLOAD_URL = "https://assiance.lanzoub.com/b00y9rfbud"
         private const val LANZOU_PASSWORD = "7rwd"
-        private const val LANZOU_VERSION = "3.4.2"
+        private const val LANZOU_VERSION = "3.4.3"
     }
 
     data class UpdateInfo(
@@ -150,12 +150,11 @@ class UpdateChecker {
                 updateUrl = LANZOU_DOWNLOAD_URL,
                 updateDescription = """
                     下载说明：
-                    1. 请访问作者github主页，在Scabbard中获取更新
-                    2. 点击更新后将跳转到蓝奏云网页获取beta版.
+                    1. 请优先访问作者github主页，在Scabbard中获取最新更新
+                    2. 点击更新后将跳转到蓝奏云获取最新版.
                     3. 输入提取码：$LANZOU_PASSWORD
                     
                     注意：请在电脑模式下预览，否则可能无法正常下载。
-                    注意：beta版无法从蓝奏云网盘获取后续更新
                 """.trimIndent(),
                 forceUpdate = true
             )

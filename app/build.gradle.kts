@@ -13,7 +13,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 3
-        versionName = "3.4.2"
+        versionName = "3.4.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -39,6 +39,18 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
+    }
+
+    applicationVariants.all {
+        val variant = this
+        variant.outputs
+            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
+            .forEach { output ->
+                // 获取版本名
+                val versionName = variant.versionName
+                // 设置输出APK文件名
+                output.outputFileName = "Scabbard-${versionName}.apk"
+            }
     }
 }
 
