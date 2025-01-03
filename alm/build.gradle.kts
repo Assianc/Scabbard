@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.azure.alm"
+    namespace = "com.assiance.alm"
     compileSdk = 35
 
     defaultConfig {
