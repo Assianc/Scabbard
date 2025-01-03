@@ -126,10 +126,26 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
                                 context = this@StartSplashActivity,
                                 updateInfo = info,
                                 onConfirm = {
-                                    if (info.forceUpdate) {
-                                        finish()
-                                    } else {
-                                        continueAppLaunch()
+                                    try {
+                                        if (info.updateUrl.contains("lanzoub.com")) {
+                                            // 蓝奏云链接使用浏览器打开
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(info.updateUrl))
+                                            startActivity(intent)
+                                        } else {
+                                            // GitHub 更新直接下载
+                                            startDownload(info.updateUrl, info.latestVersion)
+                                        }
+                                        
+                                        // 无论是否强制更新，都继续启动应用
+                                        if (!info.forceUpdate) {
+                                            continueAppLaunch()
+                                        }
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        Toast.makeText(this@StartSplashActivity, "下载失败，请稍后重试", Toast.LENGTH_SHORT).show()
+                                        if (!info.forceUpdate) {
+                                            continueAppLaunch()
+                                        }
                                     }
                                 },
                                 onCancel = {
@@ -150,16 +166,10 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
                         continueAppLaunch()
                     }
                 } ?: run {
-                    if (!isFinishing) {
-//                        Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
-                    }
                     continueAppLaunch()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                if (!isFinishing) {
-//                    Toast.makeText(this@StartSplashActivity, "检查更新失败", Toast.LENGTH_SHORT).show()
-                }
                 continueAppLaunch()
             }
         }
