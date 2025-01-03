@@ -1,57 +1,59 @@
-# Scabbard
+# Scabbard - 简约分组工具
 
-Scabbard 剑鞘 —— 愿你我成为生活的高手
+<p align="center">
+  <img src="app/src/main/res/mipmap-xxxhdpi/jianqiao24.png" width="128" height="128" alt="App Icon"/>
+</p>
 
-## 功能特点
+> 愿你我成为生活的高手
 
-### 1. 随机分组
-- 支持 2/3/4 分组模式
-- 灵活的玩家管理系统
+## ✨ 特色功能
+
+### 🎲 随机分组
+- 支持2-4人分组模式
 - 一键随机分配
-- 清晰的分组结果展示
+- 自定义玩家名单
+- 快速重新分组
 
-### 2. 备忘录功能
-- 快速记录和管理备忘
-- 简洁的用户界面
-- 便捷的编辑和删除操作
+### 📝 备忘录
+- 快速记录
+- 简洁界面
+- 便捷管理
 
-### 3. 其他特性
-- 优雅的启动动画
-- 自动检查更新
-- 支持 GitHub 和蓝奏云双更新源
-- 流畅的动画效果
+### 🎨 个性化
+- 14款精美图标任意切换
+- 5种动态渐变主题：
+    - 🌈 彩虹渐变
+    - 🌅 日落渐变
+    - 🌊 海洋渐变
+    - 💫 霓虹渐变
+    - 💜 蓝紫渐变
 
-## 技术特点
 
-- 使用 Kotlin 开发
-- 采用现代 Android 开发实践
-- 基于 Material Design 设计规范
-- 使用 Coroutines 处理异步操作
-- 支持动态主题和深色模式
+## 🚀 开始使用
 
-## 安装说明
+### 下载方式
+- [GitHub Release](https://github.com/YourUsername/Scabbard/releases/latest)
+- [蓝奏云](https://assiance.lanzoub.com/b00y9rfbud) (密码：7rwd)
 
-1. 支持 Android 5.0 及以上版本
-2. 直接安装到 Android 设备即可使用
+### 系统要求
+- Android 5.0 及以上版本
 
-## 开发者
+## 👥 关于我们
 
-- [@cuxt](https://github.com/cuxt)
-- [@Assianc](https://github.com/Assianc)
+本项目由 [@cuxt](https://github.com/cuxt) 和 [@Assianc](https://github.com/Assianc) 共同开发维护，由[@sy]() 提供部分ui设计以及个性化定制界面
 
-## 提供与设计
+## 💡 反馈建议
 
-- [@sy]()
+如果你有任何问题或建议，欢迎：
+- 提交 [Issue](https://github.com/YourUsername/Scabbard/issues)
+- 通过 GitHub 联系开发者
 
-## 许可证
+## 📄 开源协议
 
-本项目采用 [MIT 许可证](LICENSE)
+本项目基于 [MIT 许可证](LICENSE) 开源。
 
-## 反馈与支持
+---
 
-如果您发现任何问题或有建议，欢迎：
-1. 提交 Issue
-2. 发起 Pull Request
-3. 联系开发者
-
-感谢支持
+<p align="center">
+  Made with ❤️ by Scabbard Team
+</p>
