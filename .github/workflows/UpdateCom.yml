@@ -1,39 +1,41 @@
-name: Mirror Repository Sync
+name: Sync to Gitee
 
 on:
-  # 可以在以下事件触发
-  schedule:
-    - cron: '0 2 * * *'  # 每天凌晨2点执行
   push:
-    branches: [ main ]
-  workflow_dispatch:  # 允许手动触发
+    branches: 
+      - main
+      - master
+  schedule:
+    - cron: '0 1 * * *'  # UTC 1:00 即北京时间 9:00
+  workflow_dispatch:
 
 jobs:
-  mirror-sync:
+  sync:
     runs-on: ubuntu-latest
     steps:
+      # 检出代码
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      # 配置 SSH
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GITEE_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+
+      # 同步到 Gitee
       - name: Mirror to Gitee
         uses: Yikun/hub-mirror-action@v1.4
         with:
-          # 配置目标平台的密钥（需要在 GitHub Secrets 中设置）
+          src: github/Assianc
+          dst: gitee/Assianc
           dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}
           dst_token: ${{ secrets.GITEE_TOKEN }}
-          
-          # 配置源和目标
-          src: 'github/Assianc'  # 替换成你的 GitHub 用户名
-          dst: 'gitee/Assianc'    # 替换成你的 Gitee 用户名
-          
-          # 基本设置
           account_type: user
-          clone_style: https
-          
-          # 可选配置
+          clone_style: ssh
           force_update: true
           debug: true
           timeout: '30m'
-          
-          # 如果需要指定特定仓库，可以使用白名单
-          # white_list: "repo1,repo2"
-          
-          # 如果需要排除特定仓库，可以使用黑名单
-          # black_list: "private-repo,temp-repo"
+          static_list: ""  # 如果需要指定仓库，在这里添加，用逗号分隔
