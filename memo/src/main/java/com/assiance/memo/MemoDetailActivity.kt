@@ -22,6 +22,10 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import androidx.core.content.res.ResourcesCompat
 import android.graphics.Paint
 import android.view.inputmethod.EditorInfo
+import android.widget.PopupMenu
+import android.view.Menu
+import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 
 class MemoDetailActivity : AppCompatActivity() {
 
@@ -68,6 +72,23 @@ class MemoDetailActivity : AppCompatActivity() {
             "仿宋",
             "黑体",
             "楷体",
+        )
+        
+        private val FONT_SIZES = arrayOf(
+            Pair("初号", 42f),
+            Pair("小初", 36f),
+            Pair("一号", 26f),
+            Pair("小一", 24f),
+            Pair("二号", 22f),
+            Pair("小二", 18f),
+            Pair("三号", 16f),
+            Pair("小三", 15f),
+            Pair("四号", 14f),
+            Pair("小四", 12f),
+            Pair("五号", 10.5f),
+            Pair("小五", 9f),
+            Pair("六号", 7.5f),
+            Pair("小六", 6.5f)
         )
     }
 
@@ -170,6 +191,8 @@ class MemoDetailActivity : AppCompatActivity() {
             // 长按删除图片
             imagePaths.removeAt(position)
             imageAdapter.notifyItemRemoved(position)
+            // 通知适配器数据集已更改
+            imageAdapter.notifyItemRangeChanged(position, imagePaths.size)
         }
         imagesRecyclerView.adapter = imageAdapter
 
@@ -207,16 +230,25 @@ class MemoDetailActivity : AppCompatActivity() {
             contentEditText.invalidate()
         }
 
-        // 设置字体大小按钮点击事件（现在只是显示/隐藏输入框）
+        // 修改字体大小按钮点击事件
         fontSizeButton.setOnClickListener {
-            contentFontSizeInput.visibility = if (contentFontSizeInput.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            showFontSizeMenu(contentFontSizeInput, false)
         }
 
         titleFontSizeButton.setOnClickListener {
-            titleFontSizeInput.visibility = if (titleFontSizeInput.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+            showFontSizeMenu(titleFontSizeInput, true)
         }
 
-        // 设置输入框监听
+        // 修改输入框点击事件
+        contentFontSizeInput.setOnClickListener {
+            showFontSizeMenu(it as EditText, false)
+        }
+
+        titleFontSizeInput.setOnClickListener {
+            showFontSizeMenu(it as EditText, true)
+        }
+
+        // 保持原有的输入监听，用于手动输入数值
         titleFontSizeInput.setOnEditorActionListener { v, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 handleFontSizeInput(v as EditText, true)
@@ -590,27 +622,75 @@ class MemoDetailActivity : AppCompatActivity() {
         }
     }
 
+    private fun showFontSizeMenu(editText: EditText, isTitle: Boolean) {
+        val currentSize = if (isTitle) currentTitleFontSize else currentContentFontSize
+        
+        // 创建弹出菜单
+        val popupMenu = PopupMenu(this, editText)
+        
+        // 添加预设选项
+        FONT_SIZES.forEach { (name, size) ->
+            popupMenu.menu.add(Menu.NONE, View.NO_ID, Menu.NONE, "$name (${size}pt)")
+        }
+
+        // 设置点击监听
+        popupMenu.setOnMenuItemClickListener { menuItem ->
+            // 从选项中提取大小并应用
+            val sizeStr = menuItem.title.toString()
+                .substringAfter("(")
+                .substringBefore("pt")
+            val size = sizeStr.toFloatOrNull()
+            if (size != null) {
+                if (isTitle) {
+                    currentTitleFontSize = size
+                    titleEditText.textSize = size
+                    editText.setText(size.toInt().toString())
+                } else {
+                    currentContentFontSize = size
+                    contentEditText.textSize = size
+                    editText.setText(size.toInt().toString())
+                }
+            }
+            true
+        }
+
+        // 显示菜单
+        popupMenu.show()
+    }
+
+    // 修改 handleFontSizeInput 方法，添加 Toast 提醒
     private fun handleFontSizeInput(editText: EditText, isTitle: Boolean) {
         val size = editText.text.toString().toFloatOrNull()
-        if (size != null && size in 8f..72f) {
-            if (isTitle) {
-                currentTitleFontSize = size
-                titleEditText.textSize = size
-            } else {
-                currentContentFontSize = size
-                contentEditText.textSize = size
+        if (size != null) {
+            when {
+                size < 6.5f -> {
+                    Toast.makeText(this, "字号不能小于 6.5", Toast.LENGTH_SHORT).show()
+                    editText.setText((if (isTitle) currentTitleFontSize else currentContentFontSize).toInt().toString())
+                }
+                size > 42f -> {
+                    Toast.makeText(this, "字号不能大于 42", Toast.LENGTH_SHORT).show()
+                    editText.setText((if (isTitle) currentTitleFontSize else currentContentFontSize).toInt().toString())
+                }
+                else -> {
+                    if (isTitle) {
+                        currentTitleFontSize = size
+                        titleEditText.textSize = size
+                    } else {
+                        currentContentFontSize = size
+                        contentEditText.textSize = size
+                    }
+                }
             }
         } else {
-            // 如果输入无效，恢复原来的值
+            // 如果输入无效，恢复原来的值并提示
+            Toast.makeText(this, "请输入有效的字号", Toast.LENGTH_SHORT).show()
             editText.setText(
                 (if (isTitle) currentTitleFontSize else currentContentFontSize)
                     .toInt().toString()
             )
         }
         // 隐藏输入法
-        val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(editText.windowToken, 0)
-        // 隐藏输入框
-        editText.visibility = View.GONE
     }
 }
