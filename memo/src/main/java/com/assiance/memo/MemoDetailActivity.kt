@@ -21,6 +21,7 @@ import com.bumptech.glide.Glide
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import androidx.core.content.res.ResourcesCompat
 import android.graphics.Paint
+import android.view.inputmethod.EditorInfo
 
 class MemoDetailActivity : AppCompatActivity() {
 
@@ -56,6 +57,8 @@ class MemoDetailActivity : AppCompatActivity() {
     private lateinit var titleFontSizeButton: ImageButton
     private var currentTitleFontSize = 32f // 默认标题字体大小
     private var currentContentFontSize = 16f // 默认内容字体大小
+    private lateinit var titleFontSizeInput: EditText
+    private lateinit var contentFontSizeInput: EditText
 
     companion object {
         private val FONTS = mutableListOf<Typeface>()
@@ -259,6 +262,72 @@ class MemoDetailActivity : AppCompatActivity() {
         // 应用字体大小
         titleEditText.textSize = currentTitleFontSize
         contentEditText.textSize = currentContentFontSize
+
+        // 初始化字体大小输入框
+        titleFontSizeInput = findViewById(R.id.title_font_size_input)
+        contentFontSizeInput = findViewById(R.id.content_font_size_input)
+
+        // 设置初始值
+        titleFontSizeInput.setText(currentTitleFontSize.toInt().toString())
+        contentFontSizeInput.setText(currentContentFontSize.toInt().toString())
+
+        // 设置输入监听
+        titleFontSizeInput.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                val size = v.text.toString().toFloatOrNull()
+                if (size != null && size in 8f..72f) {
+                    currentTitleFontSize = size
+                    titleEditText.textSize = size
+                } else {
+                    // 如果输入无效，恢复原来的值
+                    titleFontSizeInput.setText(currentTitleFontSize.toInt().toString())
+                }
+                true
+            } else {
+                false
+            }
+        }
+
+        contentFontSizeInput.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                val size = v.text.toString().toFloatOrNull()
+                if (size != null && size in 8f..72f) {
+                    currentContentFontSize = size
+                    contentEditText.textSize = size
+                } else {
+                    // 如果输入无效，恢复原来的值
+                    contentFontSizeInput.setText(currentContentFontSize.toInt().toString())
+                }
+                true
+            } else {
+                false
+            }
+        }
+
+        // 在失去焦点时也应用字体大小
+        titleFontSizeInput.setOnFocusChangeListener { v, hasFocus ->
+            if (!hasFocus) {
+                val size = (v as EditText).text.toString().toFloatOrNull()
+                if (size != null && size in 8f..72f) {
+                    currentTitleFontSize = size
+                    titleEditText.textSize = size
+                } else {
+                    titleFontSizeInput.setText(currentTitleFontSize.toInt().toString())
+                }
+            }
+        }
+
+        contentFontSizeInput.setOnFocusChangeListener { v, hasFocus ->
+            if (!hasFocus) {
+                val size = (v as EditText).text.toString().toFloatOrNull()
+                if (size != null && size in 8f..72f) {
+                    currentContentFontSize = size
+                    contentEditText.textSize = size
+                } else {
+                    contentFontSizeInput.setText(currentContentFontSize.toInt().toString())
+                }
+            }
+        }
     }
 
     private fun toggleEditMode(edit: Boolean) {
@@ -305,6 +374,12 @@ class MemoDetailActivity : AppCompatActivity() {
         titleBoldButton.visibility = if (edit) View.VISIBLE else View.GONE
         titleItalicButton.visibility = if (edit) View.VISIBLE else View.GONE
         titleUnderlineButton.visibility = if (edit) View.VISIBLE else View.GONE
+
+        // 添加字体大小输入框的可见性控制
+        titleFontSizeInput.visibility = if (edit) View.VISIBLE else View.GONE
+        contentFontSizeInput.visibility = if (edit) View.VISIBLE else View.GONE
+        titleFontSizeInput.isEnabled = edit
+        contentFontSizeInput.isEnabled = edit
     }
 
     private fun showDeleteConfirmationDialog(position: Int) {
