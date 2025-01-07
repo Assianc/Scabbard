@@ -14,5 +14,10 @@
         <receiver 
             android:name=".AlarmReceiver"
             android:exported="false" />
+
+        <activity
+            android:name=".AlarmSettingActivity"
+            android:exported="false"
+            android:label="设置闹钟" />
     </application>
 </manifest>

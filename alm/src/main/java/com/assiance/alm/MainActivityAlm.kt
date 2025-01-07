@@ -12,22 +12,16 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
-import android.widget.Button
 import android.widget.TextView
-import android.widget.TimePicker
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 class MainActivityAlm : AppCompatActivity() {
-    private lateinit var timePicker: TimePicker
-    private lateinit var setAlarmButton: Button
-    private lateinit var cancelAlarmButton: Button
     private lateinit var alarmStatusText: TextView
     private lateinit var alarmManager: AlarmManager
     private lateinit var dateText: TextView
@@ -36,10 +30,11 @@ class MainActivityAlm : AppCompatActivity() {
     private var timeUpdateRunnable: Runnable? = null
 
     companion object {
-        private const val ALARM_REQUEST_CODE = 100
-        private const val CHANNEL_ID = "AlarmChannel"
-        private const val NOTIFICATION_ID = 1
+        internal const val ALARM_REQUEST_CODE = 100
+        internal const val CHANNEL_ID = "AlarmChannel"
+        internal const val NOTIFICATION_ID = 1
         const val ALARM_ACTION = "com.assiance.alm.ALARM_TRIGGER"
+        const val ALARM_STATUS_CHANGED_ACTION = "com.assiance.alm.ALARM_STATUS_CHANGED"
     }
 
     private val alarmReceiver = object : BroadcastReceiver() {
@@ -51,6 +46,14 @@ class MainActivityAlm : AppCompatActivity() {
         }
     }
 
+    private val alarmStatusReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == ALARM_STATUS_CHANGED_ACTION) {
+                restoreAlarmStatus()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_alm)
@@ -58,15 +61,10 @@ class MainActivityAlm : AppCompatActivity() {
         // 初始化时间显示相关的视图
         dateText = findViewById(R.id.dateText)
         timeText = findViewById(R.id.timeText)
+        alarmStatusText = findViewById(R.id.alarmStatusText)
         
         // 启动时间更新
         startTimeUpdate()
-
-        // 初始化视图
-        timePicker = findViewById(R.id.timePicker)
-        setAlarmButton = findViewById(R.id.setAlarmButton)
-        cancelAlarmButton = findViewById(R.id.cancelAlarmButton)
-        alarmStatusText = findViewById(R.id.alarmStatusText)
 
         // 初始化闹钟管理器
         alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -74,93 +72,30 @@ class MainActivityAlm : AppCompatActivity() {
         // 创建通知渠道
         createNotificationChannel()
 
-        // 注册广播接收器，添加 RECEIVER_NOT_EXPORTED 标志
+        // 注册广播接收器
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(
                 alarmReceiver,
                 IntentFilter(ALARM_ACTION),
                 Context.RECEIVER_NOT_EXPORTED
             )
+            registerReceiver(
+                alarmStatusReceiver,
+                IntentFilter(ALARM_STATUS_CHANGED_ACTION),
+                Context.RECEIVER_NOT_EXPORTED
+            )
         } else {
             registerReceiver(alarmReceiver, IntentFilter(ALARM_ACTION))
+            registerReceiver(alarmStatusReceiver, IntentFilter(ALARM_STATUS_CHANGED_ACTION))
         }
 
-        // 设置按钮点击事件
-        setAlarmButton.setOnClickListener {
-            if (checkAllPermissions()) {
-                setAlarm()
-            }
-        }
-
-        cancelAlarmButton.setOnClickListener {
-            cancelAlarm()
+        // 设置浮动按钮点击事件
+        findViewById<FloatingActionButton>(R.id.fabSetAlarm).setOnClickListener {
+            startActivity(Intent(this, AlarmSettingActivity::class.java))
         }
 
         // 恢复已设置的闹钟状态
         restoreAlarmStatus()
-
-        // 设置TimePicker为24小时制
-        timePicker.setIs24HourView(true)
-    }
-
-    private fun setAlarm() {
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, timePicker.hour)
-            set(Calendar.MINUTE, timePicker.minute)
-            set(Calendar.SECOND, 0)
-            
-            // 如果设置的时间早于当前时间，设置为明天
-            if (timeInMillis <= System.currentTimeMillis()) {
-                add(Calendar.DAY_OF_YEAR, 1)
-            }
-        }
-
-        val intent = Intent(ALARM_ACTION).apply {
-            `package` = packageName  // 添加包名以确保广播只发送给本应用
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            this,
-            ALARM_REQUEST_CODE,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // 设置精确闹钟
-        alarmManager.setAlarmClock(
-            AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent),
-            pendingIntent
-        )
-
-        // 保存闹钟状态
-        getSharedPreferences("alarm_prefs", Context.MODE_PRIVATE).edit()
-            .putLong("alarm_time", calendar.timeInMillis)
-            .apply()
-
-        val timeString = String.format("%02d:%02d", timePicker.hour, timePicker.minute)
-        updateAlarmStatus("闹钟已设置：$timeString")
-        Toast.makeText(this, "闹钟已设置", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun cancelAlarm() {
-        val intent = Intent(ALARM_ACTION).apply {
-            `package` = packageName
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            this,
-            ALARM_REQUEST_CODE,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        
-        alarmManager.cancel(pendingIntent)
-        
-        // 清除保存的闹钟状态
-        getSharedPreferences("alarm_prefs", Context.MODE_PRIVATE).edit()
-            .remove("alarm_time")
-            .apply()
-
-        updateAlarmStatus("未设置闹钟")
-        Toast.makeText(this, "闹钟已取消", Toast.LENGTH_SHORT).show()
     }
 
     private fun createNotificationChannel() {
@@ -200,15 +135,6 @@ class MainActivityAlm : AppCompatActivity() {
 
     private fun updateAlarmStatus(status: String) {
         alarmStatusText.text = status
-        
-        // 根据状态更新按钮状态
-        if (status.startsWith("闹钟已设置")) {
-            setAlarmButton.isEnabled = false
-            cancelAlarmButton.isEnabled = true
-        } else {
-            setAlarmButton.isEnabled = true
-            cancelAlarmButton.isEnabled = false
-        }
     }
 
     private fun restoreAlarmStatus() {
@@ -227,139 +153,6 @@ class MainActivityAlm : AppCompatActivity() {
             updateAlarmStatus("闹钟已设置：$timeString")
         } else {
             updateAlarmStatus("未设置闹钟")
-        }
-    }
-
-    private fun checkAllPermissions(): Boolean {
-        // 检查通知权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (!checkNotificationPermission()) {
-                requestNotificationPermission()
-                return false
-            }
-        }
-
-        // 检查精确闹钟权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (!checkAlarmPermission()) {
-                showAlarmPermissionDialog()
-                return false
-            }
-        }
-
-        return true
-    }
-
-    private fun checkNotificationPermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == 
-                android.content.pm.PackageManager.PERMISSION_GRANTED
-        }
-        return true
-    }
-
-    private fun requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)) {
-                // 显示解释对话框
-                AlertDialog.Builder(this)
-                    .setTitle("需要通知权限")
-                    .setMessage("为了在闹钟响起时显示通知，需要授予通知权限。")
-                    .setPositiveButton("授权") { _, _ ->
-                        requestPermissions(
-                            arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
-                            100
-                        )
-                    }
-                    .setNegativeButton("取消") { dialog, _ ->
-                        dialog.dismiss()
-                        Toast.makeText(this, "未授予通知权限，闹钟将无法显示通知", Toast.LENGTH_LONG).show()
-                    }
-                    .show()
-            } else {
-                // 直接请求权限
-                requestPermissions(
-                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
-                    100
-                )
-            }
-        }
-    }
-
-    private fun checkAlarmPermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            return alarmManager.canScheduleExactAlarms()
-        }
-        return true
-    }
-
-    // 处理权限请求结果
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            100 -> {
-                if (grantResults.isNotEmpty() && 
-                    grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                    // 用户授予了通知权限
-                    if (checkAlarmPermission()) {
-                        setAlarm()
-                    }
-                } else {
-                    Toast.makeText(this, "未授予通知权限，闹钟将无法显示通知", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-    }
-
-    private fun showAlarmPermissionDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("需要权限")
-            .setMessage("为了确保闹钟准时响起，需要授予精确闹钟权限。")
-            .setPositiveButton("去设置") { _, _ ->
-                try {
-                    // 跳转到精确闹钟权限设置页面
-                    val intent = Intent().apply {
-                        action = Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
-                    }
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    Toast.makeText(this, "打开设置失败，请手动授予权限", Toast.LENGTH_LONG).show()
-                }
-            }
-            .setNegativeButton("取消") { dialog, _ ->
-                dialog.dismiss()
-                Toast.makeText(this, "未授予权限，闹钟可能不会准时响起", Toast.LENGTH_LONG).show()
-            }
-            .show()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // 检查所有权限状态
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !checkNotificationPermission()) {
-            Toast.makeText(this, "请授予通知权限以确保闹钟通知正常显示", Toast.LENGTH_LONG).show()
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !checkAlarmPermission()) {
-            Toast.makeText(this, "请授予精确闹钟权限以确保闹钟准时响起", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        // 停止时间更新
-        timeUpdateRunnable?.let { timeUpdateHandler.removeCallbacks(it) }
-        timeUpdateRunnable = null
-        
-        try {
-            unregisterReceiver(alarmReceiver)
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 
@@ -383,5 +176,19 @@ class MainActivityAlm : AppCompatActivity() {
         // 更新时间显示，使用24小时制
         val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.CHINESE)
         timeText.text = timeFormat.format(calendar.time)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // 停止时间更新
+        timeUpdateRunnable?.let { timeUpdateHandler.removeCallbacks(it) }
+        timeUpdateRunnable = null
+        
+        try {
+            unregisterReceiver(alarmReceiver)
+            unregisterReceiver(alarmStatusReceiver)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
