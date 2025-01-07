@@ -66,6 +66,20 @@
             android:padding="8dp"
             android:src="@drawable/ic_underline"
             android:visibility="gone"/>
+
+        <Space
+            android:layout_width="8dp"
+            android:layout_height="wrap_content"/>
+
+        <ImageButton
+            android:id="@+id/title_font_size_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/button_background_selector"
+            android:contentDescription="标题字体大小"
+            android:padding="8dp"
+            android:src="@drawable/ic_font_size"
+            android:visibility="gone"/>
     </LinearLayout>
 
     <!-- 标题布局 -->
@@ -197,6 +211,21 @@
                 android:contentDescription="下划线"
                 android:padding="8dp"
                 android:src="@drawable/ic_underline"
+                android:visibility="gone"/>
+
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="wrap_content"/>
+
+            <!-- 添加内容字体大小按钮 -->
+            <ImageButton
+                android:id="@+id/font_size_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/button_background_selector"
+                android:contentDescription="字体大小"
+                android:padding="8dp"
+                android:src="@drawable/ic_font_size"
                 android:visibility="gone"/>
 
         </LinearLayout>

@@ -105,6 +105,14 @@ class MemoDAO(context: Context) {
                     it.getInt(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_CONTENT_UNDERLINE)) == 1
                 } catch (_: Exception) { false }
 
+                val titleFontSize = try {
+                    it.getFloat(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_TITLE_FONT_SIZE))
+                } catch (_: Exception) { 32f }
+
+                val contentFontSize = try {
+                    it.getFloat(it.getColumnIndexOrThrow(MemoDatabaseHelper.COLUMN_CONTENT_FONT_SIZE))
+                } catch (_: Exception) { 16f }
+
                 memoList.add(Memo(
                     id = id,
                     title = title,
@@ -117,7 +125,9 @@ class MemoDAO(context: Context) {
                     titleStyle = titleStyle,
                     contentStyle = contentStyle,
                     titleUnderline = titleUnderline,
-                    contentUnderline = contentUnderline
+                    contentUnderline = contentUnderline,
+                    titleFontSize = titleFontSize,
+                    contentFontSize = contentFontSize
                 ))
             }
         }
@@ -149,7 +159,9 @@ class MemoDAO(context: Context) {
         titleStyle: Int = 0,
         contentStyle: Int = 0,
         titleUnderline: Boolean = false,
-        contentUnderline: Boolean = false
+        contentUnderline: Boolean = false,
+        titleFontSize: Float = 32f,
+        contentFontSize: Float = 16f
     ) {
         val db = dbHelper.writableDatabase
         try {
@@ -164,6 +176,8 @@ class MemoDAO(context: Context) {
                 put(MemoDatabaseHelper.COLUMN_CONTENT_STYLE, contentStyle)
                 put(MemoDatabaseHelper.COLUMN_TITLE_UNDERLINE, if (titleUnderline) 1 else 0)
                 put(MemoDatabaseHelper.COLUMN_CONTENT_UNDERLINE, if (contentUnderline) 1 else 0)
+                put(MemoDatabaseHelper.COLUMN_TITLE_FONT_SIZE, titleFontSize)
+                put(MemoDatabaseHelper.COLUMN_CONTENT_FONT_SIZE, contentFontSize)
             }
             db.update(MemoDatabaseHelper.TABLE_NAME, values,
                 "${MemoDatabaseHelper.COLUMN_ID}=?", arrayOf(id.toString()))

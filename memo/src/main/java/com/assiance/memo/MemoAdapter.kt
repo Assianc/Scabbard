@@ -94,6 +94,8 @@ class MemoAdapter(
                 putExtra("memo_content_style", memo.contentStyle)
                 putExtra("memo_title_underline", memo.titleUnderline)
                 putExtra("memo_content_underline", memo.contentUnderline)
+                putExtra("memo_title_font_size", memo.titleFontSize)
+                putExtra("memo_content_font_size", memo.contentFontSize)
             }
             context.startActivity(intent)
         }

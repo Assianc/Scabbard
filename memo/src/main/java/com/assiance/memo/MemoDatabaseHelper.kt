@@ -53,11 +53,39 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 e.printStackTrace()
             }
         }
+        if (oldVersion < 7) {
+            try {
+                db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_TITLE_FONT_SIZE REAL DEFAULT 32")
+                db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_CONTENT_FONT_SIZE REAL DEFAULT 16")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        if (oldVersion < 9) {
+            try {
+                val cursor = db.rawQuery("PRAGMA table_info(${TABLE_NAME})", null)
+                val columnNames = mutableListOf<String>()
+                cursor.use {
+                    while (it.moveToNext()) {
+                        columnNames.add(it.getString(1))
+                    }
+                }
+
+                if (!columnNames.contains(COLUMN_TITLE_FONT_SIZE)) {
+                    db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_TITLE_FONT_SIZE REAL DEFAULT 32")
+                }
+                if (!columnNames.contains(COLUMN_CONTENT_FONT_SIZE)) {
+                    db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_CONTENT_FONT_SIZE REAL DEFAULT 16")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     companion object {
         private const val DATABASE_NAME = "memo.db"
-        private const val DATABASE_VERSION = 8
+        private const val DATABASE_VERSION = 9
 
         // 表和列名
         const val TABLE_NAME = "memo"
@@ -74,6 +102,8 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         const val COLUMN_CONTENT_STYLE = "content_style"
         const val COLUMN_TITLE_UNDERLINE = "title_underline"
         const val COLUMN_CONTENT_UNDERLINE = "content_underline"
+        const val COLUMN_TITLE_FONT_SIZE = "title_font_size"
+        const val COLUMN_CONTENT_FONT_SIZE = "content_font_size"
 
         // 创建表语句
         val CREATE_TABLE = """
@@ -89,7 +119,9 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 $COLUMN_TITLE_STYLE INTEGER DEFAULT 0,
                 $COLUMN_CONTENT_STYLE INTEGER DEFAULT 0,
                 $COLUMN_TITLE_UNDERLINE INTEGER DEFAULT 0,
-                $COLUMN_CONTENT_UNDERLINE INTEGER DEFAULT 0
+                $COLUMN_CONTENT_UNDERLINE INTEGER DEFAULT 0,
+                $COLUMN_TITLE_FONT_SIZE REAL DEFAULT 32,
+                $COLUMN_CONTENT_FONT_SIZE REAL DEFAULT 16
             )
         """.trimIndent()
     }

@@ -12,5 +12,7 @@ data class Memo(
     var titleStyle: Int = 0,
     var contentStyle: Int = 0,
     var titleUnderline: Boolean = false,
-    var contentUnderline: Boolean = false
+    var contentUnderline: Boolean = false,
+    var titleFontSize: Float = 32f,
+    var contentFontSize: Float = 16f
 )

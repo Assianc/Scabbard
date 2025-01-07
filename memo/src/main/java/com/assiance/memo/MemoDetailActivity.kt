@@ -52,6 +52,10 @@ class MemoDetailActivity : AppCompatActivity() {
     private var titleItalicState = false
     private var contentBoldState = false
     private var contentItalicState = false
+    private lateinit var fontSizeButton: ImageButton
+    private lateinit var titleFontSizeButton: ImageButton
+    private var currentTitleFontSize = 32f // 默认标题字体大小
+    private var currentContentFontSize = 16f // 默认内容字体大小
 
     companion object {
         private val FONTS = mutableListOf<Typeface>()
@@ -66,6 +70,11 @@ class MemoDetailActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 在初始化其他内容之前，先确保数据库是最新的
+        val dbHelper = MemoDatabaseHelper(this)
+        dbHelper.writableDatabase.close()
+        
         setContentView(R.layout.activity_memo_detail)
 
         // 初始化视图
@@ -225,6 +234,31 @@ class MemoDetailActivity : AppCompatActivity() {
             contentEditText.text = contentEditText.text
             contentEditText.invalidate()
         }
+
+        // 初始化字体大小按钮
+        fontSizeButton = findViewById(R.id.font_size_button)
+        titleFontSizeButton = findViewById(R.id.title_font_size_button)
+
+        // 设置点击事件
+        fontSizeButton.setOnClickListener {
+            showFontSizeDialog(false)
+        }
+
+        titleFontSizeButton.setOnClickListener {
+            showFontSizeDialog(true)
+        }
+
+        // 初始状态下隐藏字体大小按钮
+        fontSizeButton.visibility = View.GONE
+        titleFontSizeButton.visibility = View.GONE
+
+        // 获取并设置字体大小
+        currentTitleFontSize = intent.getFloatExtra("memo_title_font_size", 32f)
+        currentContentFontSize = intent.getFloatExtra("memo_content_font_size", 16f)
+
+        // 应用字体大小
+        titleEditText.textSize = currentTitleFontSize
+        contentEditText.textSize = currentContentFontSize
     }
 
     private fun toggleEditMode(edit: Boolean) {
@@ -247,6 +281,10 @@ class MemoDetailActivity : AppCompatActivity() {
         fontButton.visibility = if (edit) View.VISIBLE else View.GONE
         titleFontButton.visibility = if (edit) View.VISIBLE else View.GONE
         
+        // 添加字体大小按钮的可见性控制
+        fontSizeButton.visibility = if (edit) View.VISIBLE else View.GONE
+        titleFontSizeButton.visibility = if (edit) View.VISIBLE else View.GONE
+
         // 更新 ImageAdapter 的编辑模式
         imageAdapter = ImageAdapter(
             this, 
@@ -356,7 +394,9 @@ class MemoDetailActivity : AppCompatActivity() {
                 titleStyle = titleStyle,
                 contentStyle = contentStyle,
                 titleUnderline = titleEditText.paint.isUnderlineText,
-                contentUnderline = contentEditText.paint.isUnderlineText
+                contentUnderline = contentEditText.paint.isUnderlineText,
+                titleFontSize = currentTitleFontSize,
+                contentFontSize = currentContentFontSize
             )
             updateTimeTextView.text = "刚刚更新"
         }
@@ -474,5 +514,40 @@ class MemoDetailActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    private fun showFontSizeDialog(isTitle: Boolean) {
+        val sizes = arrayOf("小", "正常", "大", "特大")
+        val currentSize = if (isTitle) currentTitleFontSize else currentContentFontSize
+        val currentIndex = when (currentSize) {
+            24f -> 0
+            if (isTitle) 32f else 16f -> 1
+            if (isTitle) 40f else 20f -> 2
+            if (isTitle) 48f else 24f -> 3
+            else -> 1
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("选择字体大小")
+            .setSingleChoiceItems(sizes, currentIndex) { dialog, which ->
+                val newSize = when (which) {
+                    0 -> if (isTitle) 24f else 14f
+                    1 -> if (isTitle) 32f else 16f
+                    2 -> if (isTitle) 40f else 20f
+                    3 -> if (isTitle) 48f else 24f
+                    else -> if (isTitle) 32f else 16f
+                }
+                
+                if (isTitle) {
+                    currentTitleFontSize = newSize
+                    titleEditText.textSize = newSize
+                } else {
+                    currentContentFontSize = newSize
+                    contentEditText.textSize = newSize
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 }
