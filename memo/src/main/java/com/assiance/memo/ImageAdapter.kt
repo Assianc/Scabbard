@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.Target
 import java.io.File
 
 class ImageAdapter(
@@ -31,19 +32,19 @@ class ImageAdapter(
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
         val path = imagePaths[position]
         
-        // 创建请求选项
+        // 修改请求选项
         val requestOptions = RequestOptions()
-            .override(800, 800)
-            .centerCrop()
+            .override(Target.SIZE_ORIGINAL)  // 现在可以使用 Target.SIZE_ORIGINAL
+            .fitCenter()
             .diskCacheStrategy(DiskCacheStrategy.ALL)
             .placeholder(R.drawable.ic_image_placeholder)
             .error(R.drawable.ic_image_error)
 
-        // 使用 Glide 加载缩略图
+        // 使用 Glide 加载图片
         Glide.with(context)
             .load(File(path))
             .apply(requestOptions)
-            .thumbnail(0.5f)  // 添加缩略图支持
+            .thumbnail(0.5f)
             .into(holder.imageView)
 
         // 设置长按事件（编辑模式下删除图片）
