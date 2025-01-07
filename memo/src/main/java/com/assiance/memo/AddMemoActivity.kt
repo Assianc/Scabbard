@@ -2,6 +2,7 @@ package com.assiance.memo
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -49,10 +50,7 @@ class AddMemoActivity : AppCompatActivity() {
 
         // 保存按钮点击事件
         binding.buttonSave.setOnClickListener {
-            val title = binding.editTextTitle.text.toString()
-            val content = binding.editTextContent.text.toString()
-            memoDAO.insertMemo(title, content, imagePaths)
-            finish()
+            saveMemo()
         }
     }
 
@@ -93,5 +91,27 @@ class AddMemoActivity : AppCompatActivity() {
         val path = cursor?.getString(columnIndex ?: 0) ?: ""
         cursor?.close()
         return path
+    }
+
+    private fun saveMemo() {
+        val title = binding.editTextTitle.text.toString()
+        val content = binding.editTextContent.text.toString()
+        
+        if (title.isNotEmpty() || content.isNotEmpty()) {
+            memoDAO.insertMemo(
+                title = title,
+                content = content,
+                imagePaths = imagePaths,
+                fontName = "DEFAULT",
+                titleFontName = "DEFAULT",
+                titleStyle = Typeface.NORMAL,
+                contentStyle = Typeface.NORMAL,
+                titleUnderline = false,
+                contentUnderline = false,
+                titleFontSize = 32f,
+                contentFontSize = 16f
+            )
+            finish()
+        }
     }
 }

@@ -41,42 +41,23 @@ class MemoAdapter(
         holder.imageTextIndicator.visibility = 
             if (memo.imagePaths.isNotEmpty()) View.VISIBLE else View.GONE
 
+        holder.titleTextView.typeface = FontUtils.getFontByName(memo.titleFontName)
+        holder.titleTextView.textSize = memo.titleFontSize
+        holder.titleTextView.setTypeface(holder.titleTextView.typeface, memo.titleStyle)
+        holder.titleTextView.paint.isUnderlineText = memo.titleUnderline
+
         val content = memo.content
-        val displayContent = if (content.length > MAX_CONTENT_LENGTH) {
-            content.substring(0, MAX_CONTENT_LENGTH) + "..."
+        val displayContent = if (content.length > 100) {
+            "${content.substring(0, 100)}..."
         } else {
             content
         }
         holder.contentTextView.text = displayContent
-        holder.contentTextView.maxLines = 2
 
-        try {
-            when (memo.titleFontName) {
-                "宋体" -> ResourcesCompat.getFont(context, R.font.simsunch)
-                "仿宋" -> ResourcesCompat.getFont(context, R.font.fasimsunch)
-                "黑体" -> ResourcesCompat.getFont(context, R.font.simheich)
-                else -> Typeface.DEFAULT
-            }?.let { typeface ->
-                holder.titleTextView.typeface = typeface
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            holder.titleTextView.typeface = Typeface.DEFAULT
-        }
-
-        try {
-            when (memo.fontName) {
-                "宋体" -> ResourcesCompat.getFont(context, R.font.simsunch)
-                "仿宋" -> ResourcesCompat.getFont(context, R.font.fasimsunch)
-                "黑体" -> ResourcesCompat.getFont(context, R.font.simheich)
-                else -> Typeface.DEFAULT
-            }?.let { typeface ->
-                holder.contentTextView.typeface = typeface
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            holder.contentTextView.typeface = Typeface.DEFAULT
-        }
+        holder.contentTextView.typeface = FontUtils.getFontByName(memo.fontName)
+        holder.contentTextView.textSize = memo.contentFontSize
+        holder.contentTextView.setTypeface(holder.contentTextView.typeface, memo.contentStyle)
+        holder.contentTextView.paint.isUnderlineText = memo.contentUnderline
 
         holder.checkBox.visibility = if (isMultiSelectMode) View.VISIBLE else View.GONE
         holder.checkBox.isChecked = selectedItems.contains(memo)
@@ -127,11 +108,6 @@ class MemoAdapter(
                 selectedItems.remove(memo)
             }
         }
-
-        holder.titleTextView.setTypeface(holder.titleTextView.typeface, memo.titleStyle)
-        holder.contentTextView.setTypeface(holder.contentTextView.typeface, memo.contentStyle)
-        holder.titleTextView.paint.isUnderlineText = memo.titleUnderline
-        holder.contentTextView.paint.isUnderlineText = memo.contentUnderline
     }
 
     override fun getItemCount(): Int = memoList.size
