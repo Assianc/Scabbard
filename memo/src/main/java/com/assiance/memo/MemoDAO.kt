@@ -15,23 +15,36 @@ class MemoDAO(context: Context) {
     private val gson = Gson()
 
     // 插入新的备忘录
-    fun insertMemo(title: String, content: String, imagePaths: List<String> = emptyList()): Long {
+    fun insertMemo(
+        title: String,
+        content: String,
+        imagePaths: List<String> = emptyList(),
+        fontName: String = "DEFAULT",
+        titleFontName: String = "DEFAULT",
+        titleStyle: Int = 0,
+        contentStyle: Int = 0,
+        titleUnderline: Boolean = false,
+        contentUnderline: Boolean = false,
+        titleFontSize: Float = 32f,
+        contentFontSize: Float = 16f
+    ): Long {
         val db = dbHelper.writableDatabase
-        var result: Long = -1
-        try {
-            val values = ContentValues().apply {
-                put(MemoDatabaseHelper.COLUMN_TITLE, title)
-                put(MemoDatabaseHelper.COLUMN_CONTENT, content)
-                put(MemoDatabaseHelper.COLUMN_UPDATE_TIME, System.currentTimeMillis())
-                put(MemoDatabaseHelper.COLUMN_IMAGE_PATHS, gson.toJson(imagePaths))
-            }
-            result = db.insert(MemoDatabaseHelper.TABLE_NAME, null, values)
-        } catch (e: SQLException) {
-            e.printStackTrace()
-        } finally {
-            db.close()
+        val values = ContentValues().apply {
+            put(MemoDatabaseHelper.COLUMN_TITLE, title)
+            put(MemoDatabaseHelper.COLUMN_CONTENT, content)
+            put(MemoDatabaseHelper.COLUMN_TIMESTAMP, System.currentTimeMillis())
+            put(MemoDatabaseHelper.COLUMN_UPDATE_TIME, System.currentTimeMillis())
+            put(MemoDatabaseHelper.COLUMN_IMAGE_PATHS, gson.toJson(imagePaths))
+            put(MemoDatabaseHelper.COLUMN_FONT_NAME, fontName)
+            put(MemoDatabaseHelper.COLUMN_TITLE_FONT_NAME, titleFontName)
+            put(MemoDatabaseHelper.COLUMN_TITLE_STYLE, titleStyle)
+            put(MemoDatabaseHelper.COLUMN_CONTENT_STYLE, contentStyle)
+            put(MemoDatabaseHelper.COLUMN_TITLE_UNDERLINE, if (titleUnderline) 1 else 0)
+            put(MemoDatabaseHelper.COLUMN_CONTENT_UNDERLINE, if (contentUnderline) 1 else 0)
+            put(MemoDatabaseHelper.COLUMN_TITLE_FONT_SIZE, titleFontSize)
+            put(MemoDatabaseHelper.COLUMN_CONTENT_FONT_SIZE, contentFontSize)
         }
-        return result
+        return db.insert(MemoDatabaseHelper.TABLE_NAME, null, values)
     }
 
     // 查询所有备忘录
