@@ -7,10 +7,19 @@
     android:gravity="center">
 
     <TextView
+        android:id="@+id/dateText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="冬去鸟鸣时"
-        android:textSize="24sp"
+        android:textSize="16sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="4dp"/>
+
+    <TextView
+        android:id="@+id/timeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="00:00:00"
+        android:textSize="36sp"
         android:textStyle="bold"
         android:layout_marginBottom="24dp"/>
 

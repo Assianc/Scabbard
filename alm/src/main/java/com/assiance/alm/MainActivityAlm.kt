@@ -10,6 +10,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
@@ -18,7 +20,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 class MainActivityAlm : AppCompatActivity() {
     private lateinit var timePicker: TimePicker
@@ -26,6 +30,10 @@ class MainActivityAlm : AppCompatActivity() {
     private lateinit var cancelAlarmButton: Button
     private lateinit var alarmStatusText: TextView
     private lateinit var alarmManager: AlarmManager
+    private lateinit var dateText: TextView
+    private lateinit var timeText: TextView
+    private var timeUpdateHandler: Handler = Handler(Looper.getMainLooper())
+    private var timeUpdateRunnable: Runnable? = null
 
     companion object {
         private const val ALARM_REQUEST_CODE = 100
@@ -46,6 +54,13 @@ class MainActivityAlm : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_alm)
+
+        // 初始化时间显示相关的视图
+        dateText = findViewById(R.id.dateText)
+        timeText = findViewById(R.id.timeText)
+        
+        // 启动时间更新
+        startTimeUpdate()
 
         // 初始化视图
         timePicker = findViewById(R.id.timePicker)
@@ -72,7 +87,7 @@ class MainActivityAlm : AppCompatActivity() {
 
         // 设置按钮点击事件
         setAlarmButton.setOnClickListener {
-            if (checkAlarmPermissions()) {
+            if (checkAllPermissions()) {
                 setAlarm()
             }
         }
@@ -203,18 +218,89 @@ class MainActivityAlm : AppCompatActivity() {
         }
     }
 
-    private fun checkAlarmPermissions(): Boolean {
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                true
-            } else {
-                showAlarmPermissionDialog()
-                false
+    private fun checkAllPermissions(): Boolean {
+        // 检查通知权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (!checkNotificationPermission()) {
+                requestNotificationPermission()
+                return false
             }
-        } else {
-            true
+        }
+
+        // 检查精确闹钟权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!checkAlarmPermission()) {
+                showAlarmPermissionDialog()
+                return false
+            }
+        }
+
+        return true
+    }
+
+    private fun checkNotificationPermission(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == 
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
+        return true
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)) {
+                // 显示解释对话框
+                AlertDialog.Builder(this)
+                    .setTitle("需要通知权限")
+                    .setMessage("为了在闹钟响起时显示通知，需要授予通知权限。")
+                    .setPositiveButton("授权") { _, _ ->
+                        requestPermissions(
+                            arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                            100
+                        )
+                    }
+                    .setNegativeButton("取消") { dialog, _ ->
+                        dialog.dismiss()
+                        Toast.makeText(this, "未授予通知权限，闹钟将无法显示通知", Toast.LENGTH_LONG).show()
+                    }
+                    .show()
+            } else {
+                // 直接请求权限
+                requestPermissions(
+                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                    100
+                )
+            }
+        }
+    }
+
+    private fun checkAlarmPermission(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            return alarmManager.canScheduleExactAlarms()
+        }
+        return true
+    }
+
+    // 处理权限请求结果
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            100 -> {
+                if (grantResults.isNotEmpty() && 
+                    grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    // 用户授予了通知权限
+                    if (checkAlarmPermission()) {
+                        setAlarm()
+                    }
+                } else {
+                    Toast.makeText(this, "未授予通知权限，闹钟将无法显示通知", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 
@@ -243,21 +329,47 @@ class MainActivityAlm : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // 检查是否已经获得权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            if (!alarmManager.canScheduleExactAlarms()) {
-                Toast.makeText(this, "请授予精确闹钟权限以确保闹钟准时响起", Toast.LENGTH_LONG).show()
-            }
+        // 检查所有权限状态
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !checkNotificationPermission()) {
+            Toast.makeText(this, "请授予通知权限以确保闹钟通知正常显示", Toast.LENGTH_LONG).show()
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !checkAlarmPermission()) {
+            Toast.makeText(this, "请授予精确闹钟权限以确保闹钟准时响起", Toast.LENGTH_LONG).show()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        // 停止时间更新
+        timeUpdateRunnable?.let { timeUpdateHandler.removeCallbacks(it) }
+        timeUpdateRunnable = null
+        
         try {
             unregisterReceiver(alarmReceiver)
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    private fun startTimeUpdate() {
+        timeUpdateRunnable = object : Runnable {
+            override fun run() {
+                updateCurrentTime()
+                timeUpdateHandler.postDelayed(this, 1000) // 每秒更新一次
+            }
+        }
+        timeUpdateRunnable?.let { timeUpdateHandler.post(it) }
+    }
+
+    private fun updateCurrentTime() {
+        val calendar = Calendar.getInstance()
+        
+        // 更新日期显示
+        val dateFormat = SimpleDateFormat("yyyy年MM月dd日 E", Locale.CHINESE)
+        dateText.text = dateFormat.format(calendar.time)
+        
+        // 更新时间显示
+        val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.CHINESE)
+        timeText.text = timeFormat.format(calendar.time)
     }
 }

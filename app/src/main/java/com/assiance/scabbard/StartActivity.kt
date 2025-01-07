@@ -1,12 +1,17 @@
 package com.assiance.scabbard
 
 import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.Button
 import android.widget.PopupMenu
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.assiance.memo.MainActivityMemo
 import kotlinx.coroutines.CoroutineScope
@@ -16,10 +21,8 @@ import com.assiance.scabbard.update.UpdateChecker
 import android.widget.ImageView
 import com.assiance.scabbard.utils.IconManager
 import android.app.DownloadManager
-import android.content.Context
 import android.os.Environment
 import android.widget.Toast
-import android.app.AlertDialog
 import com.assiance.alm.MainActivityAlm
 
 open class StartActivity : AppCompatActivity() {
@@ -62,6 +65,107 @@ open class StartActivity : AppCompatActivity() {
         almButton.setOnClickListener {
             val intent = Intent(this@StartActivity, MainActivityAlm::class.java)
             startActivity(intent)
+        }
+
+        // 在应用启动时检查并请求权限
+        checkAndRequestPermissions()
+    }
+
+    private fun checkAndRequestPermissions() {
+        // 检查通知权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (!checkNotificationPermission()) {
+                requestNotificationPermission()
+            }
+        }
+
+        // 检查精确闹钟权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (!checkAlarmPermission()) {
+                showAlarmPermissionDialog()
+            }
+        }
+    }
+
+    private fun checkNotificationPermission(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == 
+                android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
+        return true
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)) {
+                AlertDialog.Builder(this)
+                    .setTitle("需要通知权限")
+                    .setMessage("为了在闹钟响起时显示通知，需要授予通知权限。")
+                    .setPositiveButton("授权") { _, _ ->
+                        requestPermissions(
+                            arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                            100
+                        )
+                    }
+                    .setNegativeButton("取消") { dialog, _ ->
+                        dialog.dismiss()
+                        Toast.makeText(this, "未授予通知权限，闹钟将无法显示通知", Toast.LENGTH_LONG).show()
+                    }
+                    .show()
+            } else {
+                requestPermissions(
+                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                    100
+                )
+            }
+        }
+    }
+
+    private fun checkAlarmPermission(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            return alarmManager.canScheduleExactAlarms()
+        }
+        return true
+    }
+
+    private fun showAlarmPermissionDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("需要权限")
+            .setMessage("为了确保闹钟准时响起，需要授予精确闹钟权限。")
+            .setPositiveButton("去设置") { _, _ ->
+                try {
+                    val intent = Intent().apply {
+                        action = Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Toast.makeText(this, "打开设置失败，请手动授予权限", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+                Toast.makeText(this, "未授予权限，闹钟可能不会准时响起", Toast.LENGTH_LONG).show()
+            }
+            .show()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            100 -> {
+                if (grantResults.isNotEmpty() && 
+                    grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "通知权限已授予", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "未授予通知权限，闹钟将无法显示通知", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 
