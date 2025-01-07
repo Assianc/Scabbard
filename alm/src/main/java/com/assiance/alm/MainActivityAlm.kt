@@ -10,10 +10,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
 import android.widget.TimePicker
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import java.util.Calendar
@@ -70,7 +72,9 @@ class MainActivityAlm : AppCompatActivity() {
 
         // 设置按钮点击事件
         setAlarmButton.setOnClickListener {
-            setAlarm()
+            if (checkAlarmPermissions()) {
+                setAlarm()
+            }
         }
 
         cancelAlarmButton.setOnClickListener {
@@ -196,6 +200,55 @@ class MainActivityAlm : AppCompatActivity() {
             updateAlarmStatus("闹钟已设置：$timeString")
         } else {
             updateAlarmStatus("未设置闹钟")
+        }
+    }
+
+    private fun checkAlarmPermissions(): Boolean {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (alarmManager.canScheduleExactAlarms()) {
+                true
+            } else {
+                showAlarmPermissionDialog()
+                false
+            }
+        } else {
+            true
+        }
+    }
+
+    private fun showAlarmPermissionDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("需要权限")
+            .setMessage("为了确保闹钟准时响起，需要授予精确闹钟权限。")
+            .setPositiveButton("去设置") { _, _ ->
+                try {
+                    // 跳转到精确闹钟权限设置页面
+                    val intent = Intent().apply {
+                        action = Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Toast.makeText(this, "打开设置失败，请手动授予权限", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+                Toast.makeText(this, "未授予权限，闹钟可能不会准时响起", Toast.LENGTH_LONG).show()
+            }
+            .show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 检查是否已经获得权限
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                Toast.makeText(this, "请授予精确闹钟权限以确保闹钟准时响起", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
