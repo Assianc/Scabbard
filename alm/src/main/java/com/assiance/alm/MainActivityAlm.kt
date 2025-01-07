@@ -98,6 +98,9 @@ class MainActivityAlm : AppCompatActivity() {
 
         // 恢复已设置的闹钟状态
         restoreAlarmStatus()
+
+        // 设置TimePicker为24小时制
+        timePicker.setIs24HourView(true)
     }
 
     private fun setAlarm() {
@@ -197,6 +200,15 @@ class MainActivityAlm : AppCompatActivity() {
 
     private fun updateAlarmStatus(status: String) {
         alarmStatusText.text = status
+        
+        // 根据状态更新按钮状态
+        if (status.startsWith("闹钟已设置")) {
+            setAlarmButton.isEnabled = false
+            cancelAlarmButton.isEnabled = true
+        } else {
+            setAlarmButton.isEnabled = true
+            cancelAlarmButton.isEnabled = false
+        }
     }
 
     private fun restoreAlarmStatus() {
@@ -364,11 +376,11 @@ class MainActivityAlm : AppCompatActivity() {
     private fun updateCurrentTime() {
         val calendar = Calendar.getInstance()
         
-        // 更新日期显示
-        val dateFormat = SimpleDateFormat("yyyy年MM月dd日 E", Locale.CHINESE)
+        // 更新日期显示，添加星期
+        val dateFormat = SimpleDateFormat("yyyy年MM月dd日 EEEE", Locale.CHINESE)
         dateText.text = dateFormat.format(calendar.time)
         
-        // 更新时间显示
+        // 更新时间显示，使用24小时制
         val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.CHINESE)
         timeText.text = timeFormat.format(calendar.time)
     }
