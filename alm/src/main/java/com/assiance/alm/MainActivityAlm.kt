@@ -10,7 +10,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.TimePicker
@@ -25,7 +24,6 @@ class MainActivityAlm : AppCompatActivity() {
     private lateinit var cancelAlarmButton: Button
     private lateinit var alarmStatusText: TextView
     private lateinit var alarmManager: AlarmManager
-    private lateinit var pendingIntent: PendingIntent
 
     companion object {
         private const val ALARM_REQUEST_CODE = 100
@@ -59,8 +57,16 @@ class MainActivityAlm : AppCompatActivity() {
         // 创建通知渠道
         createNotificationChannel()
 
-        // 注册广播接收器
-        registerReceiver(alarmReceiver, IntentFilter(ALARM_ACTION))
+        // 注册广播接收器，添加 RECEIVER_NOT_EXPORTED 标志
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                alarmReceiver,
+                IntentFilter(ALARM_ACTION),
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            registerReceiver(alarmReceiver, IntentFilter(ALARM_ACTION))
+        }
 
         // 设置按钮点击事件
         setAlarmButton.setOnClickListener {
@@ -87,8 +93,10 @@ class MainActivityAlm : AppCompatActivity() {
             }
         }
 
-        val intent = Intent(ALARM_ACTION)
-        pendingIntent = PendingIntent.getBroadcast(
+        val intent = Intent(ALARM_ACTION).apply {
+            `package` = packageName  // 添加包名以确保广播只发送给本应用
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
             this,
             ALARM_REQUEST_CODE,
             intent,
@@ -112,7 +120,9 @@ class MainActivityAlm : AppCompatActivity() {
     }
 
     private fun cancelAlarm() {
-        val intent = Intent(ALARM_ACTION)
+        val intent = Intent(ALARM_ACTION).apply {
+            `package` = packageName
+        }
         val pendingIntent = PendingIntent.getBroadcast(
             this,
             ALARM_REQUEST_CODE,
