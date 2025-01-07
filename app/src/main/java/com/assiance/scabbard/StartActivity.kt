@@ -20,6 +20,7 @@ import android.content.Context
 import android.os.Environment
 import android.widget.Toast
 import android.app.AlertDialog
+import com.assiance.alm.MainActivityAlm
 
 open class StartActivity : AppCompatActivity() {
 
@@ -54,6 +55,12 @@ open class StartActivity : AppCompatActivity() {
 
         memoButton.setOnClickListener {
             val intent = Intent(this@StartActivity, MainActivityMemo::class.java)
+            startActivity(intent)
+        }
+
+        val almButton = findViewById<Button>(R.id.alm_button)
+        almButton.setOnClickListener {
+            val intent = Intent(this@StartActivity, MainActivityAlm::class.java)
             startActivity(intent)
         }
     }
