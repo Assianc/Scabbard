@@ -40,18 +40,19 @@
 
     </LinearLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.assiance.alm.MovableFloatingActionButton
         android:id="@+id/fabSetAlarm"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_margin="24dp"
         android:src="@drawable/ic_alarm_add"
-        app:fabSize="normal"
-        app:elevation="6dp"
-        app:backgroundTint="@color/teal_200"
+        app:fabSize="mini"
+        app:elevation="8dp"
+        app:backgroundTint="#FF1976D2"
         app:tint="@android:color/white"
         app:borderWidth="0dp"
-        app:rippleColor="@color/teal_700"/>
+        app:maxImageSize="20dp"
+        app:rippleColor="#FF1565C0"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 
