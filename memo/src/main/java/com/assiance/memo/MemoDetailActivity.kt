@@ -26,11 +26,11 @@ import android.widget.PopupMenu
 import android.view.Menu
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import android.view.ViewGroup
 
 class MemoDetailActivity : AppCompatActivity() {
 
     private lateinit var titleEditText: EditText
+    private lateinit var contentEditText: EditText
     private lateinit var updateTimeTextView: TextView
     private lateinit var editButton: ImageButton
     private lateinit var saveButton: Button
@@ -40,6 +40,7 @@ class MemoDetailActivity : AppCompatActivity() {
     private lateinit var addImageButton: FloatingActionButton
     private val PICK_IMAGE_REQUEST = 1
     private val PERMISSION_REQUEST_CODE = 100
+    private lateinit var imagesRecyclerView: RecyclerView
     private lateinit var imageAdapter: ImageAdapter
     private val imagePaths = mutableListOf<String>()
     private lateinit var fontButton: ImageButton
@@ -62,13 +63,33 @@ class MemoDetailActivity : AppCompatActivity() {
     private var currentContentFontSize = 16f // 默认内容字体大小
     private lateinit var titleFontSizeInput: EditText
     private lateinit var contentFontSizeInput: EditText
-    private lateinit var contentRecyclerView: RecyclerView
-    private lateinit var mixedContentAdapter: MixedContentAdapter
-    private val contentsList = mutableListOf<MemoContent>()
-    private var contentUnderlineState = false
 
     companion object {
-        // 删除 FONTS 和 FONT_NAMES
+        private val FONTS = mutableListOf<Typeface>()
+        private val FONT_NAMES = arrayOf(
+            "默认字体",
+            "宋体",
+            "仿宋",
+            "黑体",
+            "楷体",
+        )
+        
+        private val FONT_SIZES = arrayOf(
+            Pair("初号", 42f),
+            Pair("小初", 36f),
+            Pair("一号", 26f),
+            Pair("小一", 24f),
+            Pair("二号", 22f),
+            Pair("小二", 18f),
+            Pair("三号", 16f),
+            Pair("小三", 15f),
+            Pair("四号", 14f),
+            Pair("小四", 12f),
+            Pair("五号", 10.5f),
+            Pair("小五", 9f),
+            Pair("六号", 7.5f),
+            Pair("小六", 6.5f)
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,10 +104,6 @@ class MemoDetailActivity : AppCompatActivity() {
         // 初始化所有视图
         initializeViews()
         
-        // 初始化混合内容列表
-        contentRecyclerView = findViewById(R.id.content_recycler_view)
-        contentRecyclerView.layoutManager = LinearLayoutManager(this)
-        
         // 获取传递过来的数据
         memoId = intent.getIntExtra("memo_id", -1)
         val title = intent.getStringExtra("memo_title") ?: ""
@@ -95,70 +112,14 @@ class MemoDetailActivity : AppCompatActivity() {
 
         // 设置数据
         titleEditText.setText(title)
-        
-        // 将内容按换行符分割，每段创建一个文本内容
-        if (content.isNotEmpty()) {
-            content.split("\n").forEach { paragraph ->
-                if (paragraph.isNotEmpty()) {
-                    contentsList.add(MemoContent.TextContent(paragraph))
-                }
-            }
-        }
-        
-        // 如果内容为空，添加一个空的文本内容
-        if (contentsList.isEmpty()) {
-            contentsList.add(MemoContent.TextContent(""))
-        }
-
+        contentEditText.setText(content)
         updateTimeTextView.text = updateTime
-
-        // 添加现有图片，每张图片后面添加一个空的文本内容
-        intent.getStringArrayListExtra("memo_image_paths")?.forEach { path ->
-            contentsList.add(MemoContent.ImageContent(path))
-            contentsList.add(MemoContent.TextContent(
-                text = "",
-                fontName = currentFontName,
-                style = if (contentBoldState && contentItalicState) Typeface.BOLD_ITALIC 
-                        else if (contentBoldState) Typeface.BOLD 
-                        else if (contentItalicState) Typeface.ITALIC 
-                        else Typeface.NORMAL,
-                fontSize = currentContentFontSize
-            ))
-        }
-
-        // 初始化适配器
-        mixedContentAdapter = MixedContentAdapter(
-            this,
-            contentsList,
-            isEditMode,
-            currentFontName,  // 添加字体名称
-            if (contentBoldState && contentItalicState) Typeface.BOLD_ITALIC 
-            else if (contentBoldState) Typeface.BOLD 
-            else if (contentItalicState) Typeface.ITALIC 
-            else Typeface.NORMAL,  // 添加样式
-            currentContentFontSize,  // 添加字体大小
-            onImageClick = { path ->
-                showFullImage(path)
-            },
-            onImageLongClick = { position ->
-                if (isEditMode) {
-                    showDeleteConfirmationDialog(position)
-                }
-            },
-            onTextChange = { position, newText ->
-                (contentsList[position] as? MemoContent.TextContent)?.let {
-                    contentsList[position] = MemoContent.TextContent(newText)
-                }
-            }
-        )
-        
-        contentRecyclerView.adapter = mixedContentAdapter
 
         // 设置事件监听器
         setupEventListeners()
         
         // 初始化字体
-        FontUtils.initFonts(this)
+        initFonts()
         
         // 应用保存的设置
         applyStoredSettings()
@@ -167,6 +128,7 @@ class MemoDetailActivity : AppCompatActivity() {
     private fun initializeViews() {
         // 初始化基本视图
         titleEditText = findViewById(R.id.memo_detail_title)
+        contentEditText = findViewById(R.id.memo_detail_content)
         updateTimeTextView = findViewById(R.id.memo_detail_update_time)
         editButton = findViewById(R.id.edit_button)
         saveButton = findViewById(R.id.save_button)
@@ -187,6 +149,10 @@ class MemoDetailActivity : AppCompatActivity() {
         // 初始化字体大小输入框
         titleFontSizeInput = findViewById(R.id.title_font_size_input)
         contentFontSizeInput = findViewById(R.id.content_font_size_input)
+        
+        // 初始化图片列表
+        imagesRecyclerView = findViewById(R.id.images_recycler_view)
+        imagesRecyclerView.layoutManager = LinearLayoutManager(this)
         
         // 初始化 DAO
         memoDAO = MemoDAO(this)
@@ -216,6 +182,26 @@ class MemoDetailActivity : AppCompatActivity() {
             openImagePicker()
         }
 
+        // 初始化图片列表
+        imageAdapter = ImageAdapter(
+            this, 
+            imagePaths,
+            isEditMode = false
+        ) { position ->
+            // 长按删除图片
+            imagePaths.removeAt(position)
+            imageAdapter.notifyItemRemoved(position)
+            // 通知适配器数据集已更改
+            imageAdapter.notifyItemRangeChanged(position, imagePaths.size)
+        }
+        imagesRecyclerView.adapter = imageAdapter
+
+        // 获取并显示现有图片
+        intent.getStringArrayListExtra("memo_image_paths")?.let { paths ->
+            imagePaths.addAll(paths)
+            imageAdapter.notifyDataSetChanged()
+        }
+
         // 初始化字体按钮
         fontButton.setOnClickListener {
             showFontSelectionDialog()
@@ -226,7 +212,7 @@ class MemoDetailActivity : AppCompatActivity() {
             showTitleFontSelectionDialog()
         }
 
-        // 修改内容样式按钮的点击事件
+        // 初始化内容样式按钮
         boldButton.setOnClickListener { 
             contentBoldState = !contentBoldState
             applyContentStyles()
@@ -238,8 +224,10 @@ class MemoDetailActivity : AppCompatActivity() {
         }
         
         underlineButton.setOnClickListener {
-            mixedContentAdapter.updateUnderline(!contentUnderlineState)
-            contentUnderlineState = !contentUnderlineState
+            contentEditText.paint.isUnderlineText = !contentEditText.paint.isUnderlineText
+            // 强制重绘整个 EditText
+            contentEditText.text = contentEditText.text
+            contentEditText.invalidate()
         }
 
         // 修改字体大小按钮点击事件
@@ -296,85 +284,128 @@ class MemoDetailActivity : AppCompatActivity() {
     }
 
     private fun applyStoredSettings() {
-        // 应用标题设置
+        // 应用保存的字体设置
+        currentFontName = intent.getStringExtra("memo_font_name") ?: "DEFAULT"
         currentTitleFontName = intent.getStringExtra("memo_title_font_name") ?: "DEFAULT"
+        applyFont(currentFontName)
         applyTitleFont(currentTitleFontName)
         
-        titleBoldState = (intent.getIntExtra("memo_title_style", Typeface.NORMAL) and Typeface.BOLD) != 0
-        titleItalicState = (intent.getIntExtra("memo_title_style", Typeface.NORMAL) and Typeface.ITALIC) != 0
-        applyTitleStyles()
-        
-        titleEditText.paint.isUnderlineText = intent.getBooleanExtra("memo_title_underline", false)
-        
-        // 应用内容设置
-        currentFontName = intent.getStringExtra("memo_font_name") ?: "DEFAULT"
-        
-        contentBoldState = (intent.getIntExtra("memo_content_style", Typeface.NORMAL) and Typeface.BOLD) != 0
-        contentItalicState = (intent.getIntExtra("memo_content_style", Typeface.NORMAL) and Typeface.ITALIC) != 0
-        
-        // 使用适配器更新内容样式
-        mixedContentAdapter.updateFont(currentFontName)
-        mixedContentAdapter.updateStyle(
-            if (contentBoldState && contentItalicState) Typeface.BOLD_ITALIC
-            else if (contentBoldState) Typeface.BOLD
-            else if (contentItalicState) Typeface.ITALIC
-            else Typeface.NORMAL
-        )
+        // 应用保存的样式设置
+        val titleStyle = intent.getIntExtra("memo_title_style", Typeface.NORMAL)
+        val contentStyle = intent.getIntExtra("memo_content_style", Typeface.NORMAL)
+        val titleUnderline = intent.getBooleanExtra("memo_title_underline", false)
+        val contentUnderline = intent.getBooleanExtra("memo_content_underline", false)
         
         // 设置字体大小
         currentTitleFontSize = intent.getFloatExtra("memo_title_font_size", 32f)
         currentContentFontSize = intent.getFloatExtra("memo_content_font_size", 16f)
-        
         titleEditText.textSize = currentTitleFontSize
-        mixedContentAdapter.updateFontSize(currentContentFontSize)
+        contentEditText.textSize = currentContentFontSize
         
-        // 更新输入框显示的值
+        // 更新输入框的显示值
         titleFontSizeInput.setText(currentTitleFontSize.toInt().toString())
         contentFontSizeInput.setText(currentContentFontSize.toInt().toString())
+        
+        // 恢复样式状态
+        titleBoldState = (titleStyle and Typeface.BOLD) != 0
+        titleItalicState = (titleStyle and Typeface.ITALIC) != 0
+        contentBoldState = (contentStyle and Typeface.BOLD) != 0
+        contentItalicState = (contentStyle and Typeface.ITALIC) != 0
+
+        // 应用样式
+        applyTitleStyles()
+        applyContentStyles()
+        
+        // 应用下划线并强制重绘
+        titleEditText.paint.isUnderlineText = titleUnderline
+        titleEditText.text = titleEditText.text
+        titleEditText.invalidate()
+
+        contentEditText.paint.isUnderlineText = contentUnderline
+        contentEditText.text = contentEditText.text
+        contentEditText.invalidate()
+        
+        // 设置按钮点击事件
+        titleBoldButton.setOnClickListener { 
+            titleBoldState = !titleBoldState
+            applyTitleStyles()
+        }
+        
+        titleItalicButton.setOnClickListener { 
+            titleItalicState = !titleItalicState
+            applyTitleStyles()
+        }
+        
+        titleUnderlineButton.setOnClickListener {
+            titleEditText.paint.isUnderlineText = !titleEditText.paint.isUnderlineText
+            // 强制重绘整个 EditText
+            titleEditText.text = titleEditText.text
+            titleEditText.invalidate()
+        }
+
+        boldButton.setOnClickListener { 
+            contentBoldState = !contentBoldState
+            applyContentStyles()
+        }
+        
+        italicButton.setOnClickListener { 
+            contentItalicState = !contentItalicState
+            applyContentStyles()
+        }
+        
+        underlineButton.setOnClickListener {
+            contentEditText.paint.isUnderlineText = !contentEditText.paint.isUnderlineText
+            // 强制重绘整个 EditText
+            contentEditText.text = contentEditText.text
+            contentEditText.invalidate()
+        }
     }
 
     private fun toggleEditMode(edit: Boolean) {
         isEditMode = edit
         titleEditText.isEnabled = edit
+        contentEditText.isEnabled = edit
+        
+        val textColor = if (edit) {
+            getColor(R.color.edit_mode_text)
+        } else {
+            getColor(R.color.view_mode_text)
+        }
+        
+        titleEditText.setTextColor(textColor)
+        contentEditText.setTextColor(textColor)
+        
         editButton.visibility = if (edit) View.GONE else View.VISIBLE
         saveButton.visibility = if (edit) View.VISIBLE else View.GONE
         addImageButton.visibility = if (edit) View.VISIBLE else View.GONE
         fontButton.visibility = if (edit) View.VISIBLE else View.GONE
         titleFontButton.visibility = if (edit) View.VISIBLE else View.GONE
+        
+        // 添加字体大小按钮的可见性控制
+        fontSizeButton.visibility = if (edit) View.VISIBLE else View.GONE
+        titleFontSizeButton.visibility = if (edit) View.VISIBLE else View.GONE
+
+        // 更新 ImageAdapter 的编辑模式
+        imageAdapter = ImageAdapter(
+            this, 
+            imagePaths,
+            isEditMode = edit
+        ) { position ->
+            // 长按时显示确认对话框
+            showDeleteConfirmationDialog(position)
+        }
+        imagesRecyclerView.adapter = imageAdapter
+
+        // 显示/隐藏内容样式按钮
         boldButton.visibility = if (edit) View.VISIBLE else View.GONE
         italicButton.visibility = if (edit) View.VISIBLE else View.GONE
         underlineButton.visibility = if (edit) View.VISIBLE else View.GONE
+
+        // 显示/隐藏标题样式按钮
         titleBoldButton.visibility = if (edit) View.VISIBLE else View.GONE
         titleItalicButton.visibility = if (edit) View.VISIBLE else View.GONE
         titleUnderlineButton.visibility = if (edit) View.VISIBLE else View.GONE
-        fontSizeButton.visibility = if (edit) View.VISIBLE else View.GONE
-        titleFontSizeButton.visibility = if (edit) View.VISIBLE else View.GONE
-        
-        // 更新适配器的编辑模式状态
-        mixedContentAdapter = MixedContentAdapter(
-            this,
-            contentsList,
-            edit,
-            currentFontName,
-            if (contentBoldState && contentItalicState) Typeface.BOLD_ITALIC 
-            else if (contentBoldState) Typeface.BOLD 
-            else if (contentItalicState) Typeface.ITALIC 
-            else Typeface.NORMAL,
-            currentContentFontSize,
-            onImageClick = { path -> showFullImage(path) },
-            onImageLongClick = { position ->
-                if (edit) {
-                    showDeleteConfirmationDialog(position)
-                }
-            },
-            onTextChange = { position, newText ->
-                (contentsList[position] as? MemoContent.TextContent)?.let {
-                    contentsList[position] = MemoContent.TextContent(newText)
-                }
-            }
-        )
-        contentRecyclerView.adapter = mixedContentAdapter
-        
+
         // 添加字体大小输入框的可见性控制
         titleFontSizeInput.visibility = if (edit) View.VISIBLE else View.GONE
         contentFontSizeInput.visibility = if (edit) View.VISIBLE else View.GONE
@@ -384,14 +415,22 @@ class MemoDetailActivity : AppCompatActivity() {
 
     private fun showDeleteConfirmationDialog(position: Int) {
         AlertDialog.Builder(this)
-            .setTitle("删除确认")
+            .setTitle("删除图片")
             .setMessage("确定要删除这张图片吗？")
-            .setPositiveButton("确定") { _, _ ->
-                contentsList.removeAt(position)
-                mixedContentAdapter.notifyItemRemoved(position)
-                mixedContentAdapter.notifyItemRangeChanged(position, contentsList.size)
+            .setPositiveButton("确定") { dialog, _ ->
+                // 添加安全检查
+                if (position >= 0 && position < imagePaths.size) {
+                    imagePaths.removeAt(position)
+                    imageAdapter.notifyItemRemoved(position)
+                    // 通知适配器数据集已更改
+                    imageAdapter.notifyItemRangeChanged(position, imagePaths.size)
+                }
+                dialog.dismiss()
             }
-            .setNegativeButton("取消", null)
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
             .show()
     }
 
@@ -421,24 +460,8 @@ class MemoDetailActivity : AppCompatActivity() {
             val selectedImageUri = data.data
             selectedImageUri?.let { uri ->
                 val path = getRealPathFromURI(uri)
-                // 添加图片内容
-                contentsList.add(MemoContent.ImageContent(path))
-                // 添加新的文本内容
-                contentsList.add(MemoContent.TextContent(
-                    text = "",
-                    fontName = currentFontName,
-                    style = if (contentBoldState && contentItalicState) Typeface.BOLD_ITALIC 
-                            else if (contentBoldState) Typeface.BOLD 
-                            else if (contentItalicState) Typeface.ITALIC 
-                            else Typeface.NORMAL,
-                    fontSize = currentContentFontSize
-                ))
-                // 通知适配器整个范围的更新
-                mixedContentAdapter.notifyItemRangeInserted(contentsList.size - 2, 2)
-                // 滚动到新添加的文本位置
-                contentRecyclerView.post {
-                    contentRecyclerView.smoothScrollToPosition(contentsList.size - 1)
-                }
+                imagePaths.add(path)
+                imageAdapter.notifyItemInserted(imagePaths.size - 1)
             }
         }
     }
@@ -456,34 +479,28 @@ class MemoDetailActivity : AppCompatActivity() {
     private fun saveMemo() {
         if (memoId != -1) {
             val newTitle = titleEditText.text.toString()
+            val newContent = contentEditText.text.toString()
             
-            // 收集所有文本内容
-            val textContents = contentsList
-                .filterIsInstance<MemoContent.TextContent>()
-                .joinToString("\n") { it.text }
+            // 计算当前样式
+            var titleStyle = Typeface.NORMAL
+            if (titleBoldState) titleStyle = titleStyle or Typeface.BOLD
+            if (titleItalicState) titleStyle = titleStyle or Typeface.ITALIC
             
-            // 收集所有图片路径
-            val imagePaths = contentsList
-                .filterIsInstance<MemoContent.ImageContent>()
-                .map { it.imagePath }
+            var contentStyle = Typeface.NORMAL
+            if (contentBoldState) contentStyle = contentStyle or Typeface.BOLD
+            if (contentItalicState) contentStyle = contentStyle or Typeface.ITALIC
 
             memoDAO.updateMemo(
                 id = memoId,
                 title = newTitle,
-                content = textContents,
+                content = newContent,
                 imagePaths = imagePaths,
                 fontName = currentFontName,
                 titleFontName = currentTitleFontName,
-                titleStyle = if (titleBoldState && titleItalicState) Typeface.BOLD_ITALIC 
-                            else if (titleBoldState) Typeface.BOLD 
-                            else if (titleItalicState) Typeface.ITALIC 
-                            else Typeface.NORMAL,
-                contentStyle = if (contentBoldState && contentItalicState) Typeface.BOLD_ITALIC 
-                              else if (contentBoldState) Typeface.BOLD 
-                              else if (contentItalicState) Typeface.ITALIC 
-                              else Typeface.NORMAL,
+                titleStyle = titleStyle,
+                contentStyle = contentStyle,
                 titleUnderline = titleEditText.paint.isUnderlineText,
-                contentUnderline = false,  // 内容的下划线状态现在由适配器管理
+                contentUnderline = contentEditText.paint.isUnderlineText,
                 titleFontSize = currentTitleFontSize,
                 contentFontSize = currentContentFontSize
             )
@@ -491,25 +508,43 @@ class MemoDetailActivity : AppCompatActivity() {
         }
     }
 
+    private fun initFonts() {
+        FONTS.clear()
+        FONTS.add(Typeface.DEFAULT) // 默认字体
+        
+        // 从 res/font 目录加载字体
+        try {
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simsunch)!!) // 宋体
+            FONTS.add(ResourcesCompat.getFont(this, R.font.fasimsunch)!!) //仿宋
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simheich)!!) // 黑体
+            FONTS.add(ResourcesCompat.getFont(this, R.font.simkaich)!!) // 楷体
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun applyFont(fontName: String) {
-        currentFontName = fontName
-        mixedContentAdapter.updateFont(fontName)
+        val index = FONT_NAMES.indexOf(fontName)
+        if (index >= 0 && index < FONTS.size) {
+            contentEditText.typeface = FONTS[index]
+        }
     }
 
     private fun showFontSelectionDialog() {
-        val currentIndex = FontUtils.FONT_NAMES.indexOf(currentFontName).takeIf { it != -1 } ?: 0
+        val currentIndex = FONT_NAMES.indexOf(currentFontName).takeIf { it != -1 } ?: 0
         var selectedIndex = currentIndex
 
         AlertDialog.Builder(this)
             .setTitle("选择字体")
-            .setSingleChoiceItems(FontUtils.FONT_NAMES, currentIndex) { _, which ->
+            .setSingleChoiceItems(FONT_NAMES, currentIndex) { _, which ->
                 // 只记录选择的位置，不立即应用
                 selectedIndex = which
             }
             .setPositiveButton("确定") { _, _ ->
                 // 用户点击确定后才应用字体
                 if (selectedIndex != currentIndex) {
-                    currentFontName = FontUtils.FONT_NAMES[selectedIndex]
+                    currentFontName = FONT_NAMES[selectedIndex]
                     applyFont(currentFontName)
                 }
             }
@@ -518,17 +553,17 @@ class MemoDetailActivity : AppCompatActivity() {
     }
 
     private fun showTitleFontSelectionDialog() {
-        val currentIndex = FontUtils.FONT_NAMES.indexOf(currentTitleFontName).takeIf { it != -1 } ?: 0
+        val currentIndex = FONT_NAMES.indexOf(currentTitleFontName).takeIf { it != -1 } ?: 0
         var selectedIndex = currentIndex
 
         AlertDialog.Builder(this)
             .setTitle("选择标题字体")
-            .setSingleChoiceItems(FontUtils.FONT_NAMES, currentIndex) { _, which ->
+            .setSingleChoiceItems(FONT_NAMES, currentIndex) { _, which ->
                 selectedIndex = which
             }
             .setPositiveButton("确定") { _, _ ->
                 if (selectedIndex != currentIndex) {
-                    currentTitleFontName = FontUtils.FONT_NAMES[selectedIndex]
+                    currentTitleFontName = FONT_NAMES[selectedIndex]
                     applyTitleFont(currentTitleFontName)
                 }
             }
@@ -537,9 +572,9 @@ class MemoDetailActivity : AppCompatActivity() {
     }
 
     private fun applyTitleFont(fontName: String) {
-        val index = FontUtils.FONT_NAMES.indexOf(fontName)
-        if (index >= 0 && index < FontUtils.FONTS.size) {
-            titleEditText.typeface = FontUtils.FONTS[index]
+        val index = FONT_NAMES.indexOf(fontName)
+        if (index >= 0 && index < FONTS.size) {
+            titleEditText.typeface = FONTS[index]
         }
     }
 
@@ -566,21 +601,35 @@ class MemoDetailActivity : AppCompatActivity() {
     }
 
     private fun applyContentStyles() {
-        val newStyle = when {
-            contentBoldState && contentItalicState -> Typeface.BOLD_ITALIC
-            contentBoldState -> Typeface.BOLD
-            contentItalicState -> Typeface.ITALIC
-            else -> Typeface.NORMAL
+        try {
+            // 获取当前字体
+            val currentTypeface = contentEditText.typeface ?: Typeface.DEFAULT
+            
+            // 计算新样式
+            val newStyle = when {
+                contentBoldState && contentItalicState -> Typeface.BOLD_ITALIC
+                contentBoldState -> Typeface.BOLD
+                contentItalicState -> Typeface.ITALIC
+                else -> Typeface.NORMAL
+            }
+
+            // 创建新的 Typeface
+            val newTypeface = Typeface.create(currentTypeface, newStyle)
+            contentEditText.typeface = newTypeface
+            contentEditText.invalidate()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        mixedContentAdapter.updateStyle(newStyle)
     }
 
     private fun showFontSizeMenu(editText: EditText, isTitle: Boolean) {
         val currentSize = if (isTitle) currentTitleFontSize else currentContentFontSize
         
+        // 创建弹出菜单
         val popupMenu = PopupMenu(this, editText)
         
-        FontUtils.FONT_SIZES.forEach { (name, size) ->
+        // 添加预设选项
+        FONT_SIZES.forEach { (name, size) ->
             popupMenu.menu.add(Menu.NONE, View.NO_ID, Menu.NONE, "$name (${size}pt)")
         }
 
@@ -598,7 +647,7 @@ class MemoDetailActivity : AppCompatActivity() {
                     editText.setText(size.toInt().toString())
                 } else {
                     currentContentFontSize = size
-                    mixedContentAdapter.updateFontSize(size)  // 使用适配器更新内容字体大小
+                    contentEditText.textSize = size
                     editText.setText(size.toInt().toString())
                 }
             }
@@ -628,7 +677,7 @@ class MemoDetailActivity : AppCompatActivity() {
                         titleEditText.textSize = size
                     } else {
                         currentContentFontSize = size
-                        mixedContentAdapter.updateFontSize(size)  // 使用适配器更新内容字体大小
+                        contentEditText.textSize = size
                     }
                 }
             }
@@ -643,53 +692,5 @@ class MemoDetailActivity : AppCompatActivity() {
         // 隐藏输入法
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(editText.windowToken, 0)
-    }
-
-    private fun showFullImage(imagePath: String) {
-        // 创建一个对话框来显示全屏图片
-        val dialog = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
-            .create()
-        
-        // 创建一个 ImageView
-        val imageView = ImageView(this).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            scaleType = ImageView.ScaleType.FIT_CENTER
-        }
-
-        // 使用 Glide 加载图片
-        Glide.with(this)
-            .load(imagePath)
-            .override(2048, 2048)  // 设置更大的尺寸用于全屏显示
-            .into(imageView)
-
-        // 点击图片关闭对话框
-        imageView.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        // 设置对话框内容并显示
-        dialog.setView(imageView)
-        dialog.show()
-    }
-
-    private fun addNewTextContent() {
-        contentsList.add(MemoContent.TextContent(
-            text = "",
-            fontName = currentFontName,
-            style = if (contentBoldState && contentItalicState) Typeface.BOLD_ITALIC 
-                    else if (contentBoldState) Typeface.BOLD 
-                    else if (contentItalicState) Typeface.ITALIC 
-                    else Typeface.NORMAL,
-            fontSize = currentContentFontSize
-        ))
-        val position = contentsList.size - 1
-        mixedContentAdapter.notifyItemInserted(position)
-        // 滚动到新添加的文本位置
-        contentRecyclerView.post {
-            contentRecyclerView.smoothScrollToPosition(position)
-        }
     }
 }
