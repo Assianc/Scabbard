@@ -274,9 +274,13 @@ class MemoDetailActivity : AppCompatActivity() {
             .setTitle("删除图片")
             .setMessage("确定要删除这张图片吗？")
             .setPositiveButton("确定") { dialog, _ ->
-                // 用户点击确定后删除图片
-                imagePaths.removeAt(position)
-                imageAdapter.notifyItemRemoved(position)
+                // 添加安全检查
+                if (position >= 0 && position < imagePaths.size) {
+                    imagePaths.removeAt(position)
+                    imageAdapter.notifyItemRemoved(position)
+                    // 通知适配器数据集已更改
+                    imageAdapter.notifyItemRangeChanged(position, imagePaths.size)
+                }
                 dialog.dismiss()
             }
             .setNegativeButton("取消") { dialog, _ ->
