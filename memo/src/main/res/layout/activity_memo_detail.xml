@@ -91,6 +91,9 @@
             android:textSize="14sp"
             android:gravity="center"
             android:maxLength="2"
+            android:imeOptions="actionDone"
+            android:selectAllOnFocus="true"
+            android:textColor="#FFFFFF"
             android:visibility="gone"/>
     </LinearLayout>
 
@@ -250,6 +253,9 @@
                 android:textSize="14sp"
                 android:gravity="center"
                 android:maxLength="2"
+                android:imeOptions="actionDone"
+                android:selectAllOnFocus="true"
+                android:textColor="#FFFFFF"
                 android:visibility="gone"/>
 
         </LinearLayout>

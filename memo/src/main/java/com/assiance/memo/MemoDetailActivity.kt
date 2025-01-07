@@ -80,15 +80,9 @@ class MemoDetailActivity : AppCompatActivity() {
         
         setContentView(R.layout.activity_memo_detail)
 
-        // 初始化视图
-        titleEditText = findViewById(R.id.memo_detail_title)
-        contentEditText = findViewById(R.id.memo_detail_content)
-        updateTimeTextView = findViewById(R.id.memo_detail_update_time)
-        editButton = findViewById(R.id.edit_button)
-        saveButton = findViewById(R.id.save_button)
-        addImageButton = findViewById(R.id.add_image_button)
-        memoDAO = MemoDAO(this)
-
+        // 初始化所有视图
+        initializeViews()
+        
         // 获取传递过来的数据
         memoId = intent.getIntExtra("memo_id", -1)
         val title = intent.getStringExtra("memo_title") ?: ""
@@ -100,6 +94,57 @@ class MemoDetailActivity : AppCompatActivity() {
         contentEditText.setText(content)
         updateTimeTextView.text = updateTime
 
+        // 设置事件监听器
+        setupEventListeners()
+        
+        // 初始化字体
+        initFonts()
+        
+        // 应用保存的设置
+        applyStoredSettings()
+    }
+
+    private fun initializeViews() {
+        // 初始化基本视图
+        titleEditText = findViewById(R.id.memo_detail_title)
+        contentEditText = findViewById(R.id.memo_detail_content)
+        updateTimeTextView = findViewById(R.id.memo_detail_update_time)
+        editButton = findViewById(R.id.edit_button)
+        saveButton = findViewById(R.id.save_button)
+        addImageButton = findViewById(R.id.add_image_button)
+        
+        // 初始化字体相关按钮
+        fontButton = findViewById(R.id.font_button)
+        titleFontButton = findViewById(R.id.title_font_button)
+        boldButton = findViewById(R.id.bold_button)
+        italicButton = findViewById(R.id.italic_button)
+        underlineButton = findViewById(R.id.underline_button)
+        titleBoldButton = findViewById(R.id.title_bold_button)
+        titleItalicButton = findViewById(R.id.title_italic_button)
+        titleUnderlineButton = findViewById(R.id.title_underline_button)
+        fontSizeButton = findViewById(R.id.font_size_button)
+        titleFontSizeButton = findViewById(R.id.title_font_size_button)
+        
+        // 初始化字体大小输入框
+        titleFontSizeInput = findViewById(R.id.title_font_size_input)
+        contentFontSizeInput = findViewById(R.id.content_font_size_input)
+        
+        // 初始化图片列表
+        imagesRecyclerView = findViewById(R.id.images_recycler_view)
+        imagesRecyclerView.layoutManager = LinearLayoutManager(this)
+        
+        // 初始化 DAO
+        memoDAO = MemoDAO(this)
+        
+        // 设置默认可见性
+        addImageButton.visibility = View.GONE
+        fontButton.visibility = View.GONE
+        titleFontButton.visibility = View.GONE
+        titleFontSizeInput.visibility = View.GONE
+        contentFontSizeInput.visibility = View.GONE
+    }
+
+    private fun setupEventListeners() {
         // 设置编辑按钮点击事件
         editButton.setOnClickListener {
             toggleEditMode(true)
@@ -111,17 +156,12 @@ class MemoDetailActivity : AppCompatActivity() {
             toggleEditMode(false)
         }
         
-        // 默认隐藏添加图片按钮
-        addImageButton.visibility = View.GONE
-
         // 添加图片按钮点击事件
         addImageButton.setOnClickListener {
             openImagePicker()
         }
 
         // 初始化图片列表
-        imagesRecyclerView = findViewById(R.id.images_recycler_view)
-        imagesRecyclerView.layoutManager = LinearLayoutManager(this)
         imageAdapter = ImageAdapter(
             this, 
             imagePaths,
@@ -140,51 +180,101 @@ class MemoDetailActivity : AppCompatActivity() {
         }
 
         // 初始化字体按钮
-        fontButton = findViewById(R.id.font_button)
         fontButton.setOnClickListener {
             showFontSelectionDialog()
         }
         
-        // 默认隐藏字体按钮
-        fontButton.visibility = View.GONE
-
-        // 初始化字体
-        initFonts()
-
-        // 获取并设置字体
-        currentFontName = intent.getStringExtra("memo_font_name") ?: "DEFAULT"
-        applyFont(currentFontName)
-
         // 初始化标题字体按钮
-        titleFontButton = findViewById(R.id.title_font_button)
         titleFontButton.setOnClickListener {
             showTitleFontSelectionDialog()
         }
-        
-        // 默认隐藏标题字体按钮
-        titleFontButton.visibility = View.GONE
-
-        // 获取并设置标题字体
-        currentTitleFontName = intent.getStringExtra("memo_title_font_name") ?: "DEFAULT"
-        applyTitleFont(currentTitleFontName)
 
         // 初始化内容样式按钮
-        boldButton = findViewById(R.id.bold_button)
-        italicButton = findViewById(R.id.italic_button)
-        underlineButton = findViewById(R.id.underline_button)
+        boldButton.setOnClickListener { 
+            contentBoldState = !contentBoldState
+            applyContentStyles()
+        }
+        
+        italicButton.setOnClickListener { 
+            contentItalicState = !contentItalicState
+            applyContentStyles()
+        }
+        
+        underlineButton.setOnClickListener {
+            contentEditText.paint.isUnderlineText = !contentEditText.paint.isUnderlineText
+            // 强制重绘整个 EditText
+            contentEditText.text = contentEditText.text
+            contentEditText.invalidate()
+        }
 
-        // 初始化标题样式按钮
-        titleBoldButton = findViewById(R.id.title_bold_button)
-        titleItalicButton = findViewById(R.id.title_italic_button)
-        titleUnderlineButton = findViewById(R.id.title_underline_button)
+        // 设置字体大小按钮点击事件（现在只是显示/隐藏输入框）
+        fontSizeButton.setOnClickListener {
+            contentFontSizeInput.visibility = if (contentFontSizeInput.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
 
-        // 恢复样式状态
+        titleFontSizeButton.setOnClickListener {
+            titleFontSizeInput.visibility = if (titleFontSizeInput.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+
+        // 设置输入框监听
+        titleFontSizeInput.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                handleFontSizeInput(v as EditText, true)
+                v.clearFocus()
+                true
+            } else {
+                false
+            }
+        }
+
+        contentFontSizeInput.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                handleFontSizeInput(v as EditText, false)
+                v.clearFocus()
+                true
+            } else {
+                false
+            }
+        }
+
+        // 在失去焦点时应用字体大小
+        titleFontSizeInput.setOnFocusChangeListener { v, hasFocus ->
+            if (!hasFocus) {
+                handleFontSizeInput(v as EditText, true)
+            }
+        }
+
+        contentFontSizeInput.setOnFocusChangeListener { v, hasFocus ->
+            if (!hasFocus) {
+                handleFontSizeInput(v as EditText, false)
+            }
+        }
+    }
+
+    private fun applyStoredSettings() {
+        // 应用保存的字体设置
+        currentFontName = intent.getStringExtra("memo_font_name") ?: "DEFAULT"
+        currentTitleFontName = intent.getStringExtra("memo_title_font_name") ?: "DEFAULT"
+        applyFont(currentFontName)
+        applyTitleFont(currentTitleFontName)
+        
+        // 应用保存的样式设置
         val titleStyle = intent.getIntExtra("memo_title_style", Typeface.NORMAL)
         val contentStyle = intent.getIntExtra("memo_content_style", Typeface.NORMAL)
         val titleUnderline = intent.getBooleanExtra("memo_title_underline", false)
         val contentUnderline = intent.getBooleanExtra("memo_content_underline", false)
-
-        // 初始化样式状态
+        
+        // 设置字体大小
+        currentTitleFontSize = intent.getFloatExtra("memo_title_font_size", 32f)
+        currentContentFontSize = intent.getFloatExtra("memo_content_font_size", 16f)
+        titleEditText.textSize = currentTitleFontSize
+        contentEditText.textSize = currentContentFontSize
+        
+        // 更新输入框的显示值
+        titleFontSizeInput.setText(currentTitleFontSize.toInt().toString())
+        contentFontSizeInput.setText(currentContentFontSize.toInt().toString())
+        
+        // 恢复样式状态
         titleBoldState = (titleStyle and Typeface.BOLD) != 0
         titleItalicState = (titleStyle and Typeface.ITALIC) != 0
         contentBoldState = (contentStyle and Typeface.BOLD) != 0
@@ -236,97 +326,6 @@ class MemoDetailActivity : AppCompatActivity() {
             // 强制重绘整个 EditText
             contentEditText.text = contentEditText.text
             contentEditText.invalidate()
-        }
-
-        // 初始化字体大小按钮
-        fontSizeButton = findViewById(R.id.font_size_button)
-        titleFontSizeButton = findViewById(R.id.title_font_size_button)
-
-        // 设置点击事件
-        fontSizeButton.setOnClickListener {
-            showFontSizeDialog(false)
-        }
-
-        titleFontSizeButton.setOnClickListener {
-            showFontSizeDialog(true)
-        }
-
-        // 初始状态下隐藏字体大小按钮
-        fontSizeButton.visibility = View.GONE
-        titleFontSizeButton.visibility = View.GONE
-
-        // 获取并设置字体大小
-        currentTitleFontSize = intent.getFloatExtra("memo_title_font_size", 32f)
-        currentContentFontSize = intent.getFloatExtra("memo_content_font_size", 16f)
-
-        // 应用字体大小
-        titleEditText.textSize = currentTitleFontSize
-        contentEditText.textSize = currentContentFontSize
-
-        // 初始化字体大小输入框
-        titleFontSizeInput = findViewById(R.id.title_font_size_input)
-        contentFontSizeInput = findViewById(R.id.content_font_size_input)
-
-        // 设置初始值
-        titleFontSizeInput.setText(currentTitleFontSize.toInt().toString())
-        contentFontSizeInput.setText(currentContentFontSize.toInt().toString())
-
-        // 设置输入监听
-        titleFontSizeInput.setOnEditorActionListener { v, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                val size = v.text.toString().toFloatOrNull()
-                if (size != null && size in 8f..72f) {
-                    currentTitleFontSize = size
-                    titleEditText.textSize = size
-                } else {
-                    // 如果输入无效，恢复原来的值
-                    titleFontSizeInput.setText(currentTitleFontSize.toInt().toString())
-                }
-                true
-            } else {
-                false
-            }
-        }
-
-        contentFontSizeInput.setOnEditorActionListener { v, actionId, event ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                val size = v.text.toString().toFloatOrNull()
-                if (size != null && size in 8f..72f) {
-                    currentContentFontSize = size
-                    contentEditText.textSize = size
-                } else {
-                    // 如果输入无效，恢复原来的值
-                    contentFontSizeInput.setText(currentContentFontSize.toInt().toString())
-                }
-                true
-            } else {
-                false
-            }
-        }
-
-        // 在失去焦点时也应用字体大小
-        titleFontSizeInput.setOnFocusChangeListener { v, hasFocus ->
-            if (!hasFocus) {
-                val size = (v as EditText).text.toString().toFloatOrNull()
-                if (size != null && size in 8f..72f) {
-                    currentTitleFontSize = size
-                    titleEditText.textSize = size
-                } else {
-                    titleFontSizeInput.setText(currentTitleFontSize.toInt().toString())
-                }
-            }
-        }
-
-        contentFontSizeInput.setOnFocusChangeListener { v, hasFocus ->
-            if (!hasFocus) {
-                val size = (v as EditText).text.toString().toFloatOrNull()
-                if (size != null && size in 8f..72f) {
-                    currentContentFontSize = size
-                    contentEditText.textSize = size
-                } else {
-                    contentFontSizeInput.setText(currentContentFontSize.toInt().toString())
-                }
-            }
         }
     }
 
@@ -591,38 +590,27 @@ class MemoDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun showFontSizeDialog(isTitle: Boolean) {
-        val sizes = arrayOf("小", "正常", "大", "特大")
-        val currentSize = if (isTitle) currentTitleFontSize else currentContentFontSize
-        val currentIndex = when (currentSize) {
-            24f -> 0
-            if (isTitle) 32f else 16f -> 1
-            if (isTitle) 40f else 20f -> 2
-            if (isTitle) 48f else 24f -> 3
-            else -> 1
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("选择字体大小")
-            .setSingleChoiceItems(sizes, currentIndex) { dialog, which ->
-                val newSize = when (which) {
-                    0 -> if (isTitle) 24f else 14f
-                    1 -> if (isTitle) 32f else 16f
-                    2 -> if (isTitle) 40f else 20f
-                    3 -> if (isTitle) 48f else 24f
-                    else -> if (isTitle) 32f else 16f
-                }
-                
-                if (isTitle) {
-                    currentTitleFontSize = newSize
-                    titleEditText.textSize = newSize
-                } else {
-                    currentContentFontSize = newSize
-                    contentEditText.textSize = newSize
-                }
-                dialog.dismiss()
+    private fun handleFontSizeInput(editText: EditText, isTitle: Boolean) {
+        val size = editText.text.toString().toFloatOrNull()
+        if (size != null && size in 8f..72f) {
+            if (isTitle) {
+                currentTitleFontSize = size
+                titleEditText.textSize = size
+            } else {
+                currentContentFontSize = size
+                contentEditText.textSize = size
             }
-            .setNegativeButton("取消", null)
-            .show()
+        } else {
+            // 如果输入无效，恢复原来的值
+            editText.setText(
+                (if (isTitle) currentTitleFontSize else currentContentFontSize)
+                    .toInt().toString()
+            )
+        }
+        // 隐藏输入法
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        imm.hideSoftInputFromWindow(editText.windowToken, 0)
+        // 隐藏输入框
+        editText.visibility = View.GONE
     }
 }
