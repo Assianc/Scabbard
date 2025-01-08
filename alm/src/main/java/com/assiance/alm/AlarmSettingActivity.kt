@@ -13,6 +13,7 @@ import java.util.Calendar
 class AlarmSettingActivity : AppCompatActivity() {
     private lateinit var timePicker: TimePicker
     private lateinit var alarmManager: AlarmManager
+    private var alarmId: Int = -1  // -1 表示新建闹钟
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +34,22 @@ class AlarmSettingActivity : AppCompatActivity() {
         findViewById<android.widget.Button>(R.id.setAlarmButton).setOnClickListener {
             setAlarm()
         }
+
+        // 获取传入的闹钟信息
+        alarmId = intent.getIntExtra("alarm_id", -1)
+        val alarmTime = intent.getLongExtra("alarm_time", -1L)
+        
+        if (alarmTime != -1L) {
+            // 设置时间选择器的初始值
+            val calendar = Calendar.getInstance().apply {
+                timeInMillis = alarmTime
+            }
+            timePicker.hour = calendar.get(Calendar.HOUR_OF_DAY)
+            timePicker.minute = calendar.get(Calendar.MINUTE)
+            
+            // 更新标题
+            supportActionBar?.title = "编辑闹钟"
+        }
     }
 
     private fun setAlarm() {
@@ -46,12 +63,48 @@ class AlarmSettingActivity : AppCompatActivity() {
             }
         }
 
+        // 使用传入的ID或生成新ID
+        val newAlarmId = if (alarmId != -1) alarmId else System.currentTimeMillis().toInt()
+
+        val alarm = AlarmData(
+            id = newAlarmId,
+            timeInMillis = calendar.timeInMillis
+        )
+
+        // 更新闹钟列表
+        val prefs = getSharedPreferences(MainActivityAlm.ALARM_PREFS, Context.MODE_PRIVATE)
+        val alarmsJson = prefs.getString(MainActivityAlm.ALARM_LIST_KEY, "[]")
+        val jsonArray = org.json.JSONArray(alarmsJson)
+        
+        // 如果是编辑现有闹钟，先删除旧的
+        if (alarmId != -1) {
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                if (obj.getInt("id") == alarmId) {
+                    jsonArray.remove(i)
+                    break
+                }
+            }
+        }
+
+        // 添加新的闹钟数据
+        jsonArray.put(org.json.JSONObject().apply {
+            put("id", alarm.id)
+            put("timeInMillis", alarm.timeInMillis)
+            put("isEnabled", alarm.isEnabled)
+        })
+        
+        prefs.edit()
+            .putString(MainActivityAlm.ALARM_LIST_KEY, jsonArray.toString())
+            .apply()
+
+        // 设置闹钟
         val intent = Intent(MainActivityAlm.ALARM_ACTION).apply {
             `package` = packageName
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this,
-            MainActivityAlm.ALARM_REQUEST_CODE,
+            alarm.id,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -61,15 +114,9 @@ class AlarmSettingActivity : AppCompatActivity() {
             pendingIntent
         )
 
-        // 保存闹钟状态
-        getSharedPreferences("alarm_prefs", Context.MODE_PRIVATE).edit()
-            .putLong("alarm_time", calendar.timeInMillis)
-            .apply()
-
-        // 发送广播通知主界面更新状态
+        // 立即发送广播通知主界面更新
         sendBroadcast(Intent(MainActivityAlm.ALARM_STATUS_CHANGED_ACTION))
-
-        Toast.makeText(this, "闹钟已设置", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, if (alarmId != -1) "闹钟已更新" else "闹钟已设置", Toast.LENGTH_SHORT).show()
         finish()
     }
 

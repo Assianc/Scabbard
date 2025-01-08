@@ -28,6 +28,9 @@ class MainActivityAlm : AppCompatActivity() {
     private lateinit var timeText: TextView
     private var timeUpdateHandler: Handler = Handler(Looper.getMainLooper())
     private var timeUpdateRunnable: Runnable? = null
+    private lateinit var alarmListView: androidx.recyclerview.widget.RecyclerView
+    private lateinit var alarmAdapter: AlarmAdapter
+    private val alarmList = mutableListOf<AlarmData>()
 
     companion object {
         internal const val ALARM_REQUEST_CODE = 100
@@ -35,6 +38,8 @@ class MainActivityAlm : AppCompatActivity() {
         internal const val NOTIFICATION_ID = 1
         const val ALARM_ACTION = "com.assiance.alm.ALARM_TRIGGER"
         const val ALARM_STATUS_CHANGED_ACTION = "com.assiance.alm.ALARM_STATUS_CHANGED"
+        internal const val ALARM_PREFS = "alarm_prefs"
+        internal const val ALARM_LIST_KEY = "alarm_list"
     }
 
     private val alarmReceiver = object : BroadcastReceiver() {
@@ -96,6 +101,20 @@ class MainActivityAlm : AppCompatActivity() {
 
         // 恢复已设置的闹钟状态
         restoreAlarmStatus()
+
+        // 初始化 RecyclerView
+        alarmListView = findViewById(R.id.alarmListView)
+        alarmListView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+        alarmAdapter = AlarmAdapter(
+            alarmList,
+            onDeleteClick = { alarm -> deleteAlarm(alarm) },
+            onToggleClick = { alarm, isEnabled -> toggleAlarm(alarm, isEnabled) },
+            onAlarmClick = { alarm -> editAlarm(alarm) }
+        )
+        alarmListView.adapter = alarmAdapter
+
+        // 加载保存的闹钟
+        loadAlarms()
     }
 
     private fun createNotificationChannel() {
@@ -190,5 +209,155 @@ class MainActivityAlm : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    private fun loadAlarms() {
+        val prefs = getSharedPreferences(ALARM_PREFS, Context.MODE_PRIVATE)
+        val alarmsJson = prefs.getString(ALARM_LIST_KEY, "[]")
+        try {
+            val jsonArray = org.json.JSONArray(alarmsJson)
+            alarmList.clear()
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                alarmList.add(AlarmData(
+                    id = obj.getInt("id"),
+                    timeInMillis = obj.getLong("timeInMillis"),
+                    isEnabled = obj.getBoolean("isEnabled")
+                ))
+            }
+            // 按时间排序
+            alarmList.sortBy { it.timeInMillis }
+            alarmAdapter.updateAlarms(alarmList.toList())
+            updateAlarmStatus()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun saveAlarms() {
+        val jsonArray = org.json.JSONArray()
+        alarmList.forEach { alarm ->
+            val obj = org.json.JSONObject().apply {
+                put("id", alarm.id)
+                put("timeInMillis", alarm.timeInMillis)
+                put("isEnabled", alarm.isEnabled)
+            }
+            jsonArray.put(obj)
+        }
+        
+        getSharedPreferences(ALARM_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putString(ALARM_LIST_KEY, jsonArray.toString())
+            .apply()
+    }
+
+    private fun deleteAlarm(alarm: AlarmData) {
+        // 取消闹钟
+        val intent = Intent(ALARM_ACTION).apply {
+            `package` = packageName
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            alarm.id,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+
+        // 从列表中移除并更新
+        alarmList.remove(alarm)
+        alarmListView.post {
+            alarmAdapter.updateAlarms(alarmList.toList())
+            saveAlarms()
+            updateAlarmStatus()
+        }
+    }
+
+    private fun toggleAlarm(alarm: AlarmData, isEnabled: Boolean) {
+        val index = alarmList.indexOf(alarm)
+        if (index != -1) {
+            val updatedAlarm = alarm.copy(isEnabled = isEnabled)
+            alarmList[index] = updatedAlarm
+            
+            if (isEnabled) {
+                setAlarm(updatedAlarm)
+            } else {
+                cancelAlarm(updatedAlarm)
+            }
+            
+            // 使用 post 延迟更新，避免在布局计算过程中更新
+            alarmListView.post {
+                alarmAdapter.updateAlarms(alarmList.toList())
+                saveAlarms()
+                updateAlarmStatus()
+            }
+        }
+    }
+
+    private fun updateAlarmStatus() {
+        val enabledAlarms = alarmList.count { it.isEnabled }
+        if (enabledAlarms > 0) {
+            val timeStrings = alarmList
+                .filter { it.isEnabled }
+                .joinToString(", ") { 
+                    SimpleDateFormat("HH:mm", Locale.getDefault())
+                        .format(it.timeInMillis) 
+                }
+            updateAlarmStatus("已设置 $enabledAlarms 个闹钟：$timeStrings")
+        } else {
+            updateAlarmStatus("未设置闹钟")
+        }
+    }
+
+    private fun setAlarm(alarm: AlarmData) {
+        val intent = Intent(ALARM_ACTION).apply {
+            `package` = packageName
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            alarm.id,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = alarm.timeInMillis
+            // 如果时间已过，设置为下一天
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+
+        alarmManager.setAlarmClock(
+            AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent),
+            pendingIntent
+        )
+    }
+
+    private fun cancelAlarm(alarm: AlarmData) {
+        val intent = Intent(ALARM_ACTION).apply {
+            `package` = packageName
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            alarm.id,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
+    }
+
+    private fun editAlarm(alarm: AlarmData) {
+        val intent = Intent(this, AlarmSettingActivity::class.java).apply {
+            putExtra("alarm_id", alarm.id)
+            putExtra("alarm_time", alarm.timeInMillis)
+        }
+        startActivity(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 每次返回主界面时重新加载闹钟列表
+        loadAlarms()
     }
 }
