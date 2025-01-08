@@ -1,9 +1,14 @@
 package com.assiance.alm
 
+import android.app.AlarmManager
 import android.app.DatePickerDialog
+import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.TextView
@@ -22,10 +27,13 @@ class TodoSettingActivity : AppCompatActivity() {
     private lateinit var dueDateText: TextView
     private var todoId: Int = -1
     private var dueTime: Long? = null
+    private lateinit var alarmManager: AlarmManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_todo_setting)
+
+        alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         // 设置工具栏
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
@@ -139,8 +147,75 @@ class TodoSettingActivity : AppCompatActivity() {
             .putString(MainActivityAlm.TODO_LIST_KEY, jsonArray.toString())
             .apply()
 
+        // 设置提醒
+        if (dueDateCheckBox.isChecked && dueTime != null) {
+            setTodoReminder(todo)
+        } else {
+            cancelTodoReminder(todo.id)
+        }
+
         Toast.makeText(this, if (todoId != -1) "待办已更新" else "待办已添加", Toast.LENGTH_SHORT).show()
         finish()
+    }
+
+    private fun setTodoReminder(todo: TodoData) {
+        val intent = Intent(MainActivityAlm.TODO_REMINDER_ACTION).apply {
+            `package` = packageName
+            putExtra("todo_title", todo.title)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            todo.id,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        todo.dueTime?.let { dueTime ->
+            // 设置在截止时间前15分钟提醒
+            val reminderTime = dueTime - (15 * 60 * 1000)
+            if (reminderTime > System.currentTimeMillis()) {
+                try {
+                    // 使用 setExactAndAllowWhileIdle 确保准确提醒
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        alarmManager.setExactAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            reminderTime,
+                            pendingIntent
+                        )
+                    } else {
+                        alarmManager.setExact(
+                            AlarmManager.RTC_WAKEUP,
+                            reminderTime,
+                            pendingIntent
+                        )
+                    }
+                    
+                    // 打印日志以便调试
+                    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                    val reminderTimeStr = sdf.format(reminderTime)
+                    Log.d("TodoReminder", "设置提醒：${todo.title} - $reminderTimeStr")
+                } catch (e: Exception) {
+                    Log.e("TodoReminder", "设置提醒失败", e)
+                    Toast.makeText(this, "设置提醒失败：${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Log.w("TodoReminder", "提醒时间已过：${todo.title}")
+                Toast.makeText(this, "提醒时间已过", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun cancelTodoReminder(todoId: Int) {
+        val intent = Intent(MainActivityAlm.TODO_REMINDER_ACTION).apply {
+            `package` = packageName
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            todoId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
     }
 
     override fun onSupportNavigateUp(): Boolean {

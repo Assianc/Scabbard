@@ -58,6 +58,9 @@ class MainActivityAlm : AppCompatActivity() {
         internal const val ALARM_LIST_KEY = "alarm_list"
         internal const val TODO_PREFS = "todo_prefs"
         internal const val TODO_LIST_KEY = "todo_list"
+        const val TODO_REMINDER_ACTION = "com.assiance.alm.TODO_REMINDER"
+        const val TODO_CHANNEL_ID = "TodoChannel"
+        const val TODO_NOTIFICATION_ID = 2
     }
 
     private val alarmReceiver = object : BroadcastReceiver() {
