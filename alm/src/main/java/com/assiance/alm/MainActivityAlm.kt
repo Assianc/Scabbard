@@ -24,6 +24,11 @@ import com.google.android.material.button.MaterialButton
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import android.animation.ValueAnimator
+import android.view.View
+import android.view.animation.AnimationUtils
+import android.view.animation.DecelerateInterpolator
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 
 class MainActivityAlm : AppCompatActivity() {
     private lateinit var alarmManager: AlarmManager
@@ -49,6 +54,9 @@ class MainActivityAlm : AppCompatActivity() {
     private lateinit var fabAdd: FloatingActionButton
     private var currentTab = 0 // 0: 闹钟, 1: 待办
 
+    // 添加指示器视图属性
+    private lateinit var tabIndicator: View
+    
     companion object {
         internal const val ALARM_REQUEST_CODE = 100
         internal const val CHANNEL_ID = "AlarmChannel"
@@ -121,6 +129,14 @@ class MainActivityAlm : AppCompatActivity() {
         todoTabButton = findViewById(R.id.todoTabButton)
         fabAdd = findViewById(R.id.fabAdd)
 
+        // 初始化指示器
+        tabIndicator = findViewById(R.id.tabIndicator)
+        
+        // 在视图完成布局后设置初始指示器位置
+        alarmTabButton.post {
+            updateIndicator(alarmTabButton, true)
+        }
+
         // 初始化闹钟列表
         alarmListView = findViewById(R.id.alarmListView)
         alarmListView.layoutManager = LinearLayoutManager(this)
@@ -150,11 +166,18 @@ class MainActivityAlm : AppCompatActivity() {
                 viewFlipper.setOutAnimation(this, R.anim.slide_out_right)
                 viewFlipper.displayedChild = 0
                 updateFabIcon(true)
+                
+                // 添加指示器动画
+                animateIndicator(todoTabButton, alarmTabButton)
+                
+                // 添加按钮动画
+                animateTabButton(alarmTabButton, true)
+                animateTabButton(todoTabButton, false)
+                
                 alarmTabButton.isChecked = true
                 todoTabButton.isChecked = false
                 currentTab = 0
                 
-                // 添加按钮动画
                 fabAdd.animate()
                     .rotation(360f)
                     .setDuration(300)
@@ -171,11 +194,18 @@ class MainActivityAlm : AppCompatActivity() {
                 viewFlipper.setOutAnimation(this, R.anim.slide_out_left)
                 viewFlipper.displayedChild = 1
                 updateFabIcon(false)
+                
+                // 添加指示器动画
+                animateIndicator(alarmTabButton, todoTabButton)
+                
+                // 添加按钮动画
+                animateTabButton(todoTabButton, true)
+                animateTabButton(alarmTabButton, false)
+                
                 alarmTabButton.isChecked = false
                 todoTabButton.isChecked = true
                 currentTab = 1
                 
-                // 添加按钮动画
                 fabAdd.animate()
                     .rotation(-360f)
                     .setDuration(300)
@@ -584,5 +614,80 @@ class MainActivityAlm : AppCompatActivity() {
         super.onResume()
         loadAlarms()
         loadTodos()
+    }
+
+    private fun animateTabButton(button: MaterialButton, isSelected: Boolean) {
+        // 缩放动画
+        button.animate()
+            .scaleX(if (isSelected) 1.05f else 1.0f)
+            .scaleY(if (isSelected) 1.05f else 1.0f)
+            .setDuration(200)
+            .start()
+
+        // 加载按压动画
+        if (isSelected) {
+            button.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_press))
+        }
+
+        // 文字颜色渐变
+        val startColor = if (isSelected) 
+            getColor(R.color.tab_unselected) else getColor(R.color.tab_selected)
+        val endColor = if (isSelected) 
+            getColor(R.color.tab_selected) else getColor(R.color.tab_unselected)
+
+        ValueAnimator.ofArgb(startColor, endColor).apply {
+            duration = 200
+            addUpdateListener { animator ->
+                button.setTextColor(animator.animatedValue as Int)
+            }
+            start()
+        }
+
+        // 背景颜色渐变
+        val backgroundTint = if (isSelected) 
+            android.content.res.ColorStateList.valueOf(getColor(R.color.tab_background_selected))
+        else 
+            android.content.res.ColorStateList.valueOf(getColor(R.color.tab_background_unselected))
+        
+        button.backgroundTintList = backgroundTint
+    }
+
+    // 添加指示器动画方法
+    private fun animateIndicator(fromButton: MaterialButton, toButton: MaterialButton) {
+        val animator = ValueAnimator.ofFloat(0f, 1f)
+        animator.addUpdateListener { animation ->
+            val fraction = animation.animatedFraction
+            val fromLeft = fromButton.left.toFloat()
+            val toLeft = toButton.left.toFloat()
+            val fromRight = fromButton.right.toFloat()
+            val toRight = toButton.right.toFloat()
+            
+            val currentLeft = fromLeft + (toLeft - fromLeft) * fraction
+            val currentRight = fromRight + (toRight - fromRight) * fraction
+            
+            tabIndicator.left = currentLeft.toInt()
+            tabIndicator.right = currentRight.toInt()
+        }
+        animator.duration = 300
+        animator.interpolator = FastOutSlowInInterpolator()
+        animator.start()
+    }
+
+    // 添加更新指示器位置的方法
+    private fun updateIndicator(button: MaterialButton, animate: Boolean = true) {
+        if (animate) {
+            tabIndicator.animate()
+                .x(button.left.toFloat())
+                .setDuration(200)
+                .start()
+        } else {
+            tabIndicator.left = button.left
+            tabIndicator.right = button.right
+        }
+        
+        // 设置指示器高度为按钮高度
+        val layoutParams = tabIndicator.layoutParams
+        layoutParams.height = button.height
+        tabIndicator.layoutParams = layoutParams
     }
 }

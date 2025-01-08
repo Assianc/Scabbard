@@ -33,30 +33,44 @@
                 android:text="00:00:00"
                 android:textSize="48sp"
                 android:textStyle="bold"
-                android:textColor="#2196F3"
+                android:textColor="#1766EF"
                 android:layout_marginBottom="16dp"/>
 
-            <LinearLayout
-                android:layout_width="wrap_content"
+            <FrameLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp">
+                android:layout_marginTop="16dp"
+                android:layout_marginHorizontal="16dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/alarmTabButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="闹钟"
-                    android:layout_marginEnd="8dp"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                <View
+                    android:id="@+id/tabIndicator"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:background="@drawable/tab_indicator_background"/>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/todoTabButton"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="待办"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
-            </LinearLayout>
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/alarmTabButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="闹钟"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/todoTabButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="待办"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"/>
+
+                </LinearLayout>
+            </FrameLayout>
         </LinearLayout>
 
         <ViewFlipper

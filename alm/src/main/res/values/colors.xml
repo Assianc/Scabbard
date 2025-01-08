@@ -14,5 +14,11 @@
     <color name="textColor">#000000</color>
     <color name="AllSelectColor">#000000</color>
     <color name="InputTextColor">#808080</color>
+    <color name="tab_selected">#FFFFFF</color>
+    <color name="tab_unselected">#80FFFFFF</color>
+    <color name="tab_background_selected">#4DFFFFFF</color>
+    <color name="tab_background_unselected">#1AFFFFFF</color>
+    <color name="tab_indicator_color">#A6852CDE</color>
+
     <!-- res/values/colors.xml -->
 </resources> 
