@@ -111,6 +111,3 @@ class PlayerSelectionActivity : AppCompatActivity() {
             .show()
     }
 }
-
-
-//fwhwbuifi wif iwfhgwioq GFOPIFWGQOIG FQOIUG

@@ -25,8 +25,7 @@ class UpdateChecker {
     data class UpdateInfo(
         val latestVersion: String,
         val updateUrl: String,
-        val updateDescription: String,
-        val forceUpdate: Boolean
+        val updateDescription: String
     )
 
     fun getCurrentVersion(context: Context): String? {
@@ -124,14 +123,11 @@ class UpdateChecker {
                     break
                 }
             }
-
-            val forceUpdate = body.contains("[强制更新]")
             
             return@withContext UpdateInfo(
                 latestVersion = tagName,
                 updateUrl = apkUrl,
-                updateDescription = body,
-                forceUpdate = forceUpdate
+                updateDescription = body
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -152,8 +148,7 @@ class UpdateChecker {
                     3. 蓝奏云提取码：$LANZOU_PASSWORD
                     
                     注意：请在电脑模式下预览，否则可能无法正常下载。
-                """.trimIndent(),
-                forceUpdate = true
+                """.trimIndent()
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -216,10 +211,9 @@ class UpdateChecker {
             val dialog = AlertDialog.Builder(dialogContext)
                 .setTitle("发现新版本 ${updateInfo.latestVersion}")
                 .setMessage(updateInfo.updateDescription)
-                .setCancelable(false)
                 .setPositiveButton("确定") { dialog, _ ->
                     dialog.dismiss()
-                    onConfirm()  // 只调用 onConfirm 回调，不执行下载
+                    onConfirm()
                 }
                 .setNegativeButton("取消") { dialog, _ ->
                     dialog.dismiss()

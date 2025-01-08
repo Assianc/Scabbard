@@ -233,8 +233,7 @@ open class StartActivity : AppCompatActivity() {
                                 2. 输入提取码：${UpdateChecker.LANZOU_PASSWORD}
                                 
                                 注意：请在电脑模式下预览，否则可能无法正常下载。
-                            """.trimIndent(),
-                            forceUpdate = false
+                            """.trimIndent()
                         )
                         showUpdateDialog(lanzouInfo, true)
                     }

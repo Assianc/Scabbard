@@ -139,11 +139,8 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
                                                 // GitHub 更新直接下载
                                                 startDownload(info.updateUrl, info.latestVersion)
                                             }
-
-                                            // 无论是否强制更新，都继续启动应用
-                                            if (!info.forceUpdate) {
-                                                continueAppLaunch()
-                                            }
+                                            // 继续启动应用
+                                            continueAppLaunch()
                                         } catch (e: Exception) {
                                             e.printStackTrace()
                                             Toast.makeText(
@@ -151,9 +148,7 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
                                                 "下载失败，请稍后重试",
                                                 Toast.LENGTH_SHORT
                                             ).show()
-                                            if (!info.forceUpdate) {
-                                                continueAppLaunch()
-                                            }
+                                            continueAppLaunch()
                                         }
                                     },
                                     onCancel = {
