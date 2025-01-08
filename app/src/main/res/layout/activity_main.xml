@@ -3,120 +3,109 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/gradient_background"
     android:padding="16dp">
 
-    <!-- 添加下拉菜单 Spinner -->
+    <!-- 现有的 Spinner -->
     <Spinner
         android:id="@+id/classificationSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="16dp"/>
 
-    <!-- 添加选人功能 -->
-    <Button
-        android:id="@+id/add_player_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="添加元素"
-        android:layout_gravity="center"
-        android:layout_marginBottom="16dp" />
-
-<!--     显示已选玩家-->
-    <ListView
-        android:id="@+id/player_list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:choiceMode="multipleChoice"
-        android:dividerHeight="1dp"
-        android:layout_marginBottom="16dp" />
-
-    <!-- 使用渐变效果的分界线 -->
+    <!-- 添加渐变分隔线 -->
     <View
-        android:layout_above="@+id/allocate_button"
         android:layout_width="match_parent"
         android:layout_height="1.5dp"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:layout_marginBottom="30dp"
-        android:layout_below="@+id/add_player_button"
+        android:layout_below="@id/memo_button"
         android:background="@drawable/line_divider_allocator" />
 
-
-    <!-- 分配队伍按钮 -->
-    <Button
-        android:id="@+id/allocate_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="分配组别"
-        android:layout_gravity="center"
-        android:layout_marginTop="16dp" />
-
-    <!-- 动态显示队伍 A 和 B -->
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <!-- 添加已选择元素显示区域 -->
+    <TextView
+        android:id="@+id/selectedPlayersText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:textSize="16sp"
+        android:padding="8dp"
+        android:background="@drawable/selected_players_background"
+        android:textColor="#666666"
+        android:minHeight="48dp"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp"/>
 
-        <!-- 队伍A的TextView -->
-        <TextView
-            android:id="@+id/team_a_text"
-            android:layout_width="match_parent"
+    <!-- 按钮布局 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp">
+
+        <Button
+            android:id="@+id/addPlayerButton"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/shadow_gradient"
-            android:padding="16dp"
-            android:elevation="4dp"
-            android:text="区域 A:"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="16dp"
-            android:textColor="#000000" />
+            android:layout_weight="1"
+            android:text="选择分类元素"
+            android:layout_marginEnd="8dp"/>
 
-        <!-- 队伍B的TextView -->
-        <TextView
-            android:id="@+id/team_b_text"
-            android:layout_width="match_parent"
+        <Button
+            android:id="@+id/allocateButton"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/shadow_gradient"
-            android:padding="16dp"
-            android:elevation="4dp"
-            android:text="区域 B:"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="16dp"
-            android:textColor="#000000" />
-
-        <!-- 队伍C的TextView -->
-        <TextView
-            android:id="@+id/team_c_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/shadow_gradient"
-            android:padding="16dp"
-            android:elevation="4dp"
-            android:text="区域 C:"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="16dp"
-            android:visibility="gone"
-            android:textColor="#000000" />
-
-        <!-- 队伍D的TextView -->
-        <TextView
-            android:id="@+id/team_d_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/shadow_gradient"
-            android:padding="16dp"
-            android:elevation="4dp"
-            android:text="区域 D:"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="16dp"
-            android:visibility="gone"
-            android:textColor="#000000" />
-
+            android:layout_weight="1"
+            android:text="开始分类"
+            android:layout_marginStart="8dp"/>
     </LinearLayout>
 
+    <!-- 分类结果显示 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/teamAText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:padding="8dp"
+                android:background="@drawable/team_box_background"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/teamBText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:padding="8dp"
+                android:background="@drawable/team_box_background"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/teamCText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:padding="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/team_box_background"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/teamDText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:padding="8dp"
+                android:background="@drawable/team_box_background"
+                android:visibility="gone"/>
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

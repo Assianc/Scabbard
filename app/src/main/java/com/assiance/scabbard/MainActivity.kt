@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.assiance.scabbard.databinding.ActivityMainBinding
 import java.util.*
@@ -22,11 +23,14 @@ class MainActivity : AppCompatActivity() {
     private var classificationType = 2 // 默认二分类
     private var selectedPlayers: MutableList<String> = mutableListOf()
     private var isTeamsAllocated = false // 标志是否已经进行过分类
+    private lateinit var selectedPlayersText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        selectedPlayersText = findViewById(R.id.selectedPlayersText)
 
         setupClassificationSpinner()
         setupButtons()
@@ -80,6 +84,8 @@ class MainActivity : AppCompatActivity() {
 
             data.getStringArrayListExtra("selectedPlayers")?.let {
                 selectedPlayers = ArrayList(it)
+                // 更新已选择元素的显示
+                updateSelectedPlayersText()
             }
         }
     }
@@ -164,4 +170,12 @@ class MainActivity : AppCompatActivity() {
     data class Quadruple<out A, out B, out C, out D>(
         val first: A, val second: B, val third: C, val fourth: D
     )
+
+    private fun updateSelectedPlayersText() {
+        if (selectedPlayers.isEmpty()) {
+            selectedPlayersText.text = "未选择任何元素"
+        } else {
+            selectedPlayersText.text = "已选择: ${selectedPlayers.joinToString(", ")}"
+        }
+    }
 }
