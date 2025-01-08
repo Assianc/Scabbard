@@ -21,6 +21,10 @@ import com.google.android.material.textfield.TextInputEditText
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import android.widget.NumberPicker
+import android.widget.Spinner
+import android.app.AlertDialog
+import android.widget.ArrayAdapter
 
 class TodoSettingActivity : AppCompatActivity() {
     private lateinit var titleInput: TextInputEditText
@@ -147,8 +151,82 @@ class TodoSettingActivity : AppCompatActivity() {
                 item.isChecked = true
                 return true
             }
+            R.id.reminder_custom -> {
+                showCustomReminderDialog()
+                return true
+            }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun showCustomReminderDialog() {
+        val view = layoutInflater.inflate(R.layout.dialog_custom_reminder, null)
+        val numberPicker = view.findViewById<NumberPicker>(R.id.minutesPicker)
+        val unitSpinner = view.findViewById<Spinner>(R.id.unitSpinner)
+
+        // 设置 NumberPicker
+        numberPicker.minValue = 1
+        numberPicker.maxValue = 999
+        numberPicker.value = 30
+
+        // 设置单位选择器
+        val units = arrayOf("分钟", "小时", "天")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, units)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        unitSpinner.adapter = adapter
+
+        AlertDialog.Builder(this)
+            .setTitle("自定义提醒时间")
+            .setView(view)
+            .setPositiveButton("确定") { _, _ ->
+                val number = numberPicker.value
+                val multiplier = when (unitSpinner.selectedItemPosition) {
+                    0 -> 1           // 分钟
+                    1 -> 60          // 小时
+                    2 -> 60 * 24     // 天
+                    else -> 1
+                }
+                advanceMinutes = number * multiplier
+                // 更新菜单显示
+                invalidateOptionsMenu()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        // 更新菜单项的选中状态和显示
+        val reminderItem = menu.findItem(R.id.action_reminder)
+        val submenu = reminderItem?.subMenu ?: return true
+        
+        // 取消所有项的选中状态
+        for (i in 0 until submenu.size()) {
+            submenu.getItem(i)?.isChecked = false
+        }
+
+        // 根据当前的提醒时间选中对应项
+        val itemId = when (advanceMinutes) {
+            0 -> R.id.reminder_due
+            15 -> R.id.reminder_15min
+            30 -> R.id.reminder_30min
+            60 -> R.id.reminder_1hour
+            120 -> R.id.reminder_2hour
+            else -> {
+                // 自定义时间：更新菜单项文字
+                submenu.findItem(R.id.reminder_custom)?.apply {
+                    val timeStr = when {
+                        advanceMinutes >= 1440 -> "${advanceMinutes / 1440}天"
+                        advanceMinutes >= 60 -> "${advanceMinutes / 60}小时"
+                        else -> "${advanceMinutes}分钟"
+                    }
+                    title = "提前${timeStr}"
+                }
+                R.id.reminder_custom
+            }
+        }
+        submenu.findItem(itemId)?.isChecked = true
+        
+        return true
     }
 
     private fun showDateTimePicker(isStartTime: Boolean) {

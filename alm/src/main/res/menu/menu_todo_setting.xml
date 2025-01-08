@@ -24,6 +24,9 @@
                 <item
                     android:id="@+id/reminder_2hour"
                     android:title="提前2小时"/>
+                <item
+                    android:id="@+id/reminder_custom"
+                    android:title="自定义提醒时间"/>
             </group>
         </menu>
     </item>
