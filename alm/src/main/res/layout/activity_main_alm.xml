@@ -34,14 +34,6 @@
                 android:textStyle="bold"
                 android:textColor="#2196F3"
                 android:layout_marginBottom="16dp"/>
-
-            <TextView
-                android:id="@+id/alarmStatusText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="未设置闹钟"
-                android:textSize="16sp"
-                android:layout_marginBottom="16dp"/>
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView

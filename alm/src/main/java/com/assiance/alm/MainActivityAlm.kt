@@ -22,7 +22,6 @@ import java.util.Calendar
 import java.util.Locale
 
 class MainActivityAlm : AppCompatActivity() {
-    private lateinit var alarmStatusText: TextView
     private lateinit var alarmManager: AlarmManager
     private lateinit var dateText: TextView
     private lateinit var timeText: TextView
@@ -66,7 +65,6 @@ class MainActivityAlm : AppCompatActivity() {
         // 初始化时间显示相关的视图
         dateText = findViewById(R.id.dateText)
         timeText = findViewById(R.id.timeText)
-        alarmStatusText = findViewById(R.id.alarmStatusText)
         
         // 启动时间更新
         startTimeUpdate()
@@ -153,26 +151,12 @@ class MainActivityAlm : AppCompatActivity() {
     }
 
     private fun updateAlarmStatus(status: String) {
-        alarmStatusText.text = status
+        // 不再需要更新状态文本
     }
 
     private fun restoreAlarmStatus() {
-        val savedAlarmTime = getSharedPreferences("alarm_prefs", Context.MODE_PRIVATE)
-            .getLong("alarm_time", -1)
-        
-        if (savedAlarmTime != -1L) {
-            val calendar = Calendar.getInstance().apply {
-                timeInMillis = savedAlarmTime
-            }
-            val timeString = String.format(
-                "%02d:%02d",
-                calendar.get(Calendar.HOUR_OF_DAY),
-                calendar.get(Calendar.MINUTE)
-            )
-            updateAlarmStatus("闹钟已设置：$timeString")
-        } else {
-            updateAlarmStatus("未设置闹钟")
-        }
+        // 不再需要恢复状态文本
+        loadAlarms()
     }
 
     private fun startTimeUpdate() {
