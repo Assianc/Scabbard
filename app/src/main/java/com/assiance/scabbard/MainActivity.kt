@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivityMainBinding
-    private var players: MutableList<String> = mutableListOf("1", "2", "3", "4", "5", "6", "7", "8", "9")
+    private var players: MutableList<String> = mutableListOf("示例元素1", "示例元素2", "示例元素3", "示例元素4")
     private var classificationType = 2 // 默认二分类
     private var selectedPlayers: MutableList<String> = mutableListOf()
     private var isTeamsAllocated = false // 标志是否已经进行过分类
