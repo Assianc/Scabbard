@@ -14,9 +14,13 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.ViewFlipper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.button.MaterialButton
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -30,6 +34,13 @@ class MainActivityAlm : AppCompatActivity() {
     private lateinit var alarmListView: androidx.recyclerview.widget.RecyclerView
     private lateinit var alarmAdapter: AlarmAdapter
     private val alarmList = mutableListOf<AlarmData>()
+    private lateinit var viewFlipper: ViewFlipper
+    private lateinit var todoListView: RecyclerView
+    private lateinit var todoAdapter: TodoAdapter
+    private val todoList = mutableListOf<TodoData>()
+    private lateinit var alarmTabButton: MaterialButton
+    private lateinit var todoTabButton: MaterialButton
+    private lateinit var fabAdd: FloatingActionButton
 
     companion object {
         internal const val ALARM_REQUEST_CODE = 100
@@ -39,6 +50,8 @@ class MainActivityAlm : AppCompatActivity() {
         const val ALARM_STATUS_CHANGED_ACTION = "com.assiance.alm.ALARM_STATUS_CHANGED"
         internal const val ALARM_PREFS = "alarm_prefs"
         internal const val ALARM_LIST_KEY = "alarm_list"
+        internal const val TODO_PREFS = "todo_prefs"
+        internal const val TODO_LIST_KEY = "todo_list"
     }
 
     private val alarmReceiver = object : BroadcastReceiver() {
@@ -92,27 +105,55 @@ class MainActivityAlm : AppCompatActivity() {
             registerReceiver(alarmStatusReceiver, IntentFilter(ALARM_STATUS_CHANGED_ACTION))
         }
 
-        // 设置浮动按钮点击事件
-        findViewById<FloatingActionButton>(R.id.fabSetAlarm).setOnClickListener {
-            startActivity(Intent(this, AlarmSettingActivity::class.java))
+        // 初始化视图切换器和标签按钮
+        viewFlipper = findViewById(R.id.viewFlipper)
+        alarmTabButton = findViewById(R.id.alarmTabButton)
+        todoTabButton = findViewById(R.id.todoTabButton)
+        fabAdd = findViewById(R.id.fabAdd)
+
+        // 设置标签按钮点击事件
+        alarmTabButton.setOnClickListener {
+            viewFlipper.displayedChild = 0
+            updateFabIcon(true)
+            alarmTabButton.isChecked = true
+            todoTabButton.isChecked = false
         }
 
-        // 恢复已设置的闹钟状态
-        restoreAlarmStatus()
+        todoTabButton.setOnClickListener {
+            viewFlipper.displayedChild = 1
+            updateFabIcon(false)
+            alarmTabButton.isChecked = false
+            todoTabButton.isChecked = true
+        }
 
-        // 初始化 RecyclerView
-        alarmListView = findViewById(R.id.alarmListView)
-        alarmListView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
-        alarmAdapter = AlarmAdapter(
-            alarmList,
-            onDeleteClick = { alarm -> deleteAlarm(alarm) },
-            onToggleClick = { alarm, isEnabled -> toggleAlarm(alarm, isEnabled) },
-            onAlarmClick = { alarm -> editAlarm(alarm) }
+        // 初始化待办事项列表
+        todoListView = findViewById(R.id.todoListView)
+        todoListView.layoutManager = LinearLayoutManager(this)
+        todoAdapter = TodoAdapter(
+            todoList,
+            onDeleteClick = { todo -> deleteTodo(todo) },
+            onToggleClick = { todo, isCompleted -> toggleTodo(todo, isCompleted) },
+            onTodoClick = { todo -> editTodo(todo) }
         )
-        alarmListView.adapter = alarmAdapter
+        todoListView.adapter = todoAdapter
 
-        // 加载保存的闹钟
+        // 设置浮动按钮点击事件
+        fabAdd.setOnClickListener {
+            if (viewFlipper.displayedChild == 0) {
+                startActivity(Intent(this, AlarmSettingActivity::class.java))
+            } else {
+                startActivity(Intent(this, TodoSettingActivity::class.java))
+            }
+        }
+
+        // 初始状态
+        alarmTabButton.isChecked = true
+        todoTabButton.isChecked = false
+        updateFabIcon(true)
+
+        // 加载数据
         loadAlarms()
+        loadTodos()
     }
 
     private fun createNotificationChannel() {
@@ -339,9 +380,88 @@ class MainActivityAlm : AppCompatActivity() {
         startActivity(intent)
     }
 
+    private fun updateFabIcon(isAlarmTab: Boolean) {
+        fabAdd.setImageResource(
+            if (isAlarmTab) R.drawable.ic_alarm_add else R.drawable.ic_add_task
+        )
+    }
+
+    private fun loadTodos() {
+        val prefs = getSharedPreferences(TODO_PREFS, Context.MODE_PRIVATE)
+        val todosJson = prefs.getString(TODO_LIST_KEY, "[]")
+        try {
+            val jsonArray = org.json.JSONArray(todosJson)
+            todoList.clear()
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                todoList.add(TodoData(
+                    id = obj.getInt("id"),
+                    title = obj.getString("title"),
+                    description = obj.optString("description", ""),
+                    dueTime = obj.optLong("dueTime").takeIf { it != 0L },
+                    isCompleted = obj.getBoolean("isCompleted")
+                ))
+            }
+            // 按截止时间和完成状态排序
+            todoList.sortWith(compareBy<TodoData> { it.isCompleted }
+                .thenBy { it.dueTime ?: Long.MAX_VALUE })
+            todoAdapter.updateTodos(todoList.toList())
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun saveTodos() {
+        val jsonArray = org.json.JSONArray()
+        todoList.forEach { todo ->
+            val obj = org.json.JSONObject().apply {
+                put("id", todo.id)
+                put("title", todo.title)
+                put("description", todo.description)
+                put("dueTime", todo.dueTime ?: 0L)
+                put("isCompleted", todo.isCompleted)
+            }
+            jsonArray.put(obj)
+        }
+        
+        getSharedPreferences(TODO_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putString(TODO_LIST_KEY, jsonArray.toString())
+            .apply()
+    }
+
+    private fun deleteTodo(todo: TodoData) {
+        todoList.remove(todo)
+        todoAdapter.updateTodos(todoList.toList())
+        saveTodos()
+    }
+
+    private fun toggleTodo(todo: TodoData, isCompleted: Boolean) {
+        val index = todoList.indexOf(todo)
+        if (index != -1) {
+            val updatedTodo = todo.copy(isCompleted = isCompleted)
+            todoList[index] = updatedTodo
+            // 重新排序并更新
+            todoList.sortWith(compareBy<TodoData> { it.isCompleted }
+                .thenBy { it.dueTime ?: Long.MAX_VALUE })
+            todoAdapter.updateTodos(todoList.toList())
+            saveTodos()
+        }
+    }
+
+    private fun editTodo(todo: TodoData) {
+        val intent = Intent(this, TodoSettingActivity::class.java).apply {
+            putExtra("todo_id", todo.id)
+            putExtra("todo_title", todo.title)
+            putExtra("todo_description", todo.description)
+            putExtra("todo_due_time", todo.dueTime)
+        }
+        startActivity(intent)
+    }
+
     override fun onResume() {
         super.onResume()
-        // 每次返回主界面时重新加载闹钟列表
         loadAlarms()
+        loadTodos()
     }
 }
