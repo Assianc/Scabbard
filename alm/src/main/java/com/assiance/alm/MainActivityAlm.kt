@@ -31,13 +31,19 @@ class MainActivityAlm : AppCompatActivity() {
     private lateinit var timeText: TextView
     private var timeUpdateHandler: Handler = Handler(Looper.getMainLooper())
     private var timeUpdateRunnable: Runnable? = null
-    private lateinit var alarmListView: androidx.recyclerview.widget.RecyclerView
+    
+    // 闹钟列表相关
+    private lateinit var alarmListView: RecyclerView
     private lateinit var alarmAdapter: AlarmAdapter
     private val alarmList = mutableListOf<AlarmData>()
-    private lateinit var viewFlipper: ViewFlipper
+    
+    // 待办列表相关
     private lateinit var todoListView: RecyclerView
     private lateinit var todoAdapter: TodoAdapter
     private val todoList = mutableListOf<TodoData>()
+    
+    // 视图切换相关
+    private lateinit var viewFlipper: ViewFlipper
     private lateinit var alarmTabButton: MaterialButton
     private lateinit var todoTabButton: MaterialButton
     private lateinit var fabAdd: FloatingActionButton
@@ -111,6 +117,28 @@ class MainActivityAlm : AppCompatActivity() {
         todoTabButton = findViewById(R.id.todoTabButton)
         fabAdd = findViewById(R.id.fabAdd)
 
+        // 初始化闹钟列表
+        alarmListView = findViewById(R.id.alarmListView)
+        alarmListView.layoutManager = LinearLayoutManager(this)
+        alarmAdapter = AlarmAdapter(
+            alarmList,
+            onDeleteClick = { alarm -> deleteAlarm(alarm) },
+            onToggleClick = { alarm, isEnabled -> toggleAlarm(alarm, isEnabled) },
+            onAlarmClick = { alarm -> editAlarm(alarm) }
+        )
+        alarmListView.adapter = alarmAdapter
+
+        // 初始化待办列表
+        todoListView = findViewById(R.id.todoListView)
+        todoListView.layoutManager = LinearLayoutManager(this)
+        todoAdapter = TodoAdapter(
+            todoList,
+            onDeleteClick = { todo -> deleteTodo(todo) },
+            onToggleClick = { todo, isCompleted -> toggleTodo(todo, isCompleted) },
+            onTodoClick = { todo -> editTodo(todo) }
+        )
+        todoListView.adapter = todoAdapter
+
         // 设置标签按钮点击事件
         alarmTabButton.setOnClickListener {
             viewFlipper.displayedChild = 0
@@ -125,17 +153,6 @@ class MainActivityAlm : AppCompatActivity() {
             alarmTabButton.isChecked = false
             todoTabButton.isChecked = true
         }
-
-        // 初始化待办事项列表
-        todoListView = findViewById(R.id.todoListView)
-        todoListView.layoutManager = LinearLayoutManager(this)
-        todoAdapter = TodoAdapter(
-            todoList,
-            onDeleteClick = { todo -> deleteTodo(todo) },
-            onToggleClick = { todo, isCompleted -> toggleTodo(todo, isCompleted) },
-            onTodoClick = { todo -> editTodo(todo) }
-        )
-        todoListView.adapter = todoAdapter
 
         // 设置浮动按钮点击事件
         fabAdd.setOnClickListener {
@@ -402,7 +419,7 @@ class MainActivityAlm : AppCompatActivity() {
                     isCompleted = obj.getBoolean("isCompleted")
                 ))
             }
-            // 按截止时间和完成状态排序
+            // 按完成状态和截止时间排序
             todoList.sortWith(compareBy<TodoData> { it.isCompleted }
                 .thenBy { it.dueTime ?: Long.MAX_VALUE })
             todoAdapter.updateTodos(todoList.toList())
