@@ -47,6 +47,7 @@ class MainActivityAlm : AppCompatActivity() {
     private lateinit var alarmTabButton: MaterialButton
     private lateinit var todoTabButton: MaterialButton
     private lateinit var fabAdd: FloatingActionButton
+    private var currentTab = 0 // 0: 闹钟, 1: 待办
 
     companion object {
         internal const val ALARM_REQUEST_CODE = 100
@@ -144,17 +145,45 @@ class MainActivityAlm : AppCompatActivity() {
 
         // 设置标签按钮点击事件
         alarmTabButton.setOnClickListener {
-            viewFlipper.displayedChild = 0
-            updateFabIcon(true)
-            alarmTabButton.isChecked = true
-            todoTabButton.isChecked = false
+            if (currentTab != 0) {
+                viewFlipper.setInAnimation(this, R.anim.slide_in_left)
+                viewFlipper.setOutAnimation(this, R.anim.slide_out_right)
+                viewFlipper.displayedChild = 0
+                updateFabIcon(true)
+                alarmTabButton.isChecked = true
+                todoTabButton.isChecked = false
+                currentTab = 0
+                
+                // 添加按钮动画
+                fabAdd.animate()
+                    .rotation(360f)
+                    .setDuration(300)
+                    .withEndAction {
+                        fabAdd.rotation = 0f
+                    }
+                    .start()
+            }
         }
 
         todoTabButton.setOnClickListener {
-            viewFlipper.displayedChild = 1
-            updateFabIcon(false)
-            alarmTabButton.isChecked = false
-            todoTabButton.isChecked = true
+            if (currentTab != 1) {
+                viewFlipper.setInAnimation(this, R.anim.slide_in_right)
+                viewFlipper.setOutAnimation(this, R.anim.slide_out_left)
+                viewFlipper.displayedChild = 1
+                updateFabIcon(false)
+                alarmTabButton.isChecked = false
+                todoTabButton.isChecked = true
+                currentTab = 1
+                
+                // 添加按钮动画
+                fabAdd.animate()
+                    .rotation(-360f)
+                    .setDuration(300)
+                    .withEndAction {
+                        fabAdd.rotation = 0f
+                    }
+                    .start()
+            }
         }
 
         // 设置浮动按钮点击事件
@@ -396,9 +425,21 @@ class MainActivityAlm : AppCompatActivity() {
     }
 
     private fun updateFabIcon(isAlarmTab: Boolean) {
-        fabAdd.setImageResource(
-            if (isAlarmTab) R.drawable.ic_alarm_add else R.drawable.ic_add_task
-        )
+        fabAdd.animate()
+            .scaleX(0f)
+            .scaleY(0f)
+            .setDuration(150)
+            .withEndAction {
+                fabAdd.setImageResource(
+                    if (isAlarmTab) R.drawable.ic_alarm_add else R.drawable.ic_add_task
+                )
+                fabAdd.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(150)
+                    .start()
+            }
+            .start()
     }
 
     private fun loadTodos() {
