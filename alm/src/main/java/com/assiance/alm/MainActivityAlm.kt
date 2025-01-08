@@ -407,17 +407,41 @@ class MainActivityAlm : AppCompatActivity() {
         try {
             val jsonArray = org.json.JSONArray(todosJson)
             todoList.clear()
+            val currentTime = System.currentTimeMillis()
+            var hasChanges = false
+
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
+                val dueTime = obj.optLong("dueTime").takeIf { it != 0L }
+                val isCompleted = obj.getBoolean("isCompleted")
+                
+                // 如果待办已过期且未完成，自动标记为完成
+                val shouldComplete = dueTime != null && 
+                    dueTime < currentTime && 
+                    !isCompleted
+
+                if (shouldComplete) {
+                    obj.put("isCompleted", true)
+                    hasChanges = true
+                }
+
                 todoList.add(TodoData(
                     id = obj.getInt("id"),
                     title = obj.getString("title"),
                     description = obj.optString("description", ""),
                     startTime = obj.optLong("startTime").takeIf { it != 0L },
-                    dueTime = obj.optLong("dueTime").takeIf { it != 0L },
-                    isCompleted = obj.getBoolean("isCompleted")
+                    dueTime = dueTime,
+                    isCompleted = shouldComplete || isCompleted
                 ))
             }
+
+            // 如果有待办被自动完成，保存更新
+            if (hasChanges) {
+                prefs.edit()
+                    .putString(TODO_LIST_KEY, jsonArray.toString())
+                    .apply()
+            }
+
             // 按完成状态、开始时间和截止时间排序
             todoList.sortWith(
                 compareBy<TodoData> { it.isCompleted }
