@@ -17,12 +17,13 @@ class TodoReminderReceiver : BroadcastReceiver() {
         
         if (context != null && intent?.action == MainActivityAlm.TODO_REMINDER_ACTION) {
             val todoTitle = intent.getStringExtra("todo_title") ?: "待办事项"
-            Log.d("TodoReminder", "显示提醒通知：$todoTitle")
-            showNotification(context, todoTitle)
+            val isAdvance = intent.getBooleanExtra("is_advance", true)
+            Log.d("TodoReminder", "显示提醒通知：$todoTitle, ${if (isAdvance) "提前提醒" else "到期提醒"}")
+            showNotification(context, todoTitle, isAdvance)
         }
     }
 
-    private fun showNotification(context: Context, todoTitle: String) {
+    private fun showNotification(context: Context, todoTitle: String, isAdvance: Boolean) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         // 创建通知渠道
@@ -57,8 +58,8 @@ class TodoReminderReceiver : BroadcastReceiver() {
         // 创建通知
         val notification = NotificationCompat.Builder(context, MainActivityAlm.TODO_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_add_task)
-            .setContentTitle("待办提醒")
-            .setContentText("$todoTitle 即将到期")
+            .setContentTitle(if (isAdvance) "待办提醒" else "待办到期提醒")
+            .setContentText(if (isAdvance) "$todoTitle 即将到期" else "$todoTitle 已到期")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setAutoCancel(true)
@@ -67,7 +68,12 @@ class TodoReminderReceiver : BroadcastReceiver() {
             .build()
 
         try {
-            notificationManager.notify(MainActivityAlm.TODO_NOTIFICATION_ID, notification)
+            // 使用不同的通知ID以显示多个通知
+            val notificationId = if (isAdvance) 
+                MainActivityAlm.TODO_NOTIFICATION_ID 
+            else 
+                MainActivityAlm.TODO_NOTIFICATION_ID + 1
+            notificationManager.notify(notificationId, notification)
             Log.d("TodoReminder", "通知已发送")
         } catch (e: Exception) {
             Log.e("TodoReminder", "发送通知失败", e)

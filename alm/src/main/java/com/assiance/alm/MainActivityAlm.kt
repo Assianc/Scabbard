@@ -487,6 +487,17 @@ class MainActivityAlm : AppCompatActivity() {
             putExtra("todo_description", todo.description)
             putExtra("todo_start_time", todo.startTime)
             putExtra("todo_due_time", todo.dueTime)
+            // 根据提醒时间计算提前分钟数
+            val advanceMinutes = todo.dueTime?.let { dueTime ->
+                val prefs = getSharedPreferences(TODO_PREFS, Context.MODE_PRIVATE)
+                val advanceTime = prefs.getLong("advance_time_${todo.id}", 0L)
+                if (advanceTime > 0) {
+                    ((dueTime - advanceTime) / (60 * 1000)).toInt()
+                } else {
+                    0
+                }
+            } ?: 0
+            putExtra("todo_advance_minutes", advanceMinutes)
         }
         startActivity(intent)
     }

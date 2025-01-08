@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_reminder"
+        android:title="提醒时间"
+        android:icon="@drawable/ic_notification"
+        app:showAsAction="always">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/reminder_due"
+                    android:title="仅到期提醒"
+                    android:checked="true"/>
+                <item
+                    android:id="@+id/reminder_15min"
+                    android:title="提前15分钟"/>
+                <item
+                    android:id="@+id/reminder_30min"
+                    android:title="提前30分钟"/>
+                <item
+                    android:id="@+id/reminder_1hour"
+                    android:title="提前1小时"/>
+                <item
+                    android:id="@+id/reminder_2hour"
+                    android:title="提前2小时"/>
+            </group>
+        </menu>
+    </item>
+</menu> 
