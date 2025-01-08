@@ -57,6 +57,9 @@ class MainActivityAlm : AppCompatActivity() {
     // 添加指示器视图属性
     private lateinit var tabIndicator: View
     
+    // 添加指示器动画属性
+    private var isFirstLayout = true
+
     companion object {
         internal const val ALARM_REQUEST_CODE = 100
         internal const val CHANNEL_ID = "AlarmChannel"
@@ -132,9 +135,59 @@ class MainActivityAlm : AppCompatActivity() {
         // 初始化指示器
         tabIndicator = findViewById(R.id.tabIndicator)
         
-        // 在视图完成布局后设置初始指示器位置
+        // 设置指示器初始状态
+        tabIndicator.alpha = 0f
+        tabIndicator.scaleX = 0.8f
+        tabIndicator.scaleY = 0.8f
+
+        // 在视图完成布局后设置指示器
         alarmTabButton.post {
-            updateIndicator(alarmTabButton, true)
+            if (isFirstLayout) {
+                // 设置指示器的初始大小和位置
+                val layoutParams = tabIndicator.layoutParams
+                layoutParams.width = alarmTabButton.width
+                layoutParams.height = alarmTabButton.height
+                tabIndicator.layoutParams = layoutParams
+                
+                // 设置初始位置
+                tabIndicator.translationX = alarmTabButton.x
+                
+                // 添加组合动画效果
+                tabIndicator.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(500)
+                    .setStartDelay(300) // 稍微延迟一下，让用户能看到动画
+                    .setInterpolator(DecelerateInterpolator())
+                    .withStartAction {
+                        // 动画开始时设置按钮状态
+                        alarmTabButton.isChecked = true
+                        todoTabButton.isChecked = false
+                    }
+                    .withEndAction {
+                        isFirstLayout = false
+                    }
+                    .start()
+
+                // 同时添加按钮的动画效果
+                alarmTabButton.alpha = 0f
+                todoTabButton.alpha = 0f
+                
+                alarmTabButton.animate()
+                    .alpha(1f)
+                    .setDuration(400)
+                    .setStartDelay(200)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+                
+                todoTabButton.animate()
+                    .alpha(1f)
+                    .setDuration(400)
+                    .setStartDelay(200)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+            }
         }
 
         // 初始化闹钟列表
@@ -657,37 +710,46 @@ class MainActivityAlm : AppCompatActivity() {
         val animator = ValueAnimator.ofFloat(0f, 1f)
         animator.addUpdateListener { animation ->
             val fraction = animation.animatedFraction
-            val fromLeft = fromButton.left.toFloat()
-            val toLeft = toButton.left.toFloat()
-            val fromRight = fromButton.right.toFloat()
-            val toRight = toButton.right.toFloat()
-            
-            val currentLeft = fromLeft + (toLeft - fromLeft) * fraction
-            val currentRight = fromRight + (toRight - fromRight) * fraction
-            
-            tabIndicator.left = currentLeft.toInt()
-            tabIndicator.right = currentRight.toInt()
+            val fromX = fromButton.x
+            val toX = toButton.x
+            val currentX = fromX + (toX - fromX) * fraction
+            tabIndicator.translationX = currentX
         }
         animator.duration = 300
         animator.interpolator = FastOutSlowInInterpolator()
+        
+        // 添加缩放动画效果
+        tabIndicator.animate()
+            .scaleX(0.95f)
+            .scaleY(0.95f)
+            .setDuration(150)
+            .withEndAction {
+                tabIndicator.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(150)
+                    .start()
+            }
+            .start()
+        
         animator.start()
     }
 
     // 添加更新指示器位置的方法
     private fun updateIndicator(button: MaterialButton, animate: Boolean = true) {
-        if (animate) {
-            tabIndicator.animate()
-                .x(button.left.toFloat())
-                .setDuration(200)
-                .start()
-        } else {
-            tabIndicator.left = button.left
-            tabIndicator.right = button.right
-        }
-        
-        // 设置指示器高度为按钮高度
         val layoutParams = tabIndicator.layoutParams
+        layoutParams.width = button.width
         layoutParams.height = button.height
         tabIndicator.layoutParams = layoutParams
+
+        if (animate) {
+            tabIndicator.animate()
+                .translationX(button.x)
+                .setDuration(200)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        } else {
+            tabIndicator.translationX = button.x
+        }
     }
 }
