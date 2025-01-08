@@ -418,13 +418,17 @@ class MainActivityAlm : AppCompatActivity() {
                     id = obj.getInt("id"),
                     title = obj.getString("title"),
                     description = obj.optString("description", ""),
+                    startTime = obj.optLong("startTime").takeIf { it != 0L },
                     dueTime = obj.optLong("dueTime").takeIf { it != 0L },
                     isCompleted = obj.getBoolean("isCompleted")
                 ))
             }
-            // 按完成状态和截止时间排序
-            todoList.sortWith(compareBy<TodoData> { it.isCompleted }
-                .thenBy { it.dueTime ?: Long.MAX_VALUE })
+            // 按完成状态、开始时间和截止时间排序
+            todoList.sortWith(
+                compareBy<TodoData> { it.isCompleted }
+                    .thenBy { it.startTime ?: Long.MAX_VALUE }
+                    .thenBy { it.dueTime ?: Long.MAX_VALUE }
+            )
             todoAdapter.updateTodos(todoList.toList())
         } catch (e: Exception) {
             e.printStackTrace()
@@ -438,6 +442,7 @@ class MainActivityAlm : AppCompatActivity() {
                 put("id", todo.id)
                 put("title", todo.title)
                 put("description", todo.description)
+                put("startTime", todo.startTime ?: 0L)
                 put("dueTime", todo.dueTime ?: 0L)
                 put("isCompleted", todo.isCompleted)
             }
@@ -474,6 +479,7 @@ class MainActivityAlm : AppCompatActivity() {
             putExtra("todo_id", todo.id)
             putExtra("todo_title", todo.title)
             putExtra("todo_description", todo.description)
+            putExtra("todo_start_time", todo.startTime)
             putExtra("todo_due_time", todo.dueTime)
         }
         startActivity(intent)

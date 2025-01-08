@@ -23,9 +23,12 @@ import java.util.Locale
 class TodoSettingActivity : AppCompatActivity() {
     private lateinit var titleInput: TextInputEditText
     private lateinit var descriptionInput: TextInputEditText
+    private lateinit var startDateCheckBox: CheckBox
+    private lateinit var startDateText: TextView
     private lateinit var dueDateCheckBox: CheckBox
     private lateinit var dueDateText: TextView
     private var todoId: Int = -1
+    private var startTime: Long? = null
     private var dueTime: Long? = null
     private lateinit var alarmManager: AlarmManager
 
@@ -44,13 +47,25 @@ class TodoSettingActivity : AppCompatActivity() {
         // 初始化视图
         titleInput = findViewById(R.id.todoTitleInput)
         descriptionInput = findViewById(R.id.todoDescriptionInput)
+        startDateCheckBox = findViewById(R.id.startDateCheckBox)
+        startDateText = findViewById(R.id.startDateText)
         dueDateCheckBox = findViewById(R.id.dueDateCheckBox)
         dueDateText = findViewById(R.id.dueDateText)
+
+        // 设置开始时间选择
+        startDateCheckBox.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                showDateTimePicker(true)
+            } else {
+                startTime = null
+                startDateText.text = "未设置"
+            }
+        }
 
         // 设置截止时间选择
         dueDateCheckBox.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                showDateTimePicker()
+                showDateTimePicker(false)
             } else {
                 dueTime = null
                 dueDateText.text = "未设置"
@@ -63,10 +78,17 @@ class TodoSettingActivity : AppCompatActivity() {
             supportActionBar?.title = "编辑待办"
             titleInput.setText(intent.getStringExtra("todo_title"))
             descriptionInput.setText(intent.getStringExtra("todo_description"))
+            
+            intent.getLongExtra("todo_start_time", -1L).takeIf { it != -1L }?.let {
+                startTime = it
+                startDateCheckBox.isChecked = true
+                updateDateText(true, it)
+            }
+            
             intent.getLongExtra("todo_due_time", -1L).takeIf { it != -1L }?.let {
                 dueTime = it
                 dueDateCheckBox.isChecked = true
-                updateDueDateText(it)
+                updateDateText(false, it)
             }
         }
 
@@ -76,9 +98,10 @@ class TodoSettingActivity : AppCompatActivity() {
         }
     }
 
-    private fun showDateTimePicker() {
+    private fun showDateTimePicker(isStartTime: Boolean) {
         val currentDateTime = Calendar.getInstance()
-        dueTime?.let {
+        val currentTime = if (isStartTime) startTime else dueTime
+        currentTime?.let {
             currentDateTime.timeInMillis = it
         }
 
@@ -92,16 +115,39 @@ class TodoSettingActivity : AppCompatActivity() {
                     set(Calendar.MINUTE, minute)
                     set(Calendar.SECOND, 0)
                 }
-                dueTime = calendar.timeInMillis
-                updateDueDateText(calendar.timeInMillis)
+                
+                val selectedTime = calendar.timeInMillis
+                
+                // 检查时间是否合理
+                if (isStartTime) {
+                    if (dueTime != null && selectedTime >= dueTime!!) {
+                        Toast.makeText(this, "开始时间必须早于截止时间", Toast.LENGTH_SHORT).show()
+                        startDateCheckBox.isChecked = false
+                        return@TimePickerDialog
+                    }
+                    startTime = selectedTime
+                } else {
+                    if (startTime != null && selectedTime <= startTime!!) {
+                        Toast.makeText(this, "截止时间必须晚于开始时间", Toast.LENGTH_SHORT).show()
+                        dueDateCheckBox.isChecked = false
+                        return@TimePickerDialog
+                    }
+                    dueTime = selectedTime
+                }
+                
+                updateDateText(isStartTime, selectedTime)
             }, currentDateTime.get(Calendar.HOUR_OF_DAY), currentDateTime.get(Calendar.MINUTE), true).show()
         }, currentDateTime.get(Calendar.YEAR), currentDateTime.get(Calendar.MONTH), 
            currentDateTime.get(Calendar.DAY_OF_MONTH)).show()
     }
 
-    private fun updateDueDateText(timeInMillis: Long) {
+    private fun updateDateText(isStartTime: Boolean, timeInMillis: Long) {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-        dueDateText.text = dateFormat.format(timeInMillis)
+        if (isStartTime) {
+            startDateText.text = dateFormat.format(timeInMillis)
+        } else {
+            dueDateText.text = dateFormat.format(timeInMillis)
+        }
     }
 
     private fun saveTodo() {
@@ -115,6 +161,7 @@ class TodoSettingActivity : AppCompatActivity() {
             id = if (todoId != -1) todoId else System.currentTimeMillis().toInt(),
             title = title,
             description = descriptionInput.text?.toString()?.trim() ?: "",
+            startTime = if (startDateCheckBox.isChecked) startTime else null,
             dueTime = if (dueDateCheckBox.isChecked) dueTime else null
         )
 
@@ -139,6 +186,7 @@ class TodoSettingActivity : AppCompatActivity() {
             put("id", todo.id)
             put("title", todo.title)
             put("description", todo.description)
+            put("startTime", todo.startTime ?: 0L)
             put("dueTime", todo.dueTime ?: 0L)
             put("isCompleted", false)
         })

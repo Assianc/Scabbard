@@ -19,7 +19,7 @@ class TodoAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val titleText: TextView = view.findViewById(R.id.todoTitleText)
-        val dueTimeText: TextView = view.findViewById(R.id.todoDueTimeText)
+        val timeText: TextView = view.findViewById(R.id.todoTimeText)
         val completeCheckBox: CheckBox = view.findViewById(R.id.todoCompleteCheckBox)
         val deleteButton: ImageButton = view.findViewById(R.id.todoDeleteButton)
         val container: View = view
@@ -35,12 +35,20 @@ class TodoAdapter(
         val todo = todos[position]
         holder.titleText.text = todo.title
         
-        todo.dueTime?.let {
-            val timeFormat = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
-            holder.dueTimeText.text = timeFormat.format(it)
-            holder.dueTimeText.visibility = View.VISIBLE
-        } ?: run {
-            holder.dueTimeText.visibility = View.GONE
+        val timeText = buildTimeText(todo)
+        if (timeText.isNotEmpty()) {
+            holder.timeText.text = timeText
+            holder.timeText.visibility = View.VISIBLE
+        } else {
+            holder.timeText.visibility = View.GONE
+        }
+        
+        holder.titleText.apply {
+            paintFlags = if (todo.isCompleted) {
+                paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+            } else {
+                paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+            }
         }
         
         holder.completeCheckBox.setOnCheckedChangeListener(null)
@@ -56,6 +64,27 @@ class TodoAdapter(
         holder.container.setOnClickListener {
             onTodoClick(todo)
         }
+    }
+
+    private fun buildTimeText(todo: TodoData): String {
+        val dateFormat = SimpleDateFormat("MM-dd HH:mm", Locale.getDefault())
+        val sb = StringBuilder()
+
+        todo.startTime?.let {
+            sb.append("开始：")
+            sb.append(dateFormat.format(it))
+        }
+
+        if (todo.startTime != null && todo.dueTime != null) {
+            sb.append(" | ")
+        }
+
+        todo.dueTime?.let {
+            sb.append("截止：")
+            sb.append(dateFormat.format(it))
+        }
+
+        return sb.toString()
     }
 
     override fun getItemCount() = todos.size
