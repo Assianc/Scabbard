@@ -9,7 +9,8 @@
 
     <application>
         <activity android:name=".MemoDetailActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/TransparentTheme" />
         <activity android:name=".AddMemoActivity"
             android:exported="false" />
         <activity android:name=".MainActivityMemo"

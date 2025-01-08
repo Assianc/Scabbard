@@ -93,6 +93,22 @@ class MemoDetailActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 设置窗口背景为透明
+        window.setBackgroundDrawableResource(android.R.color.transparent)
+        
+        // 启用转场动画
+        window.requestFeature(android.view.Window.FEATURE_ACTIVITY_TRANSITIONS)
+        window.sharedElementEnterTransition = android.transition.TransitionInflater
+            .from(this)
+            .inflateTransition(R.transition.memo_transition)
+        window.sharedElementReturnTransition = android.transition.TransitionInflater
+            .from(this)
+            .inflateTransition(R.transition.memo_transition)
+        
+        // 禁用默认的进入和退出过渡动画
+        window.enterTransition = null
+        window.exitTransition = null
+        
         super.onCreate(savedInstanceState)
         
         // 在初始化其他内容之前，先确保数据库是最新的
@@ -692,5 +708,16 @@ class MemoDetailActivity : AppCompatActivity() {
         // 隐藏输入法
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(editText.windowToken, 0)
+    }
+
+    override fun finish() {
+        super.finish()
+        // 应用退出动画
+        overridePendingTransition(R.anim.slide_down_enter, R.anim.slide_down_exit)
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        overridePendingTransition(R.anim.slide_down_enter, R.anim.slide_down_exit)
     }
 }

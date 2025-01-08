@@ -97,7 +97,16 @@ class MemoAdapter(
                 putExtra("memo_title_font_size", memo.titleFontSize)
                 putExtra("memo_content_font_size", memo.contentFontSize)
             }
-            context.startActivity(intent)
+            
+            if (context is MainActivityMemo) {
+                val options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    context,
+                    androidx.core.util.Pair(holder.titleTextView, "memo_title"),
+                    androidx.core.util.Pair(holder.contentTextView, "memo_content"),
+                    androidx.core.util.Pair(holder.updateTimeTextView, "memo_time")
+                )
+                context.startActivity(intent, options.toBundle())
+            }
         }
 
         holder.contentTextView.setOnClickListener(object : View.OnClickListener {
