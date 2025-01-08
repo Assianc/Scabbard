@@ -297,25 +297,20 @@ class MainActivityAlm : AppCompatActivity() {
     }
 
     private fun deleteAlarm(alarm: AlarmData) {
-        // 取消闹钟
-        val intent = Intent(ALARM_ACTION).apply {
-            `package` = packageName
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            this,
-            alarm.id,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        alarmManager.cancel(pendingIntent)
-
-        // 从列表中移除并更新
-        alarmList.remove(alarm)
-        alarmListView.post {
-            alarmAdapter.updateAlarms(alarmList.toList())
-            saveAlarms()
-            updateAlarmStatus()
-        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("删除闹钟")
+            .setMessage("确定要删除这个闹钟吗？")
+            .setPositiveButton("删除") { _, _ ->
+                // 取消闹钟
+                cancelAlarm(alarm)
+                // 从列表中移除
+                alarmList.remove(alarm)
+                alarmAdapter.updateAlarms(alarmList.toList())
+                saveAlarms()
+                Toast.makeText(this, "闹钟已删除", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun toggleAlarm(alarm: AlarmData, isEnabled: Boolean) {
@@ -456,9 +451,20 @@ class MainActivityAlm : AppCompatActivity() {
     }
 
     private fun deleteTodo(todo: TodoData) {
-        todoList.remove(todo)
-        todoAdapter.updateTodos(todoList.toList())
-        saveTodos()
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("删除待办")
+            .setMessage("确定要删除这个待办事项吗？")
+            .setPositiveButton("删除") { _, _ ->
+                // 取消提醒
+                cancelTodoReminder(todo.id)
+                // 从列表中移除
+                todoList.remove(todo)
+                todoAdapter.updateTodos(todoList.toList())
+                saveTodos()
+                Toast.makeText(this, "待办已删除", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun toggleTodo(todo: TodoData, isCompleted: Boolean) {
@@ -483,6 +489,19 @@ class MainActivityAlm : AppCompatActivity() {
             putExtra("todo_due_time", todo.dueTime)
         }
         startActivity(intent)
+    }
+
+    private fun cancelTodoReminder(todoId: Int) {
+        val intent = Intent(TODO_REMINDER_ACTION).apply {
+            `package` = packageName
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            todoId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
     }
 
     override fun onResume() {

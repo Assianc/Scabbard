@@ -71,7 +71,7 @@ class TodoAdapter(
         val sb = StringBuilder()
 
         todo.startTime?.let {
-            sb.append("开始：")
+            sb.append("开始于：")
             sb.append(dateFormat.format(it))
         }
 
@@ -80,7 +80,7 @@ class TodoAdapter(
         }
 
         todo.dueTime?.let {
-            sb.append("截止：")
+            sb.append("截止于：")
             sb.append(dateFormat.format(it))
         }
 
