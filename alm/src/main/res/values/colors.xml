@@ -19,6 +19,7 @@
     <color name="tab_background_selected">#4DFFFFFF</color>
     <color name="tab_background_unselected">#1AFFFFFF</color>
     <color name="tab_indicator_color">#A6852CDE</color>
+    <color name="tab_ripple_color">#33FFFFFF</color>
 
     <!-- res/values/colors.xml -->
 </resources> 

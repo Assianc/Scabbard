@@ -59,6 +59,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="闹钟"
+                        android:textColor="@color/tab_unselected"
+                        app:rippleColor="@color/tab_ripple_color"
                         style="@style/Widget.MaterialComponents.Button.TextButton"/>
 
                     <com.google.android.material.button.MaterialButton
@@ -67,6 +69,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="待办"
+                        android:textColor="@color/tab_unselected"
+                        app:rippleColor="@color/tab_ripple_color"
                         style="@style/Widget.MaterialComponents.Button.TextButton"/>
 
                 </LinearLayout>
