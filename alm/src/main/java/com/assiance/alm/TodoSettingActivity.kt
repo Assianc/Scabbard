@@ -288,6 +288,11 @@ class TodoSettingActivity : AppCompatActivity() {
             return
         }
 
+        // 取消旧的提醒（如果存在）
+        if (todoId != -1) {
+            cancelTodoReminder(todoId)
+        }
+
         val todo = TodoData(
             id = if (todoId != -1) todoId else System.currentTimeMillis().toInt(),
             title = title,
@@ -327,36 +332,50 @@ class TodoSettingActivity : AppCompatActivity() {
             .apply()
 
         // 设置提醒
-        if (dueDateCheckBox.isChecked && dueTime != null) {
-            setTodoReminder(todo)
-        } else {
-            cancelTodoReminder(todo.id)
-        }
+        setTodoReminder(todo)
 
         Toast.makeText(this, if (todoId != -1) "待办已更新" else "待办已添加", Toast.LENGTH_SHORT).show()
         finish()
     }
 
     private fun setTodoReminder(todo: TodoData) {
+        Log.d("TodoReminder", "开始设置提醒：${todo.title}")
+        
+        // 处理开始时间提醒
+        todo.startTime?.let { startTime ->
+            if (startTime > System.currentTimeMillis()) {
+                Log.d("TodoReminder", "设置开始时间提醒：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(startTime)}")
+                // 在开始时间设置提醒
+                setReminder(todo, startTime, false, false)
+            } else {
+                Log.d("TodoReminder", "开始时间已过：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(startTime)}")
+            }
+        }
+
+        // 处理截止时间提醒
         todo.dueTime?.let { dueTime ->
             if (advanceMinutes > 0) {
                 // 设置提前提醒
-                setReminder(todo, dueTime - (advanceMinutes * 60 * 1000), true)
+                setReminder(todo, dueTime - (advanceMinutes * 60 * 1000), true, true)
             }
             // 设置到期提醒
-            setReminder(todo, dueTime, false)
+            setReminder(todo, dueTime, false, true)
         }
     }
 
-    private fun setReminder(todo: TodoData, reminderTime: Long, isAdvance: Boolean) {
+    private fun setReminder(todo: TodoData, reminderTime: Long, isAdvance: Boolean, isDueReminder: Boolean) {
         val intent = Intent(MainActivityAlm.TODO_REMINDER_ACTION).apply {
             `package` = packageName
             putExtra("todo_title", todo.title)
-            putExtra("is_advance", isAdvance)  // 标记是否为提前提醒
+            putExtra("is_advance", isAdvance)
+            putExtra("is_due_reminder", isDueReminder)
         }
         
-        // 使用不同的请求码来区分提前提醒和截止时间提醒
-        val requestCode = if (isAdvance) todo.id else todo.id + 1000000
+        val requestCode = when {
+            !isDueReminder -> todo.id + 2000000  // 开始时间提醒
+            isAdvance -> todo.id + 1000000       // 提前提醒
+            else -> todo.id                       // 到期提醒
+        }
 
         val pendingIntent = PendingIntent.getBroadcast(
             this,
@@ -365,43 +384,41 @@ class TodoSettingActivity : AppCompatActivity() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        if (reminderTime > System.currentTimeMillis()) {
-            try {
-                // 使用 setExactAndAllowWhileIdle 确保准确提醒
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        reminderTime,
-                        pendingIntent
-                    )
-                } else {
-                    alarmManager.setExact(
-                        AlarmManager.RTC_WAKEUP,
-                        reminderTime,
-                        pendingIntent
-                    )
-                }
-                
-                // 打印日志以便调试
-                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                val reminderTimeStr = sdf.format(reminderTime)
-                Log.d("TodoReminder", "设置${if (isAdvance) "提前" else "截止时间"}提醒：${todo.title} - $reminderTimeStr")
-            } catch (e: Exception) {
-                Log.e("TodoReminder", "设置提醒失败", e)
-                Toast.makeText(this, "设置提醒失败：${e.message}", Toast.LENGTH_SHORT).show()
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    reminderTime,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    reminderTime,
+                    pendingIntent
+                )
             }
-        } else {
-            Log.w("TodoReminder", "提醒时间已过：${todo.title}")
-            if (isAdvance) {
-                Toast.makeText(this, "提醒时间已过", Toast.LENGTH_SHORT).show()
+            
+            val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val reminderTimeStr = sdf.format(reminderTime)
+            val reminderType = when {
+                !isDueReminder -> "开始时间"
+                isAdvance -> "提前"
+                else -> "截止时间"
             }
+            Log.d("TodoReminder", "成功设置${reminderType}提醒：${todo.title} - $reminderTimeStr")
+            Toast.makeText(this, "已设置${reminderType}提醒", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Log.e("TodoReminder", "设置提醒失败", e)
+            Toast.makeText(this, "设置提醒失败：${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun cancelTodoReminder(todoId: Int) {
-        // 取消两个提醒
-        cancelSingleReminder(todoId)  // 取消提前提醒
-        cancelSingleReminder(todoId + 1000000)  // 取消截止时间提醒
+        // 取消所有类型的提醒
+        cancelSingleReminder(todoId)          // 取消到期提醒
+        cancelSingleReminder(todoId + 1000000) // 取消提前提醒
+        cancelSingleReminder(todoId + 2000000) // 取消开始时间提醒
     }
 
     private fun cancelSingleReminder(requestCode: Int) {

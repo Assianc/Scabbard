@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/gradient_background_alm"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.Toolbar
@@ -24,13 +25,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:hint="标题">
+            android:hint="标题"
+            app:boxBackgroundColor="@android:color/transparent"
+            app:boxBackgroundMode="none"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/todoTitleInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
+                android:background="@drawable/alm_white_text_border"
                 android:maxLines="1"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -38,7 +43,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:hint="描述">
+            android:hint="描述"
+            app:boxBackgroundColor="@android:color/transparent"
+            app:boxBackgroundMode="none"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/todoDescriptionInput"
@@ -46,6 +54,7 @@
                 android:layout_height="wrap_content"
                 android:inputType="textMultiLine"
                 android:minLines="3"
+                android:background="@drawable/alm_white_text_border"
                 android:gravity="top"/>
         </com.google.android.material.textfield.TextInputLayout>
 
