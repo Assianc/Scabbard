@@ -207,8 +207,11 @@ class TodoSettingActivity : AppCompatActivity() {
 
     private fun saveTodo() {
         val title = titleInput.text?.toString()?.trim() ?: ""
-        if (title.isEmpty()) {
-            titleInput.error = "请输入标题"
+        val description = descriptionInput.text?.toString()?.trim() ?: ""
+        
+        // 修改验证逻辑：内容不能为空
+        if (description.isEmpty()) {
+            descriptionInput.error = "请输入待办内容"
             return
         }
 
@@ -219,8 +222,8 @@ class TodoSettingActivity : AppCompatActivity() {
 
         val todo = TodoData(
             id = if (todoId != -1) todoId else System.currentTimeMillis().toInt(),
-            title = title,
-            description = descriptionInput.text?.toString()?.trim() ?: "",
+            title = title,  // 标题可以为空
+            description = description,
             startTime = if (startDateCheckBox.isChecked) startTime else null,
             dueTime = if (dueDateCheckBox.isChecked) dueTime else null
         )

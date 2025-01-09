@@ -19,6 +19,7 @@ class TodoAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val titleText: TextView = view.findViewById(R.id.todoTitleText)
+        val descriptionText: TextView = view.findViewById(R.id.todoDescriptionText)
         val timeText: TextView = view.findViewById(R.id.todoTimeText)
         val completeCheckBox: CheckBox = view.findViewById(R.id.todoCompleteCheckBox)
         val deleteButton: ImageButton = view.findViewById(R.id.todoDeleteButton)
@@ -33,16 +34,9 @@ class TodoAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val todo = todos[position]
+        
+        // 设置标题
         holder.titleText.text = todo.title
-        
-        val timeText = buildTimeText(todo)
-        if (timeText.isNotEmpty()) {
-            holder.timeText.text = timeText
-            holder.timeText.visibility = View.VISIBLE
-        } else {
-            holder.timeText.visibility = View.GONE
-        }
-        
         holder.titleText.apply {
             paintFlags = if (todo.isCompleted) {
                 paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
@@ -51,16 +45,43 @@ class TodoAdapter(
             }
         }
         
+        // 设置描述内容
+        if (todo.description.isNotEmpty()) {
+            holder.descriptionText.visibility = View.VISIBLE
+            holder.descriptionText.text = todo.description
+            holder.descriptionText.apply {
+                paintFlags = if (todo.isCompleted) {
+                    paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                } else {
+                    paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                }
+            }
+        } else {
+            holder.descriptionText.visibility = View.GONE
+        }
+        
+        // 设置时间信息
+        val timeText = buildTimeText(todo)
+        if (timeText.isNotEmpty()) {
+            holder.timeText.visibility = View.VISIBLE
+            holder.timeText.text = timeText
+        } else {
+            holder.timeText.visibility = View.GONE
+        }
+        
+        // 设置完成状态
         holder.completeCheckBox.setOnCheckedChangeListener(null)
         holder.completeCheckBox.isChecked = todo.isCompleted
         holder.completeCheckBox.setOnCheckedChangeListener { _, isChecked ->
             onToggleClick(todo, isChecked)
         }
         
+        // 设置删除按钮
         holder.deleteButton.setOnClickListener {
             onDeleteClick(todo)
         }
 
+        // 设置整体点击
         holder.container.setOnClickListener {
             onTodoClick(todo)
         }
