@@ -15,12 +15,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:background="@drawable/gradient_background_almitem"
         android:padding="20dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="闹钟响了"
+            android:text="冬去鸟鸣时"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="#333333"
@@ -32,7 +33,7 @@
             android:layout_height="wrap_content"
             android:textSize="40sp"
             android:textStyle="bold"
-            android:textColor="#FF4081"
+            android:textColor="#FF0101"
             android:gravity="center"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="24dp"/>
@@ -44,8 +45,8 @@
             android:text="停止闹钟"
             android:textSize="18sp"
             android:padding="16dp"
-            android:background="@drawable/rounded_button_background"
+            android:background="@drawable/gradient_background_mesitem"
             android:textColor="@android:color/white"/>
     </LinearLayout>
 
-</androidx.cardview.widget.CardView> 
+</androidx.cardview.widget.CardView>
