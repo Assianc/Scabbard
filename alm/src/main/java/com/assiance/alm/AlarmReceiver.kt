@@ -6,54 +6,123 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.MediaPlayer
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.core.app.NotificationCompat
+import android.app.Notification
 
 class AlarmReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent?) {
-        if (context != null && intent?.action == MainActivityAlm.ALARM_ACTION) {
-            showNotification(context)
-            // 发送广播通知主界面更新状态
-            context.sendBroadcast(Intent(MainActivityAlm.ALARM_STATUS_CHANGED_ACTION))
+    companion object {
+        private var instance: AlarmReceiver? = null
+        private var mediaPlayer: MediaPlayer? = null
+        private var vibrator: Vibrator? = null
+        private var alarmHandler: Handler? = null
+        
+        fun getInstance(): AlarmReceiver {
+            if (instance == null) {
+                instance = AlarmReceiver()
+            }
+            return instance!!
         }
     }
 
-    private fun showNotification(context: Context) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    override fun onReceive(context: Context?, intent: Intent?) {
+        if (context == null || intent == null) return
         
-        // 创建通知渠道
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                MainActivityAlm.CHANNEL_ID,
-                "闹钟通知",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "冬去鸟鸣时闹钟通知"
+        when (intent.action) {
+            MainActivityAlm.ALARM_STOP_ACTION -> {
+                stopAlarm()
             }
-            notificationManager.createNotificationChannel(channel)
+            MainActivityAlm.ALARM_ACTION -> {
+                val ringtoneUri = intent.getStringExtra("ringtone_uri")
+                playAlarm(context, ringtoneUri)
+                // 启动悬浮窗服务
+                context.startService(Intent(context, AlarmFloatingService::class.java))
+            }
+        }
+    }
+
+    private fun playAlarm(context: Context, ringtoneUri: String?) {
+        // 确保先停止之前的闹钟
+        stopAlarm()
+        
+        try {
+            // 获取铃声URI
+            val soundUri = if (ringtoneUri != null) {
+                Uri.parse(ringtoneUri)
+            } else {
+                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            }
+
+            // 创建并配置 MediaPlayer
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(context, soundUri)
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                isLooping = true
+                setOnPreparedListener { mp ->
+                    mp.start()
+                }
+                prepareAsync()
+            }
+
+            // 设置振动
+            vibrator = (context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrate(VibrationEffect.createWaveform(
+                        longArrayOf(0, 1000, 1000),
+                        0
+                    ))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrate(longArrayOf(0, 1000, 1000), 0)
+                }
+            }
+
+            // 设置超时自动停止（30分钟）
+            alarmHandler = Handler(Looper.getMainLooper())
+            alarmHandler?.postDelayed({
+                stopAlarm()
+            }, 30 * 60 * 1000L)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // 如果播放失败，确保清理资源
+            stopAlarm()
+        }
+    }
+
+    private fun stopAlarm() {
+        try {
+            mediaPlayer?.apply {
+                if (isPlaying) {
+                    stop()
+                }
+                reset()
+                release()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            mediaPlayer = null
         }
 
-        // 创建打开应用的 Intent
-        val intent = Intent(context, MainActivityAlm::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
+        vibrator?.cancel()
+        vibrator = null
 
-        // 创建通知
-        val notification = NotificationCompat.Builder(context, MainActivityAlm.CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_alarm)
-            .setContentTitle("冬去鸟鸣时")
-            .setContentText("闹钟时间到了！")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .build()
-
-        notificationManager.notify(MainActivityAlm.NOTIFICATION_ID, notification)
+        alarmHandler?.removeCallbacksAndMessages(null)
+        alarmHandler = null
     }
 } 

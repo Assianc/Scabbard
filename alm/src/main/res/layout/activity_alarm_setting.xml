@@ -47,6 +47,17 @@
                 android:text="设置闹钟"
                 android:layout_marginTop="16dp"/>
 
+            <Button
+                android:id="@+id/ringtoneButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="选择铃声"
+                android:drawableStart="@drawable/ic_music_note"
+                android:drawablePadding="8dp"
+                android:gravity="start|center_vertical"
+                android:padding="16dp"/>
+
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </LinearLayout> 

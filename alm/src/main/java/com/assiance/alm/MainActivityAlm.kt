@@ -16,6 +16,7 @@ import android.widget.TextView
 import android.widget.Toast
 import android.widget.ViewFlipper
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.NotificationCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -29,6 +30,9 @@ import android.view.View
 import android.view.animation.AnimationUtils
 import android.view.animation.DecelerateInterpolator
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import android.provider.Settings
+import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
 
 class MainActivityAlm : AppCompatActivity() {
     private lateinit var alarmManager: AlarmManager
@@ -60,6 +64,19 @@ class MainActivityAlm : AppCompatActivity() {
     // 添加指示器动画属性
     private var isFirstLayout = true
 
+    // 添加权限请求启动器
+    private val overlayPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (!Settings.canDrawOverlays(this)) {
+            // 如果用户拒绝了权限，显示提示
+            Toast.makeText(this, 
+                "需要悬浮窗权限来显示闹钟提醒，请在设置中开启", 
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
     companion object {
         internal const val ALARM_REQUEST_CODE = 100
         internal const val CHANNEL_ID = "AlarmChannel"
@@ -73,6 +90,7 @@ class MainActivityAlm : AppCompatActivity() {
         const val TODO_REMINDER_ACTION = "com.assiance.alm.TODO_REMINDER"
         const val TODO_CHANNEL_ID = "TodoChannel"
         const val TODO_NOTIFICATION_ID = 2
+        const val ALARM_STOP_ACTION = "com.assiance.alm.ALARM_STOP"
     }
 
     private val alarmReceiver = object : BroadcastReceiver() {
@@ -109,21 +127,26 @@ class MainActivityAlm : AppCompatActivity() {
         // 创建通知渠道
         createNotificationChannel()
 
-        // 注册广播接收器
+        // 修改广播注册方式
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(
-                alarmReceiver,
-                IntentFilter(ALARM_ACTION),
-                Context.RECEIVER_NOT_EXPORTED
-            )
-            registerReceiver(
-                alarmStatusReceiver,
-                IntentFilter(ALARM_STATUS_CHANGED_ACTION),
-                Context.RECEIVER_NOT_EXPORTED
+                AlarmReceiver.getInstance(),
+                IntentFilter().apply {
+                    addAction(ALARM_ACTION)
+                    addAction(ALARM_STOP_ACTION)
+                    addAction(ALARM_STATUS_CHANGED_ACTION)
+                },
+                Context.RECEIVER_NOT_EXPORTED  // 添加这个标志
             )
         } else {
-            registerReceiver(alarmReceiver, IntentFilter(ALARM_ACTION))
-            registerReceiver(alarmStatusReceiver, IntentFilter(ALARM_STATUS_CHANGED_ACTION))
+            registerReceiver(
+                AlarmReceiver.getInstance(),
+                IntentFilter().apply {
+                    addAction(ALARM_ACTION)
+                    addAction(ALARM_STOP_ACTION)
+                    addAction(ALARM_STATUS_CHANGED_ACTION)
+                }
+            )
         }
 
         // 初始化视图切换器和标签按钮
@@ -292,6 +315,9 @@ class MainActivityAlm : AppCompatActivity() {
         // 加载数据
         loadAlarms()
         loadTodos()
+
+        // 检查悬浮窗权限
+        checkOverlayPermission()
     }
 
     private fun createNotificationChannel() {
@@ -385,7 +411,8 @@ class MainActivityAlm : AppCompatActivity() {
                 alarmList.add(AlarmData(
                     id = obj.getInt("id"),
                     timeInMillis = obj.getLong("timeInMillis"),
-                    isEnabled = obj.getBoolean("isEnabled")
+                    isEnabled = obj.getBoolean("isEnabled"),
+                    ringtoneUri = obj.optString("ringtoneUri", null)
                 ))
             }
             // 按时间排序
@@ -404,6 +431,7 @@ class MainActivityAlm : AppCompatActivity() {
                 put("id", alarm.id)
                 put("timeInMillis", alarm.timeInMillis)
                 put("isEnabled", alarm.isEnabled)
+                put("ringtoneUri", alarm.ringtoneUri)
             }
             jsonArray.put(obj)
         }
@@ -470,6 +498,7 @@ class MainActivityAlm : AppCompatActivity() {
     private fun setAlarm(alarm: AlarmData) {
         val intent = Intent(ALARM_ACTION).apply {
             `package` = packageName
+            putExtra("ringtone_uri", alarm.ringtoneUri)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this,
@@ -509,6 +538,7 @@ class MainActivityAlm : AppCompatActivity() {
         val intent = Intent(this, AlarmSettingActivity::class.java).apply {
             putExtra("alarm_id", alarm.id)
             putExtra("alarm_time", alarm.timeInMillis)
+            putExtra("ringtone_uri", alarm.ringtoneUri)
         }
         startActivity(intent)
     }
@@ -756,6 +786,30 @@ class MainActivityAlm : AppCompatActivity() {
                 .start()
         } else {
             tabIndicator.translationX = button.x
+        }
+    }
+
+    private fun checkOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            // 创建提示对话框
+            AlertDialog.Builder(this)
+                .setTitle("需要悬浮窗权限")
+                .setMessage("为了在闹钟响起时显示提醒窗口，需要您授予悬浮窗权限。")
+                .setPositiveButton("去设置") { _, _ ->
+                    // 跳转到悬浮窗权限设置页面
+                    val intent = Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:$packageName")
+                    )
+                    overlayPermissionLauncher.launch(intent)
+                }
+                .setNegativeButton("取消") { _, _ ->
+                    Toast.makeText(this, 
+                        "未授予悬浮窗权限，闹钟提醒可能无法正常显示", 
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                .show()
         }
     }
 }

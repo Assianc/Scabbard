@@ -4,7 +4,10 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Button
 import android.widget.TimePicker
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +17,12 @@ class AlarmSettingActivity : AppCompatActivity() {
     private lateinit var timePicker: TimePicker
     private lateinit var alarmManager: AlarmManager
     private var alarmId: Int = -1  // -1 表示新建闹钟
+    private var selectedRingtoneUri: String? = null
+    private lateinit var ringtoneButton: Button
+
+    companion object {
+        private const val RINGTONE_PICKER_REQUEST = 1
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,9 +44,15 @@ class AlarmSettingActivity : AppCompatActivity() {
             setAlarm()
         }
 
+        ringtoneButton = findViewById(R.id.ringtoneButton)
+        ringtoneButton.setOnClickListener {
+            openRingtonePicker()
+        }
+
         // 获取传入的闹钟信息
         alarmId = intent.getIntExtra("alarm_id", -1)
         val alarmTime = intent.getLongExtra("alarm_time", -1L)
+        selectedRingtoneUri = intent.getStringExtra("ringtone_uri")
         
         if (alarmTime != -1L) {
             // 设置时间选择器的初始值
@@ -50,6 +65,9 @@ class AlarmSettingActivity : AppCompatActivity() {
             // 更新标题
             supportActionBar?.title = "编辑闹钟"
         }
+
+        // 更新铃声按钮文本
+        updateRingtoneButtonText()
     }
 
     private fun setAlarm() {
@@ -68,7 +86,8 @@ class AlarmSettingActivity : AppCompatActivity() {
 
         val alarm = AlarmData(
             id = newAlarmId,
-            timeInMillis = calendar.timeInMillis
+            timeInMillis = calendar.timeInMillis,
+            ringtoneUri = selectedRingtoneUri
         )
 
         // 更新闹钟列表
@@ -92,6 +111,7 @@ class AlarmSettingActivity : AppCompatActivity() {
             put("id", alarm.id)
             put("timeInMillis", alarm.timeInMillis)
             put("isEnabled", alarm.isEnabled)
+            put("ringtoneUri", alarm.ringtoneUri)
         })
         
         prefs.edit()
@@ -101,6 +121,7 @@ class AlarmSettingActivity : AppCompatActivity() {
         // 设置闹钟
         val intent = Intent(MainActivityAlm.ALARM_ACTION).apply {
             `package` = packageName
+            putExtra("ringtone_uri", selectedRingtoneUri)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this,
@@ -118,6 +139,41 @@ class AlarmSettingActivity : AppCompatActivity() {
         sendBroadcast(Intent(MainActivityAlm.ALARM_STATUS_CHANGED_ACTION))
         Toast.makeText(this, if (alarmId != -1) "闹钟已更新" else "闹钟已设置", Toast.LENGTH_SHORT).show()
         finish()
+    }
+
+    private fun openRingtonePicker() {
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "选择闹钟铃声")
+            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, 
+                selectedRingtoneUri?.let { Uri.parse(it) })
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+        }
+        startActivityForResult(intent, RINGTONE_PICKER_REQUEST)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == RINGTONE_PICKER_REQUEST && resultCode == RESULT_OK) {
+            val uri = data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            selectedRingtoneUri = uri?.toString()
+            updateRingtoneButtonText()
+        }
+    }
+
+    private fun updateRingtoneButtonText() {
+        if (selectedRingtoneUri == null) {
+            ringtoneButton.text = "默认铃声"
+            return
+        }
+        
+        try {
+            val ringtone = RingtoneManager.getRingtone(this, Uri.parse(selectedRingtoneUri))
+            ringtoneButton.text = ringtone.getTitle(this)
+        } catch (e: Exception) {
+            ringtoneButton.text = "默认铃声"
+            selectedRingtoneUri = null
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
