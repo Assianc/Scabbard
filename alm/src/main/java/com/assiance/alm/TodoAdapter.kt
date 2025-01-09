@@ -35,13 +35,34 @@ class TodoAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val todo = todos[position]
         
-        // 设置标题
-        holder.titleText.text = todo.title
-        holder.titleText.apply {
-            paintFlags = if (todo.isCompleted) {
-                paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
-            } else {
-                paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+        // 设置标题和描述内容的显示逻辑
+        if (todo.title.isNotEmpty()) {
+            // 有标题时，显示标题和描述
+            holder.titleText.visibility = View.VISIBLE
+            holder.titleText.text = todo.title
+            holder.titleText.apply {
+                paintFlags = if (todo.isCompleted) {
+                    paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                } else {
+                    paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                }
+            }
+            
+            // 有标题时，描述文本使用中等样式
+            holder.descriptionText.apply {
+                textSize = 16f  // 增大字号
+                setTextColor(context.getColor(android.R.color.black))  // 加深颜色
+                setTypeface(null, android.graphics.Typeface.NORMAL)
+                gravity = android.view.Gravity.TOP
+            }
+        } else {
+            // 没有标题时，隐藏标题，让描述文本使用标题样式
+            holder.titleText.visibility = View.GONE
+            holder.descriptionText.apply {
+                textSize = 24f  // 使用标题的文字大小
+                setTextColor(context.getColor(android.R.color.black))
+                setTypeface(null, android.graphics.Typeface.BOLD)  // 使用粗体
+                gravity = android.view.Gravity.CENTER_VERTICAL
             }
         }
         
@@ -97,7 +118,8 @@ class TodoAdapter(
         }
 
         if (todo.startTime != null && todo.dueTime != null) {
-            sb.append(" | ")
+            sb.append("\n")
+
         }
 
         todo.dueTime?.let {

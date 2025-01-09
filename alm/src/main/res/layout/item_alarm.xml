@@ -8,7 +8,7 @@
     android:layout_marginHorizontal="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp"
-    android:foreground="?attr/selectableItemBackground"
+    android:background="@drawable/gradient_background_almitem"
     android:clickable="true"
     android:focusable="true">
 
@@ -47,7 +47,6 @@
             android:id="@+id/alarmEnableSwitch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-
             android:layout_marginEnd="16dp"/>
 
         <ImageButton
@@ -55,7 +54,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_delete"
+            android:src="@drawable/ic_baseline_delete_24"
             android:padding="8dp"
             android:contentDescription="删除闹钟"/>
     </LinearLayout>
