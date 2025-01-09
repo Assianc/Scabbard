@@ -1,5 +1,7 @@
 package com.assiance.alm
 
+import android.app.AlertDialog
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,8 +23,7 @@ class AlarmAdapter(
         val timeText: TextView = view.findViewById(R.id.alarmTimeText)
         val repeatText: TextView = view.findViewById(R.id.alarmRepeatText)
         val enableSwitch: Switch = view.findViewById(R.id.alarmEnableSwitch)
-        val deleteButton: ImageButton = view.findViewById(R.id.alarmDeleteButton)
-        val container: View = view
+        val cardView: View = view
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -42,11 +43,12 @@ class AlarmAdapter(
             onToggleClick(alarm, isChecked)
         }
         
-        holder.deleteButton.setOnClickListener {
+        holder.cardView.setOnLongClickListener {
             onDeleteClick(alarm)
+            true
         }
 
-        holder.container.setOnClickListener {
+        holder.cardView.setOnClickListener {
             onAlarmClick(alarm)
         }
     }

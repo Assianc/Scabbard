@@ -8,9 +8,7 @@
     android:layout_marginHorizontal="8dp"
     app:cardCornerRadius="8dp"
     app:cardElevation="2dp"
-    android:background="@drawable/gradient_background_almitem"
-    android:clickable="true"
-    android:focusable="true">
+    android:background="@drawable/gradient_background_almitem">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -49,14 +47,6 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"/>
 
-        <ImageButton
-            android:id="@+id/alarmDeleteButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_baseline_delete_24"
-            android:padding="8dp"
-            android:contentDescription="删除闹钟"/>
     </LinearLayout>
 
 </androidx.cardview.widget.CardView> 
