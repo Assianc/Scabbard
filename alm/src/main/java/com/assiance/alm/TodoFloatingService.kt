@@ -54,13 +54,28 @@ class TodoFloatingService : Service() {
         val isDueReminder = intent?.getBooleanExtra("is_due_reminder", true) ?: true
 
         titleText?.text = when {
-            !isDueReminder -> "开始时间到了"
-            isAdvance -> "即将开始"
-            else -> "到期提醒"
+            !isDueReminder && isAdvance -> "即将开始"
+            !isDueReminder && !isAdvance -> "事件已开始"
+            isDueReminder && isAdvance -> "即将截至"
+            else -> "事件已截至"
         }
         
         descriptionText?.text = if (title.isNotEmpty()) {
-            "$title\n$description"
+            buildString {
+                append(title)
+                if (description.isNotEmpty()) {
+                    append("\n")
+                    append(description)
+                }
+                append("\n")
+                // 添加时间状态说明
+                append(when {
+                    !isDueReminder && isAdvance -> "还有5分钟开始"
+                    !isDueReminder && !isAdvance -> "现在开始"
+                    isDueReminder && isAdvance -> "还有30分钟截止"
+                    else -> "已经截止"
+                })
+            }
         } else {
             description
         }
