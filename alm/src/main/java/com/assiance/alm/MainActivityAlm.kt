@@ -212,6 +212,12 @@ class MainActivityAlm : AppCompatActivity() {
         )
         todoListView.adapter = todoAdapter
 
+        // 为闹钟列表启用侧滑
+        alarmAdapter.attachToRecyclerView(alarmListView)
+        
+        // 为待办列表启用侧滑
+        todoAdapter.attachToRecyclerView(todoListView)
+
         // 设置标签按钮点击事件
         alarmTabButton.setOnClickListener {
             if (currentTab != 0) {

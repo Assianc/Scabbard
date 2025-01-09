@@ -38,7 +38,9 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
     implementation("androidx.cardview:cardview:1.0.0")
-    
+
+    implementation("androidx.recyclerview:recyclerview:1.2.1")
+
     // 添加通知相关依赖
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     
