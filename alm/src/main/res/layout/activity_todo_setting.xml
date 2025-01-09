@@ -102,6 +102,13 @@
                 android:text="开始时不提醒"
                 android:enabled="false" />
 
+            <Button
+                android:id="@+id/startRingtoneButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="开始提醒铃声：默认" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -138,6 +145,13 @@
                 android:layout_marginBottom="10dp"
                 android:text="截止时不提醒"
                 android:enabled="false" />
+
+            <Button
+                android:id="@+id/dueRingtoneButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="截止提醒铃声：默认" />
 
             <Button
                 android:id="@+id/saveTodoButton"

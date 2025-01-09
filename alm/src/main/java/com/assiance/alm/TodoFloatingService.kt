@@ -1,9 +1,5 @@
 package com.assiance.alm
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
 import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
@@ -17,10 +13,12 @@ import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.TextView
 import android.widget.Button
-import java.text.SimpleDateFormat
-import java.util.Locale
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 
-class AlarmFloatingService : Service() {
+class TodoFloatingService : Service() {
     private var windowManager: WindowManager? = null
     private var floatingView: View? = null
 
@@ -33,38 +31,71 @@ class AlarmFloatingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (floatingView == null) {
-            showFloatingWindow()
+            showFloatingWindow(intent)
         }
         return START_STICKY
     }
 
-    private fun showFloatingWindow() {
+    private fun showFloatingWindow(intent: Intent?) {
         val contextThemeWrapper = android.view.ContextThemeWrapper(
             this, 
-            R.style.Theme_Alm
+            com.google.android.material.R.style.Theme_MaterialComponents_Light
         )
         val inflater = LayoutInflater.from(contextThemeWrapper)
-        floatingView = inflater.inflate(R.layout.layout_alarm_floating, null)
+        floatingView = inflater.inflate(R.layout.layout_todo_floating, null)
 
-        // 设置当前时间
-        val timeText = floatingView?.findViewById<TextView>(R.id.alarmTimeText)
-        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-        timeText?.text = timeFormat.format(System.currentTimeMillis())
+        // 设置标题和内容
+        val titleText = floatingView?.findViewById<TextView>(R.id.todoTitleText)
+        val descriptionText = floatingView?.findViewById<TextView>(R.id.todoDescriptionText)
+        
+        val title = intent?.getStringExtra("todo_title") ?: "待办提醒"
+        val description = intent?.getStringExtra("todo_description") ?: ""
+        val isAdvance = intent?.getBooleanExtra("is_advance", false) ?: false
+        val isDueReminder = intent?.getBooleanExtra("is_due_reminder", true) ?: true
 
-        // 设置停止按钮点击事件
-        floatingView?.findViewById<Button>(R.id.stopAlarmButton)?.setOnClickListener {
-            // 添加消失动画
-            animateClose {
-                // 发送停止闹钟的广播
-                val stopIntent = Intent(MainActivityAlm.ALARM_STOP_ACTION).apply {
-                    `package` = packageName
-                    flags = Intent.FLAG_INCLUDE_STOPPED_PACKAGES
-                }
-                sendBroadcast(stopIntent)
-                
-                // 关闭悬浮窗
-                stopSelf()
+        titleText?.text = when {
+            !isDueReminder -> "开始时间到了"
+            isAdvance -> "即将开始"
+            else -> "到期提醒"
+        }
+        
+        descriptionText?.text = if (title.isNotEmpty()) {
+            "$title\n$description"
+        } else {
+            description
+        }
+
+        // 设置关闭按钮点击事件
+        floatingView?.findViewById<Button>(R.id.stopTodoButton)?.setOnClickListener {
+            // 禁用按钮，防止重复点击
+            it.isEnabled = false
+            
+            // 立即发送停止提醒的广播
+            val stopIntent = Intent(MainActivityAlm.TODO_REMINDER_STOP_ACTION).apply {
+                `package` = packageName
+                flags = Intent.FLAG_INCLUDE_STOPPED_PACKAGES
             }
+            sendBroadcast(stopIntent)
+            
+            // 添加按钮点击反馈
+            it.animate()
+                .scaleX(0.95f)
+                .scaleY(0.95f)
+                .setDuration(100)
+                .withEndAction {
+                    it.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .withEndAction {
+                            // 开始关闭动画
+                            animateClose {
+                                stopSelf()
+                            }
+                        }
+                        .start()
+                }
+                .start()
         }
 
         // 设置窗口参数
@@ -84,10 +115,7 @@ class AlarmFloatingService : Service() {
             gravity = Gravity.TOP
         }
 
-        // 添加悬浮窗到窗口管理器
         windowManager?.addView(floatingView, params)
-
-        // 添加出现动画
         animateShow()
     }
 
@@ -112,7 +140,7 @@ class AlarmFloatingService : Service() {
             
             AnimatorSet().apply {
                 playTogether(translateY, alpha)
-                duration = 300
+                duration = 200  // 减少动画时间
                 interpolator = DecelerateInterpolator()
                 addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {

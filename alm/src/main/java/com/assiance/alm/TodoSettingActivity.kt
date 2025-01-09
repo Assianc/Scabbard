@@ -25,6 +25,8 @@ import android.widget.NumberPicker
 import android.widget.Spinner
 import android.app.AlertDialog
 import android.widget.ArrayAdapter
+import android.media.RingtoneManager
+import android.net.Uri
 
 class TodoSettingActivity : AppCompatActivity() {
     private lateinit var titleInput: TextInputEditText
@@ -42,6 +44,12 @@ class TodoSettingActivity : AppCompatActivity() {
     private var dueAdvanceMinutes: Int = 0    // 截止时间的提前提醒分钟数
     private lateinit var startReminderButton: Button
     private lateinit var dueReminderButton: Button
+    private var startRingtoneUri: String? = null
+    private var dueRingtoneUri: String? = null
+    private lateinit var startRingtoneButton: Button
+    private lateinit var dueRingtoneButton: Button
+    private val RINGTONE_PICKER_START_REQUEST = 1001
+    private val RINGTONE_PICKER_DUE_REQUEST = 1002
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -147,6 +155,24 @@ class TodoSettingActivity : AppCompatActivity() {
                 showDateTimePicker(false)
             }
         }
+
+        startRingtoneButton = findViewById(R.id.startRingtoneButton)
+        dueRingtoneButton = findViewById(R.id.dueRingtoneButton)
+        
+        startRingtoneButton.setOnClickListener {
+            openRingtonePicker(RINGTONE_PICKER_START_REQUEST)
+        }
+        
+        dueRingtoneButton.setOnClickListener {
+            openRingtonePicker(RINGTONE_PICKER_DUE_REQUEST)
+        }
+        
+        // 获取传入的铃声设置
+        startRingtoneUri = intent.getStringExtra("todo_start_ringtone")
+        dueRingtoneUri = intent.getStringExtra("todo_due_ringtone")
+        
+        // 更新铃声按钮文本
+        updateRingtoneButtonText()
     }
 
     private fun showDateTimePicker(isStartTime: Boolean) {
@@ -254,7 +280,9 @@ class TodoSettingActivity : AppCompatActivity() {
             description = description,
             startTime = newStartTime,
             dueTime = newDueTime,
-            isCompleted = isCompleted  // 使用计算后的完成状态
+            isCompleted = isCompleted,
+            startRingtoneUri = startRingtoneUri,
+            dueRingtoneUri = dueRingtoneUri
         )
 
         // 保存到 SharedPreferences
@@ -281,6 +309,8 @@ class TodoSettingActivity : AppCompatActivity() {
             put("startTime", todo.startTime ?: 0L)
             put("dueTime", todo.dueTime ?: 0L)
             put("isCompleted", isCompleted)
+            put("startRingtoneUri", todo.startRingtoneUri)
+            put("dueRingtoneUri", todo.dueRingtoneUri)
         })
 
         prefs.edit()
@@ -340,8 +370,10 @@ class TodoSettingActivity : AppCompatActivity() {
         val intent = Intent(MainActivityAlm.TODO_REMINDER_ACTION).apply {
             `package` = packageName
             putExtra("todo_title", todo.title)
+            putExtra("todo_description", todo.description)
             putExtra("is_advance", isAdvance)
             putExtra("is_due_reminder", isDueReminder)
+            putExtra("ringtone_uri", if (isDueReminder) todo.dueRingtoneUri else todo.startRingtoneUri)
         }
         
         // 修改请求码的生成方式，确保每个提醒都有唯一的请求码
@@ -563,5 +595,53 @@ class TodoSettingActivity : AppCompatActivity() {
         // 根据复选框状态更新按钮可用性
         startReminderButton.isEnabled = startDateCheckBox.isChecked
         dueReminderButton.isEnabled = dueDateCheckBox.isChecked
+    }
+
+    private fun openRingtonePicker(requestCode: Int) {
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "选择提醒铃声")
+            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, 
+                if (requestCode == RINGTONE_PICKER_START_REQUEST) 
+                    startRingtoneUri?.let { Uri.parse(it) }
+                else 
+                    dueRingtoneUri?.let { Uri.parse(it) }
+            )
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+        }
+        startActivityForResult(intent, requestCode)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == RESULT_OK) {
+            val uri = data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            when (requestCode) {
+                RINGTONE_PICKER_START_REQUEST -> {
+                    startRingtoneUri = uri?.toString()
+                    updateRingtoneButtonText()
+                }
+                RINGTONE_PICKER_DUE_REQUEST -> {
+                    dueRingtoneUri = uri?.toString()
+                    updateRingtoneButtonText()
+                }
+            }
+        }
+    }
+
+    private fun updateRingtoneButtonText() {
+        fun getRingtoneName(uri: String?): String {
+            if (uri == null) return "默认铃声"
+            try {
+                val ringtone = RingtoneManager.getRingtone(this, Uri.parse(uri))
+                return ringtone.getTitle(this)
+            } catch (e: Exception) {
+                return "默认铃声"
+            }
+        }
+        
+        startRingtoneButton.text = "开始提醒铃声：${getRingtoneName(startRingtoneUri)}"
+        dueRingtoneButton.text = "截止提醒铃声：${getRingtoneName(dueRingtoneUri)}"
     }
 } 

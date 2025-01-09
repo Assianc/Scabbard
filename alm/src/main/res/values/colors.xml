@@ -21,5 +21,8 @@
     <color name="tab_indicator_color">#A6852CDE</color>
     <color name="tab_ripple_color">#33FFFFFF</color>
 
+    <color name="gradient_start">#FF0000</color>
+    <color name="gradient_end">#00FF00</color>
+
     <!-- res/values/colors.xml -->
 </resources> 

@@ -91,6 +91,7 @@ class MainActivityAlm : AppCompatActivity() {
         const val TODO_CHANNEL_ID = "TodoChannel"
         const val TODO_NOTIFICATION_ID = 2
         const val ALARM_STOP_ACTION = "com.assiance.alm.ALARM_STOP"
+        const val TODO_REMINDER_STOP_ACTION = "com.assiance.alm.TODO_REMINDER_STOP"
     }
 
     private val alarmReceiver = object : BroadcastReceiver() {
@@ -318,6 +319,26 @@ class MainActivityAlm : AppCompatActivity() {
 
         // 检查悬浮窗权限
         checkOverlayPermission()
+
+        // 在 onCreate 方法中修改广播注册
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(
+                TodoReminderReceiver(),
+                IntentFilter().apply {
+                    addAction(TODO_REMINDER_ACTION)
+                    addAction(TODO_REMINDER_STOP_ACTION)
+                },
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            registerReceiver(
+                TodoReminderReceiver(),
+                IntentFilter().apply {
+                    addAction(TODO_REMINDER_ACTION)
+                    addAction(TODO_REMINDER_STOP_ACTION)
+                }
+            )
+        }
     }
 
     private fun createNotificationChannel() {
