@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:hint="标题"
+            android:hint="事件标题"
             app:boxBackgroundColor="@android:color/transparent"
             app:boxBackgroundMode="none"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
@@ -43,7 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:hint="描述"
+            android:hint="内容"
             app:boxBackgroundColor="@android:color/transparent"
             app:boxBackgroundMode="none"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
@@ -69,7 +69,7 @@
                 android:id="@+id/startDateCheckBox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="开始时间"/>
+                android:text="事件开始时间"/>
 
             <TextView
                 android:id="@+id/startDateText"
@@ -93,7 +93,7 @@
                 android:id="@+id/dueDateCheckBox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="截止时间"/>
+                android:text="事件截止时间"/>
 
             <TextView
                 android:id="@+id/dueDateText"
