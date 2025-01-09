@@ -1,6 +1,7 @@
 package com.assiance.alm
 
 import android.content.Context
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.appcompat.app.AlertDialog
 
 class TodoAdapter(
     private var todos: List<TodoData>,
@@ -22,6 +24,7 @@ class TodoAdapter(
         val descriptionText: TextView = view.findViewById(R.id.todoDescriptionText)
         val timeText: TextView = view.findViewById(R.id.todoTimeText)
         val completeCheckBox: CheckBox = view.findViewById(R.id.todoCompleteCheckBox)
+        val statusText: TextView = view.findViewById(R.id.todoStatusText)
         val cardView: View = view
     }
 
@@ -44,11 +47,13 @@ class TodoAdapter(
                 } else {
                     paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
                 }
+                // 设置文字颜色
+                setTextColor(if (todo.isCompleted) Color.GRAY else Color.BLACK)
             }
             
             holder.descriptionText.apply {
                 textSize = 16f
-                setTextColor(context.getColor(android.R.color.black))
+                setTextColor(if (todo.isCompleted) Color.GRAY else Color.BLACK)
                 setTypeface(null, android.graphics.Typeface.NORMAL)
                 gravity = android.view.Gravity.TOP
             }
@@ -56,7 +61,7 @@ class TodoAdapter(
             holder.titleText.visibility = View.GONE
             holder.descriptionText.apply {
                 textSize = 24f
-                setTextColor(context.getColor(android.R.color.black))
+                setTextColor(if (todo.isCompleted) Color.GRAY else Color.BLACK)
                 setTypeface(null, android.graphics.Typeface.BOLD)
                 gravity = android.view.Gravity.CENTER_VERTICAL
             }
@@ -76,28 +81,61 @@ class TodoAdapter(
             holder.descriptionText.visibility = View.GONE
         }
         
+        // 设置时间文本颜色
         val timeText = buildTimeText(todo)
         if (timeText.isNotEmpty()) {
             holder.timeText.visibility = View.VISIBLE
             holder.timeText.text = timeText
+            holder.timeText.setTextColor(if (todo.isCompleted) Color.GRAY else Color.BLACK)
         } else {
             holder.timeText.visibility = View.GONE
         }
         
+        // 设置状态文本
+        holder.statusText.visibility = if (todo.isCompleted) View.VISIBLE else View.GONE
+        holder.statusText.text = "已完成"
+        holder.statusText.setTextColor(Color.GRAY)
+        
+        // 修改复选框行为
         holder.completeCheckBox.setOnCheckedChangeListener(null)
         holder.completeCheckBox.isChecked = todo.isCompleted
-        holder.completeCheckBox.setOnCheckedChangeListener { _, isChecked ->
-            onToggleClick(todo, isChecked)
-        }
         
-        holder.cardView.setOnLongClickListener {
-            onDeleteClick(todo)
-            true
+        if (todo.isCompleted) {
+            // 如果已完成，点击复选框不响应，需要长按才能恢复
+            holder.completeCheckBox.setOnCheckedChangeListener { _, _ ->
+                holder.completeCheckBox.isChecked = true  // 保持选中状态
+            }
+            
+            holder.cardView.setOnLongClickListener {
+                showRestoreDialog(holder.itemView.context, todo)
+                true
+            }
+        } else {
+            // 未完成状态下正常响应点击
+            holder.completeCheckBox.setOnCheckedChangeListener { _, isChecked ->
+                onToggleClick(todo, isChecked)
+            }
+            
+            holder.cardView.setOnLongClickListener {
+                onDeleteClick(todo)
+                true
+            }
         }
 
         holder.cardView.setOnClickListener {
             onTodoClick(todo)
         }
+    }
+
+    private fun showRestoreDialog(context: Context, todo: TodoData) {
+        AlertDialog.Builder(context)
+            .setTitle("恢复待办")
+            .setMessage("是否将此待办恢复为未完成状态？")
+            .setPositiveButton("恢复") { _, _ ->
+                onToggleClick(todo, false)
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     private fun buildTimeText(todo: TodoData): String {

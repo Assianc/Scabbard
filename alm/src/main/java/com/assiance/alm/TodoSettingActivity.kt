@@ -209,7 +209,6 @@ class TodoSettingActivity : AppCompatActivity() {
         val title = titleInput.text?.toString()?.trim() ?: ""
         val description = descriptionInput.text?.toString()?.trim() ?: ""
         
-        // 修改验证逻辑：内容不能为空
         if (description.isEmpty()) {
             descriptionInput.error = "请输入待办内容"
             return
@@ -220,12 +219,42 @@ class TodoSettingActivity : AppCompatActivity() {
             cancelTodoReminder(todoId)
         }
 
+        // 获取原有待办的完成状态和时间
+        var originalIsCompleted = false
+        var originalStartTime: Long? = null
+        var originalDueTime: Long? = null
+        
+        if (todoId != -1) {
+            val prefs = getSharedPreferences(MainActivityAlm.TODO_PREFS, Context.MODE_PRIVATE)
+            val todosJson = prefs.getString(MainActivityAlm.TODO_LIST_KEY, "[]")
+            val jsonArray = org.json.JSONArray(todosJson)
+            
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                if (obj.getInt("id") == todoId) {
+                    originalIsCompleted = obj.getBoolean("isCompleted")
+                    originalStartTime = obj.getLong("startTime").takeIf { it != 0L }
+                    originalDueTime = obj.getLong("dueTime").takeIf { it != 0L }
+                    break
+                }
+            }
+        }
+
+        // 检查时间是否发生变化
+        val newStartTime = if (startDateCheckBox.isChecked) startTime else null
+        val newDueTime = if (dueDateCheckBox.isChecked) dueTime else null
+        val timeChanged = newStartTime != originalStartTime || newDueTime != originalDueTime
+
+        // 如果时间发生变化，则重置完成状态
+        val isCompleted = if (timeChanged) false else originalIsCompleted
+
         val todo = TodoData(
             id = if (todoId != -1) todoId else System.currentTimeMillis().toInt(),
-            title = title,  // 标题可以为空
+            title = title,
             description = description,
-            startTime = if (startDateCheckBox.isChecked) startTime else null,
-            dueTime = if (dueDateCheckBox.isChecked) dueTime else null
+            startTime = newStartTime,
+            dueTime = newDueTime,
+            isCompleted = isCompleted  // 使用计算后的完成状态
         )
 
         // 保存到 SharedPreferences
@@ -251,17 +280,25 @@ class TodoSettingActivity : AppCompatActivity() {
             put("description", todo.description)
             put("startTime", todo.startTime ?: 0L)
             put("dueTime", todo.dueTime ?: 0L)
-            put("isCompleted", false)
+            put("isCompleted", isCompleted)
         })
 
         prefs.edit()
             .putString(MainActivityAlm.TODO_LIST_KEY, jsonArray.toString())
             .apply()
 
-        // 设置提醒
-        setTodoReminder(todo)
+        // 如果待办未完成，则设置提醒
+        if (!isCompleted) {
+            setTodoReminder(todo)
+        }
 
-        Toast.makeText(this, if (todoId != -1) "待办已更新" else "待办已添加", Toast.LENGTH_SHORT).show()
+        // 根据状态显示不同的提示信息
+        val message = when {
+            todoId == -1 -> "待办已添加"
+            timeChanged -> "待办已更新并重置为未完成状态"
+            else -> "待办已更新"
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         finish()
     }
 
