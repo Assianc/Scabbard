@@ -62,15 +62,27 @@ class TodoSettingActivity : AppCompatActivity() {
         startDateText = findViewById(R.id.startDateText)
         dueDateCheckBox = findViewById(R.id.dueDateCheckBox)
         dueDateText = findViewById(R.id.dueDateText)
+        
+        // 初始化提醒按钮 - 移到这里
+        startReminderButton = findViewById(R.id.startReminderButton)
+        dueReminderButton = findViewById(R.id.dueReminderButton)
+
+        // 设置按钮点击事件
+        startReminderButton.setOnClickListener {
+            showReminderDialog(true)
+        }
+
+        dueReminderButton.setOnClickListener {
+            showReminderDialog(false)
+        }
 
         // 设置开始时间选择
         startDateCheckBox.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
+            if (isChecked && startTime == null) {
                 showDateTimePicker(true)
-            } else {
+            } else if (!isChecked) {
                 startTime = null
                 startDateText.text = "未设置"
-                // 禁用提醒按钮
                 startReminderButton.isEnabled = false
                 startAdvanceMinutes = 0
                 updateReminderButtonText()
@@ -79,12 +91,11 @@ class TodoSettingActivity : AppCompatActivity() {
 
         // 设置截止时间选择
         dueDateCheckBox.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
+            if (isChecked && dueTime == null) {
                 showDateTimePicker(false)
-            } else {
+            } else if (!isChecked) {
                 dueTime = null
                 dueDateText.text = "未设置"
-                // 禁用提醒按钮
                 dueReminderButton.isEnabled = false
                 dueAdvanceMinutes = 0
                 updateReminderButtonText()
@@ -102,30 +113,19 @@ class TodoSettingActivity : AppCompatActivity() {
                 startTime = it
                 startDateCheckBox.isChecked = true
                 updateDateText(true, it)
+                startReminderButton.isEnabled = true
             }
             
             intent.getLongExtra("todo_due_time", -1L).takeIf { it != -1L }?.let {
                 dueTime = it
                 dueDateCheckBox.isChecked = true
                 updateDateText(false, it)
+                dueReminderButton.isEnabled = true
             }
         }
 
         // 获取传入的提醒设置
         advanceMinutes = intent.getIntExtra("todo_advance_minutes", 0)
-
-        // 初始化提醒按钮
-        startReminderButton = findViewById(R.id.startReminderButton)
-        dueReminderButton = findViewById(R.id.dueReminderButton)
-
-        // 设置按钮点击事件
-        startReminderButton.setOnClickListener {
-            showReminderDialog(true)
-        }
-
-        dueReminderButton.setOnClickListener {
-            showReminderDialog(false)
-        }
 
         // 更新按钮状态
         updateReminderButtonText()
@@ -133,6 +133,19 @@ class TodoSettingActivity : AppCompatActivity() {
         // 保存按钮
         findViewById<Button>(R.id.saveTodoButton).setOnClickListener {
             saveTodo()
+        }
+
+        // 添加时间文本的点击事件
+        startDateText.setOnClickListener {
+            if (startDateCheckBox.isChecked) {
+                showDateTimePicker(true)
+            }
+        }
+
+        dueDateText.setOnClickListener {
+            if (dueDateCheckBox.isChecked) {
+                showDateTimePicker(false)
+            }
         }
     }
 
