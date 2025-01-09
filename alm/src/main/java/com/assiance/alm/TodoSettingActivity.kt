@@ -270,7 +270,7 @@ class TodoSettingActivity : AppCompatActivity() {
         
         // 处理开始时间提醒
         todo.startTime?.let { startTime ->
-            if (startTime > System.currentTimeMillis()) {
+            if (startTime > System.currentTimeMillis() && startAdvanceMinutes != -1) {
                 // 设置开始时间的提前提醒
                 if (startAdvanceMinutes > 0) {
                     val advanceTime = startTime - (startAdvanceMinutes * 60 * 1000)
@@ -278,14 +278,14 @@ class TodoSettingActivity : AppCompatActivity() {
                         setReminder(todo, advanceTime, true, false)
                     }
                 }
-                // 设置开始时间提醒（无论是否设置了提前提醒，都要设置开始时间的提醒）
+                // 设置开始时间提醒
                 setReminder(todo, startTime, false, false)
             }
         }
 
         // 处理截止时间提醒
         todo.dueTime?.let { dueTime ->
-            if (dueTime > System.currentTimeMillis()) {
+            if (dueTime > System.currentTimeMillis() && dueAdvanceMinutes != -1) {
                 // 设置截止时间的提前提醒
                 if (dueAdvanceMinutes > 0) {
                     val advanceTime = dueTime - (dueAdvanceMinutes * 60 * 1000)
@@ -293,7 +293,7 @@ class TodoSettingActivity : AppCompatActivity() {
                         setReminder(todo, advanceTime, true, true)
                     }
                 }
-                // 设置截止时间提醒（无论是否设置了提前提醒，都要设置截止时间的提醒）
+                // 设置截止时间提醒
                 setReminder(todo, dueTime, false, true)
             }
         }
@@ -380,6 +380,7 @@ class TodoSettingActivity : AppCompatActivity() {
 
     private fun showReminderDialog(isStartTime: Boolean) {
         val items = arrayOf(
+            "不提醒",
             "立即提醒",
             "提前15分钟",
             "提前30分钟",
@@ -390,12 +391,13 @@ class TodoSettingActivity : AppCompatActivity() {
 
         val currentMinutes = if (isStartTime) startAdvanceMinutes else dueAdvanceMinutes
         val currentSelection = when (currentMinutes) {
-            0 -> 0
-            15 -> 1
-            30 -> 2
-            60 -> 3
-            120 -> 4
-            else -> if (currentMinutes > 0) 5 else 0
+            -1 -> 0
+            0 -> 1
+            15 -> 2
+            30 -> 3
+            60 -> 4
+            120 -> 5
+            else -> if (currentMinutes > 0) 6 else 0
         }
 
         AlertDialog.Builder(this)
@@ -403,31 +405,36 @@ class TodoSettingActivity : AppCompatActivity() {
             .setSingleChoiceItems(items, currentSelection) { dialog, which ->
                 when (which) {
                     0 -> {
-                        if (isStartTime) startAdvanceMinutes = 0 else dueAdvanceMinutes = 0
+                        if (isStartTime) startAdvanceMinutes = -1 else dueAdvanceMinutes = -1
                         updateReminderButtonText()
                         dialog.dismiss()
                     }
                     1 -> {
-                        if (isStartTime) startAdvanceMinutes = 15 else dueAdvanceMinutes = 15
+                        if (isStartTime) startAdvanceMinutes = 0 else dueAdvanceMinutes = 0
                         updateReminderButtonText()
                         dialog.dismiss()
                     }
                     2 -> {
-                        if (isStartTime) startAdvanceMinutes = 30 else dueAdvanceMinutes = 30
+                        if (isStartTime) startAdvanceMinutes = 15 else dueAdvanceMinutes = 15
                         updateReminderButtonText()
                         dialog.dismiss()
                     }
                     3 -> {
-                        if (isStartTime) startAdvanceMinutes = 60 else dueAdvanceMinutes = 60
+                        if (isStartTime) startAdvanceMinutes = 30 else dueAdvanceMinutes = 30
                         updateReminderButtonText()
                         dialog.dismiss()
                     }
                     4 -> {
-                        if (isStartTime) startAdvanceMinutes = 120 else dueAdvanceMinutes = 120
+                        if (isStartTime) startAdvanceMinutes = 60 else dueAdvanceMinutes = 60
                         updateReminderButtonText()
                         dialog.dismiss()
                     }
                     5 -> {
+                        if (isStartTime) startAdvanceMinutes = 120 else dueAdvanceMinutes = 120
+                        updateReminderButtonText()
+                        dialog.dismiss()
+                    }
+                    6 -> {
                         dialog.dismiss()
                         showCustomReminderDialog(isStartTime)
                     }
@@ -489,6 +496,7 @@ class TodoSettingActivity : AppCompatActivity() {
 
     private fun updateReminderButtonText() {
         startReminderButton.text = when (startAdvanceMinutes) {
+            -1 -> "不提醒"
             0 -> "立即提醒"
             15 -> "提前15分钟提醒"
             30 -> "提前30分钟提醒"
@@ -502,6 +510,7 @@ class TodoSettingActivity : AppCompatActivity() {
         }
 
         dueReminderButton.text = when (dueAdvanceMinutes) {
+            -1 -> "不提醒"
             0 -> "立即提醒"
             15 -> "提前15分钟提醒"
             30 -> "提前30分钟提醒"
