@@ -87,7 +87,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginBottom="10dp"
             android:text="开始时不提醒"
             android:enabled="false" />
 
@@ -120,7 +120,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginBottom="10dp"
             android:text="截止时不提醒"
             android:enabled="false" />
 
