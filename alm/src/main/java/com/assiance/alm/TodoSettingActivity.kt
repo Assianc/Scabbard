@@ -38,6 +38,10 @@ class TodoSettingActivity : AppCompatActivity() {
     private var dueTime: Long? = null
     private lateinit var alarmManager: AlarmManager
     private var advanceMinutes: Int = 0  // 提前提醒的分钟数，0表示仅到期提醒
+    private var startAdvanceMinutes: Int = 0  // 开始时间的提前提醒分钟数
+    private var dueAdvanceMinutes: Int = 0    // 截止时间的提前提醒分钟数
+    private lateinit var startReminderButton: Button
+    private lateinit var dueReminderButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +70,10 @@ class TodoSettingActivity : AppCompatActivity() {
             } else {
                 startTime = null
                 startDateText.text = "未设置"
+                // 禁用提醒按钮
+                startReminderButton.isEnabled = false
+                startAdvanceMinutes = 0
+                updateReminderButtonText()
             }
         }
 
@@ -76,6 +84,10 @@ class TodoSettingActivity : AppCompatActivity() {
             } else {
                 dueTime = null
                 dueDateText.text = "未设置"
+                // 禁用提醒按钮
+                dueReminderButton.isEnabled = false
+                dueAdvanceMinutes = 0
+                updateReminderButtonText()
             }
         }
 
@@ -102,131 +114,26 @@ class TodoSettingActivity : AppCompatActivity() {
         // 获取传入的提醒设置
         advanceMinutes = intent.getIntExtra("todo_advance_minutes", 0)
 
+        // 初始化提醒按钮
+        startReminderButton = findViewById(R.id.startReminderButton)
+        dueReminderButton = findViewById(R.id.dueReminderButton)
+
+        // 设置按钮点击事件
+        startReminderButton.setOnClickListener {
+            showReminderDialog(true)
+        }
+
+        dueReminderButton.setOnClickListener {
+            showReminderDialog(false)
+        }
+
+        // 更新按钮状态
+        updateReminderButtonText()
+
         // 保存按钮
         findViewById<Button>(R.id.saveTodoButton).setOnClickListener {
             saveTodo()
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_todo_setting, menu)
-        
-        // 根据当前设置选中对应的菜单项
-        val itemId = when (advanceMinutes) {
-            15 -> R.id.reminder_15min
-            30 -> R.id.reminder_30min
-            60 -> R.id.reminder_1hour
-            120 -> R.id.reminder_2hour
-            else -> R.id.reminder_due
-        }
-        menu.findItem(itemId).isChecked = true
-        
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.reminder_due -> {
-                advanceMinutes = 0
-                item.isChecked = true
-                return true
-            }
-            R.id.reminder_15min -> {
-                advanceMinutes = 15
-                item.isChecked = true
-                return true
-            }
-            R.id.reminder_30min -> {
-                advanceMinutes = 30
-                item.isChecked = true
-                return true
-            }
-            R.id.reminder_1hour -> {
-                advanceMinutes = 60
-                item.isChecked = true
-                return true
-            }
-            R.id.reminder_2hour -> {
-                advanceMinutes = 120
-                item.isChecked = true
-                return true
-            }
-            R.id.reminder_custom -> {
-                showCustomReminderDialog()
-                return true
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    private fun showCustomReminderDialog() {
-        val view = layoutInflater.inflate(R.layout.dialog_custom_reminder, null)
-        val numberPicker = view.findViewById<NumberPicker>(R.id.minutesPicker)
-        val unitSpinner = view.findViewById<Spinner>(R.id.unitSpinner)
-
-        // 设置 NumberPicker
-        numberPicker.minValue = 1
-        numberPicker.maxValue = 999
-        numberPicker.value = 30
-
-        // 设置单位选择器
-        val units = arrayOf("分钟", "小时", "天")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, units)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        unitSpinner.adapter = adapter
-
-        AlertDialog.Builder(this)
-            .setTitle("自定义提醒时间")
-            .setView(view)
-            .setPositiveButton("确定") { _, _ ->
-                val number = numberPicker.value
-                val multiplier = when (unitSpinner.selectedItemPosition) {
-                    0 -> 1           // 分钟
-                    1 -> 60          // 小时
-                    2 -> 60 * 24     // 天
-                    else -> 1
-                }
-                advanceMinutes = number * multiplier
-                // 更新菜单显示
-                invalidateOptionsMenu()
-            }
-            .setNegativeButton("取消", null)
-            .show()
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        // 更新菜单项的选中状态和显示
-        val reminderItem = menu.findItem(R.id.action_reminder)
-        val submenu = reminderItem?.subMenu ?: return true
-        
-        // 取消所有项的选中状态
-        for (i in 0 until submenu.size()) {
-            submenu.getItem(i)?.isChecked = false
-        }
-
-        // 根据当前的提醒时间选中对应项
-        val itemId = when (advanceMinutes) {
-            0 -> R.id.reminder_due
-            15 -> R.id.reminder_15min
-            30 -> R.id.reminder_30min
-            60 -> R.id.reminder_1hour
-            120 -> R.id.reminder_2hour
-            else -> {
-                // 自定义时间：更新菜单项文字
-                submenu.findItem(R.id.reminder_custom)?.apply {
-                    val timeStr = when {
-                        advanceMinutes >= 1440 -> "${advanceMinutes / 1440}天"
-                        advanceMinutes >= 60 -> "${advanceMinutes / 60}小时"
-                        else -> "${advanceMinutes}分钟"
-                    }
-                    title = "提前${timeStr}"
-                }
-                R.id.reminder_custom
-            }
-        }
-        submenu.findItem(itemId)?.isChecked = true
-        
-        return true
     }
 
     private fun showDateTimePicker(isStartTime: Boolean) {
@@ -257,6 +164,8 @@ class TodoSettingActivity : AppCompatActivity() {
                         return@TimePickerDialog
                     }
                     startTime = selectedTime
+                    // 启用开始时间提醒按钮
+                    startReminderButton.isEnabled = true
                 } else {
                     if (startTime != null && selectedTime <= startTime!!) {
                         Toast.makeText(this, "截止时间必须晚于开始时间", Toast.LENGTH_SHORT).show()
@@ -264,6 +173,8 @@ class TodoSettingActivity : AppCompatActivity() {
                         return@TimePickerDialog
                     }
                     dueTime = selectedTime
+                    // 启用截止时间提醒按钮
+                    dueReminderButton.isEnabled = true
                 }
                 
                 updateDateText(isStartTime, selectedTime)
@@ -344,22 +255,31 @@ class TodoSettingActivity : AppCompatActivity() {
         // 处理开始时间提醒
         todo.startTime?.let { startTime ->
             if (startTime > System.currentTimeMillis()) {
-                Log.d("TodoReminder", "设置开始时间提醒：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(startTime)}")
-                // 在开始时间设置提醒
+                // 设置开始时间的提前提醒
+                if (startAdvanceMinutes > 0) {
+                    val advanceTime = startTime - (startAdvanceMinutes * 60 * 1000)
+                    if (advanceTime > System.currentTimeMillis()) {
+                        setReminder(todo, advanceTime, true, false)
+                    }
+                }
+                // 设置开始时间提醒（无论是否设置了提前提醒，都要设置开始时间的提醒）
                 setReminder(todo, startTime, false, false)
-            } else {
-                Log.d("TodoReminder", "开始时间已过：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(startTime)}")
             }
         }
 
         // 处理截止时间提醒
         todo.dueTime?.let { dueTime ->
-            if (advanceMinutes > 0) {
-                // 设置提前提醒
-                setReminder(todo, dueTime - (advanceMinutes * 60 * 1000), true, true)
+            if (dueTime > System.currentTimeMillis()) {
+                // 设置截止时间的提前提醒
+                if (dueAdvanceMinutes > 0) {
+                    val advanceTime = dueTime - (dueAdvanceMinutes * 60 * 1000)
+                    if (advanceTime > System.currentTimeMillis()) {
+                        setReminder(todo, advanceTime, true, true)
+                    }
+                }
+                // 设置截止时间提醒（无论是否设置了提前提醒，都要设置截止时间的提醒）
+                setReminder(todo, dueTime, false, true)
             }
-            // 设置到期提醒
-            setReminder(todo, dueTime, false, true)
         }
     }
 
@@ -371,10 +291,13 @@ class TodoSettingActivity : AppCompatActivity() {
             putExtra("is_due_reminder", isDueReminder)
         }
         
+        // 修改请求码的生成方式，确保每个提醒都有唯一的请求码
         val requestCode = when {
-            !isDueReminder -> todo.id + 2000000  // 开始时间提醒
-            isAdvance -> todo.id + 1000000       // 提前提醒
-            else -> todo.id                       // 到期提醒
+            !isDueReminder -> {
+                if (isAdvance) todo.id + 2000000 else todo.id + 3000000  // 区分开始时间的提前提醒和准时提醒
+            }
+            isAdvance -> todo.id + 1000000  // 截止时间的提前提醒
+            else -> todo.id                  // 截止时间的准时提醒
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -386,9 +309,8 @@ class TodoSettingActivity : AppCompatActivity() {
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    reminderTime,
+                alarmManager.setAlarmClock(  // 使用 setAlarmClock 替代 setExactAndAllowWhileIdle
+                    AlarmManager.AlarmClockInfo(reminderTime, pendingIntent),
                     pendingIntent
                 )
             } else {
@@ -402,8 +324,8 @@ class TodoSettingActivity : AppCompatActivity() {
             val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
             val reminderTimeStr = sdf.format(reminderTime)
             val reminderType = when {
-                !isDueReminder -> "开始时间"
-                isAdvance -> "提前"
+                !isDueReminder -> if (isAdvance) "开始时间提前" else "开始时间"
+                isAdvance -> "截止时间提前"
                 else -> "截止时间"
             }
             Log.d("TodoReminder", "成功设置${reminderType}提醒：${todo.title} - $reminderTimeStr")
@@ -416,9 +338,10 @@ class TodoSettingActivity : AppCompatActivity() {
 
     private fun cancelTodoReminder(todoId: Int) {
         // 取消所有类型的提醒
-        cancelSingleReminder(todoId)          // 取消到期提醒
-        cancelSingleReminder(todoId + 1000000) // 取消提前提醒
-        cancelSingleReminder(todoId + 2000000) // 取消开始时间提醒
+        cancelSingleReminder(todoId)           // 取消截止时间提醒
+        cancelSingleReminder(todoId + 1000000) // 取消截止时间提前提醒
+        cancelSingleReminder(todoId + 2000000) // 取消开始时间提前提醒
+        cancelSingleReminder(todoId + 3000000) // 取消开始时间准时提醒
     }
 
     private fun cancelSingleReminder(requestCode: Int) {
@@ -437,5 +360,146 @@ class TodoSettingActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
+    }
+
+    private fun showReminderDialog(isStartTime: Boolean) {
+        val items = arrayOf(
+            "立即提醒",
+            "提前15分钟",
+            "提前30分钟",
+            "提前1小时",
+            "提前2小时",
+            "自定义..."
+        )
+
+        val currentMinutes = if (isStartTime) startAdvanceMinutes else dueAdvanceMinutes
+        val currentSelection = when (currentMinutes) {
+            0 -> 0
+            15 -> 1
+            30 -> 2
+            60 -> 3
+            120 -> 4
+            else -> if (currentMinutes > 0) 5 else 0
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(if (isStartTime) "设置开始时间提醒" else "设置截止时间提醒")
+            .setSingleChoiceItems(items, currentSelection) { dialog, which ->
+                when (which) {
+                    0 -> {
+                        if (isStartTime) startAdvanceMinutes = 0 else dueAdvanceMinutes = 0
+                        updateReminderButtonText()
+                        dialog.dismiss()
+                    }
+                    1 -> {
+                        if (isStartTime) startAdvanceMinutes = 15 else dueAdvanceMinutes = 15
+                        updateReminderButtonText()
+                        dialog.dismiss()
+                    }
+                    2 -> {
+                        if (isStartTime) startAdvanceMinutes = 30 else dueAdvanceMinutes = 30
+                        updateReminderButtonText()
+                        dialog.dismiss()
+                    }
+                    3 -> {
+                        if (isStartTime) startAdvanceMinutes = 60 else dueAdvanceMinutes = 60
+                        updateReminderButtonText()
+                        dialog.dismiss()
+                    }
+                    4 -> {
+                        if (isStartTime) startAdvanceMinutes = 120 else dueAdvanceMinutes = 120
+                        updateReminderButtonText()
+                        dialog.dismiss()
+                    }
+                    5 -> {
+                        dialog.dismiss()
+                        showCustomReminderDialog(isStartTime)
+                    }
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun showCustomReminderDialog(isStartTime: Boolean) {
+        val view = layoutInflater.inflate(R.layout.dialog_custom_reminder, null)
+        val numberPicker = view.findViewById<NumberPicker>(R.id.minutesPicker)
+        val unitSpinner = view.findViewById<Spinner>(R.id.unitSpinner)
+        
+        val currentMinutes = if (isStartTime) startAdvanceMinutes else dueAdvanceMinutes
+        numberPicker.minValue = 1
+        numberPicker.maxValue = 999
+        numberPicker.value = when {
+            currentMinutes >= 1440 -> currentMinutes / 1440
+            currentMinutes >= 60 -> currentMinutes / 60
+            else -> currentMinutes.coerceAtLeast(1)
+        }
+
+        val units = arrayOf("分钟", "小时", "天")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, units)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        unitSpinner.adapter = adapter
+        
+        unitSpinner.setSelection(when {
+            currentMinutes >= 1440 -> 2
+            currentMinutes >= 60 -> 1
+            else -> 0
+        })
+
+        AlertDialog.Builder(this)
+            .setTitle(if (isStartTime) "自定义开始时间提醒" else "自定义截止时间提醒")
+            .setView(view)
+            .setPositiveButton("确定") { _, _ ->
+                val number = numberPicker.value
+                val multiplier = when (unitSpinner.selectedItemPosition) {
+                    0 -> 1           // 分钟
+                    1 -> 60          // 小时
+                    2 -> 60 * 24     // 天
+                    else -> 1
+                }
+                val minutes = number * multiplier
+                
+                if (isStartTime) {
+                    startAdvanceMinutes = minutes
+                } else {
+                    dueAdvanceMinutes = minutes
+                }
+                
+                updateReminderButtonText()
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun updateReminderButtonText() {
+        startReminderButton.text = when (startAdvanceMinutes) {
+            0 -> "立即提醒"
+            15 -> "提前15分钟提醒"
+            30 -> "提前30分钟提醒"
+            60 -> "提前1小时提醒"
+            120 -> "提前2小时提醒"
+            else -> when {
+                startAdvanceMinutes >= 1440 -> "提前${startAdvanceMinutes / 1440}天提醒"
+                startAdvanceMinutes >= 60 -> "提前${startAdvanceMinutes / 60}小时提醒"
+                else -> "提前${startAdvanceMinutes}分钟提醒"
+            }
+        }
+
+        dueReminderButton.text = when (dueAdvanceMinutes) {
+            0 -> "立即提醒"
+            15 -> "提前15分钟提醒"
+            30 -> "提前30分钟提醒"
+            60 -> "提前1小时提醒"
+            120 -> "提前2小时提醒"
+            else -> when {
+                dueAdvanceMinutes >= 1440 -> "提前${dueAdvanceMinutes / 1440}天提醒"
+                dueAdvanceMinutes >= 60 -> "提前${dueAdvanceMinutes / 60}小时提醒"
+                else -> "提前${dueAdvanceMinutes}分钟提醒"
+            }
+        }
+
+        // 根据复选框状态更新按钮可用性
+        startReminderButton.isEnabled = startDateCheckBox.isChecked
+        dueReminderButton.isEnabled = dueDateCheckBox.isChecked
     }
 } 
