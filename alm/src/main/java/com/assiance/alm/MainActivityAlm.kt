@@ -612,7 +612,9 @@ class MainActivityAlm : AppCompatActivity() {
                     description = obj.optString("description", ""),
                     startTime = obj.optLong("startTime").takeIf { it != 0L },
                     dueTime = dueTime,
-                    isCompleted = shouldComplete || isCompleted
+                    isCompleted = shouldComplete || isCompleted,
+                    startRingtoneUri = obj.optString("startRingtoneUri", null),  // 加载开始时间铃声
+                    dueRingtoneUri = obj.optString("dueRingtoneUri", null)       // 加载截止时间铃声
                 ))
             }
 
@@ -645,6 +647,8 @@ class MainActivityAlm : AppCompatActivity() {
                 put("startTime", todo.startTime ?: 0L)
                 put("dueTime", todo.dueTime ?: 0L)
                 put("isCompleted", todo.isCompleted)
+                put("startRingtoneUri", todo.startRingtoneUri)    // 保存开始时间铃声
+                put("dueRingtoneUri", todo.dueRingtoneUri)        // 保存截止时间铃声
             }
             jsonArray.put(obj)
         }
@@ -677,12 +681,39 @@ class MainActivityAlm : AppCompatActivity() {
         if (index != -1) {
             val updatedTodo = todo.copy(isCompleted = isCompleted)
             todoList[index] = updatedTodo
+
+            // 如果待办被标记为完成，取消所有提醒
+            if (isCompleted) {
+                cancelTodoReminder(todo.id)
+            }
+
             // 重新排序并更新
             todoList.sortWith(compareBy<TodoData> { it.isCompleted }
                 .thenBy { it.dueTime ?: Long.MAX_VALUE })
             todoAdapter.updateTodos(todoList.toList())
             saveTodos()
         }
+    }
+
+    private fun cancelTodoReminder(todoId: Int) {
+        // 取消所有类型的提醒
+        cancelSingleReminder(todoId)           // 取消截止时间提醒
+        cancelSingleReminder(todoId + 1000000) // 取消截止时间提前提醒
+        cancelSingleReminder(todoId + 2000000) // 取消开始时间提前提醒
+        cancelSingleReminder(todoId + 3000000) // 取消开始时间准时提醒
+    }
+
+    private fun cancelSingleReminder(requestCode: Int) {
+        val intent = Intent(TODO_REMINDER_ACTION).apply {
+            `package` = packageName
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
     }
 
     private fun editTodo(todo: TodoData) {
@@ -692,6 +723,9 @@ class MainActivityAlm : AppCompatActivity() {
             putExtra("todo_description", todo.description)
             putExtra("todo_start_time", todo.startTime)
             putExtra("todo_due_time", todo.dueTime)
+            // 添加铃声 URI
+            putExtra("todo_start_ringtone_uri", todo.startRingtoneUri)
+            putExtra("todo_due_ringtone_uri", todo.dueRingtoneUri)
             // 根据提醒时间计算提前分钟数
             val advanceMinutes = todo.dueTime?.let { dueTime ->
                 val prefs = getSharedPreferences(TODO_PREFS, Context.MODE_PRIVATE)
@@ -705,19 +739,6 @@ class MainActivityAlm : AppCompatActivity() {
             putExtra("todo_advance_minutes", advanceMinutes)
         }
         startActivity(intent)
-    }
-
-    private fun cancelTodoReminder(todoId: Int) {
-        val intent = Intent(TODO_REMINDER_ACTION).apply {
-            `package` = packageName
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            this,
-            todoId,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        alarmManager.cancel(pendingIntent)
     }
 
     override fun onResume() {

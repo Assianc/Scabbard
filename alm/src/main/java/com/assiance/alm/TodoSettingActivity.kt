@@ -27,6 +27,7 @@ import android.app.AlertDialog
 import android.widget.ArrayAdapter
 import android.media.RingtoneManager
 import android.net.Uri
+import android.widget.ImageButton
 
 class TodoSettingActivity : AppCompatActivity() {
     private lateinit var titleInput: TextInputEditText
@@ -46,8 +47,10 @@ class TodoSettingActivity : AppCompatActivity() {
     private lateinit var dueReminderButton: Button
     private var startRingtoneUri: String? = null
     private var dueRingtoneUri: String? = null
-    private lateinit var startRingtoneButton: Button
-    private lateinit var dueRingtoneButton: Button
+    private lateinit var startRingtoneButton: ImageButton
+    private lateinit var dueRingtoneButton: ImageButton
+    private lateinit var startRingtoneName: TextView
+    private lateinit var dueRingtoneName: TextView
     private val RINGTONE_PICKER_START_REQUEST = 1001
     private val RINGTONE_PICKER_DUE_REQUEST = 1002
 
@@ -156,20 +159,50 @@ class TodoSettingActivity : AppCompatActivity() {
             }
         }
 
+        // 初始化铃声相关视图
         startRingtoneButton = findViewById(R.id.startRingtoneButton)
         dueRingtoneButton = findViewById(R.id.dueRingtoneButton)
-        
+        startRingtoneName = findViewById(R.id.startRingtoneName)
+        dueRingtoneName = findViewById(R.id.dueRingtoneName)
+
+        // 设置铃声按钮点击事件
         startRingtoneButton.setOnClickListener {
-            openRingtonePicker(RINGTONE_PICKER_START_REQUEST)
+            // 添加点击动画效果
+            it.animate()
+                .scaleX(0.85f)
+                .scaleY(0.85f)
+                .setDuration(100)
+                .withEndAction {
+                    it.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start()
+                    openRingtonePicker(RINGTONE_PICKER_START_REQUEST)
+                }
+                .start()
         }
-        
+
         dueRingtoneButton.setOnClickListener {
-            openRingtonePicker(RINGTONE_PICKER_DUE_REQUEST)
+            // 添加点击动画效果
+            it.animate()
+                .scaleX(0.85f)
+                .scaleY(0.85f)
+                .setDuration(100)
+                .withEndAction {
+                    it.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start()
+                    openRingtonePicker(RINGTONE_PICKER_DUE_REQUEST)
+                }
+                .start()
         }
-        
+
         // 获取传入的铃声设置
-        startRingtoneUri = intent.getStringExtra("todo_start_ringtone")
-        dueRingtoneUri = intent.getStringExtra("todo_due_ringtone")
+        startRingtoneUri = intent.getStringExtra("todo_start_ringtone_uri")
+        dueRingtoneUri = intent.getStringExtra("todo_due_ringtone_uri")
         
         // 更新铃声按钮文本
         updateRingtoneButtonText()
@@ -182,7 +215,8 @@ class TodoSettingActivity : AppCompatActivity() {
             currentDateTime.timeInMillis = it
         }
 
-        DatePickerDialog(this, { _, year, month, day ->
+        // 创建日期选择对话框
+        val dateDialog = DatePickerDialog(this, { _, year, month, day ->
             TimePickerDialog(this, { _, hour, minute ->
                 val calendar = Calendar.getInstance().apply {
                     set(Calendar.YEAR, year)
@@ -217,9 +251,37 @@ class TodoSettingActivity : AppCompatActivity() {
                 }
                 
                 updateDateText(isStartTime, selectedTime)
-            }, currentDateTime.get(Calendar.HOUR_OF_DAY), currentDateTime.get(Calendar.MINUTE), true).show()
+            }, currentDateTime.get(Calendar.HOUR_OF_DAY), currentDateTime.get(Calendar.MINUTE), true).apply {
+                // 为时间选择对话框添加取消按钮的监听
+                setOnCancelListener {
+                    if (isStartTime) {
+                        if (startTime == null) {
+                            startDateCheckBox.isChecked = false
+                        }
+                    } else {
+                        if (dueTime == null) {
+                            dueDateCheckBox.isChecked = false
+                        }
+                    }
+                }
+            }.show()
         }, currentDateTime.get(Calendar.YEAR), currentDateTime.get(Calendar.MONTH), 
-           currentDateTime.get(Calendar.DAY_OF_MONTH)).show()
+           currentDateTime.get(Calendar.DAY_OF_MONTH))
+
+        // 为日期选择对话框添加取消按钮的监听
+        dateDialog.setOnCancelListener {
+            if (isStartTime) {
+                if (startTime == null) {
+                    startDateCheckBox.isChecked = false
+                }
+            } else {
+                if (dueTime == null) {
+                    dueDateCheckBox.isChecked = false
+                }
+            }
+        }
+
+        dateDialog.show()
     }
 
     private fun updateDateText(isStartTime: Boolean, timeInMillis: Long) {
@@ -333,6 +395,11 @@ class TodoSettingActivity : AppCompatActivity() {
     }
 
     private fun setTodoReminder(todo: TodoData) {
+        // 如果待办已完成，不设置任何提醒
+        if (todo.isCompleted) {
+            return
+        }
+
         Log.d("TodoReminder", "开始设置提醒：${todo.title}")
         
         // 处理开始时间提醒
@@ -641,7 +708,7 @@ class TodoSettingActivity : AppCompatActivity() {
             }
         }
         
-        startRingtoneButton.text = "开始提醒铃声：${getRingtoneName(startRingtoneUri)}"
-        dueRingtoneButton.text = "截止提醒铃声：${getRingtoneName(dueRingtoneUri)}"
+        startRingtoneName.text = getRingtoneName(startRingtoneUri)
+        dueRingtoneName.text = getRingtoneName(dueRingtoneUri)
     }
 } 

@@ -30,17 +30,18 @@ class TodoReminderReceiver : BroadcastReceiver() {
         when (intent?.action) {
             MainActivityAlm.TODO_REMINDER_ACTION -> {
                 val ringtoneUri = intent.getStringExtra("ringtone_uri")
-                showNotification(context!!, intent)
-                playRingtone(context!!, ringtoneUri)
-                
-                // 启动悬浮窗服务
+                // 只调用一次启动悬浮窗服务
                 val serviceIntent = Intent(context, TodoFloatingService::class.java).apply {
                     putExtra("todo_title", intent.getStringExtra("todo_title"))
                     putExtra("todo_description", intent.getStringExtra("todo_description"))
                     putExtra("is_advance", intent.getBooleanExtra("is_advance", false))
                     putExtra("is_due_reminder", intent.getBooleanExtra("is_due_reminder", true))
+                    putExtra("target_time", intent.getLongExtra("target_time", 0))
                 }
-                context.startService(serviceIntent)
+                context?.startService(serviceIntent)
+
+                // 播放铃声
+                playRingtone(context!!, ringtoneUri)
             }
             MainActivityAlm.TODO_REMINDER_STOP_ACTION -> {
                 Log.d("TodoReminder", "收到停止提醒广播")
@@ -52,72 +53,6 @@ class TodoReminderReceiver : BroadcastReceiver() {
                 notificationManager?.cancel(MainActivityAlm.TODO_NOTIFICATION_ID + 1)
                 notificationManager?.cancel(MainActivityAlm.TODO_NOTIFICATION_ID + 2)
             }
-        }
-    }
-
-    private fun showNotification(context: Context, intent: Intent) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
-        // 创建通知渠道
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                MainActivityAlm.TODO_CHANNEL_ID,
-                "待办提醒",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "待办事项截止时间提醒"
-                enableLights(true)
-                lightColor = Color.RED
-                enableVibration(true)
-                setShowBadge(true)
-            }
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        // 创建打开应用的 Intent
-        val intent = Intent(context, MainActivityAlm::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            // 添加额外标志以打开待办列表
-            putExtra("open_todo_list", true)
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // 创建通知
-        val notification = NotificationCompat.Builder(context, MainActivityAlm.TODO_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_add_task)
-            .setContentTitle(when {
-                !intent.getBooleanExtra("is_due_reminder", true) -> "待办开始提醒"
-                intent.getBooleanExtra("is_advance", true) -> "待办提醒"
-                else -> "待办到期提醒"
-            })
-            .setContentText(when {
-                !intent.getBooleanExtra("is_due_reminder", true) -> "${intent.getStringExtra("todo_title")} 开始时间到了"
-                intent.getBooleanExtra("is_advance", true) -> "${intent.getStringExtra("todo_title")} 即将到期"
-                else -> "${intent.getStringExtra("todo_title")} 已到期"
-            })
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_REMINDER)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .build()
-
-        try {
-            // 使用不同的通知ID
-            val notificationId = when {
-                !intent.getBooleanExtra("is_due_reminder", true) -> MainActivityAlm.TODO_NOTIFICATION_ID + 2
-                intent.getBooleanExtra("is_advance", true) -> MainActivityAlm.TODO_NOTIFICATION_ID + 1
-                else -> MainActivityAlm.TODO_NOTIFICATION_ID
-            }
-            notificationManager.notify(notificationId, notification)
-            Log.d("TodoReminder", "通知已发送")
-        } catch (e: Exception) {
-            Log.e("TodoReminder", "发送通知失败", e)
         }
     }
 
