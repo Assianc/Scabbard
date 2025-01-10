@@ -707,7 +707,6 @@ class TodoSettingActivity : AppCompatActivity() {
                 return "默认铃声"
             }
         }
-        
         startRingtoneName.text = getRingtoneName(startRingtoneUri)
         dueRingtoneName.text = getRingtoneName(dueRingtoneUri)
     }
