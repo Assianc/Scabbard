@@ -231,25 +231,4 @@ class UpdateChecker {
             null
         }
     }
-
-    private fun startDownload(context: Context, downloadUrl: String, version: String) {
-        try {
-            val fileName = "Scabbard-${version}.apk"
-            val request = DownloadManager.Request(Uri.parse(downloadUrl))
-                .setTitle("下载更新")
-                .setDescription("正在下载 Scabbard ${version}")
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-                .setAllowedOverMetered(true)
-                .setAllowedOverRoaming(true)
-
-            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            downloadManager.enqueue(request)
-
-            Toast.makeText(context, "开始下载更新", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(context, "下载失败，请稍后重试", Toast.LENGTH_SHORT).show()
-        }
-    }
 } 
