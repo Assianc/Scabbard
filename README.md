@@ -71,7 +71,7 @@
 ## 💡 反馈建议
 
 部分图片素材来自网络，如果你有任何问题或建议，欢迎：
-- 提交 [Issue](https://github.com/YourUsername/Scabbard/issues)
+- 提交 [Issue](https://github.com/Assianc/Scabbard/issues)
 - 通过 GitHub 联系开发者
 
 ## 📄 开源协议
