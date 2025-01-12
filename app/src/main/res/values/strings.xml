@@ -8,6 +8,8 @@
     <string name="previous">Previous</string>
     <string name="common_permission_fail">权限请求失败，请检查设置。</string>
     <string name="common_permission_hint">请授予必要的权限。</string>
+    <string name="navigation_drawer_open">打开导航菜单</string>
+    <string name="navigation_drawer_close">关闭导航菜单</string>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris

@@ -12,15 +12,18 @@ import android.provider.Settings
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.core.view.GravityCompat
 import com.assiance.alm.MainActivityAlm
 import com.assiance.memo.MainActivityMemo
 import com.assiance.scabbard.update.UpdateChecker
 import com.assiance.scabbard.utils.IconManager
+import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,13 +32,45 @@ open class StartActivity : AppCompatActivity() {
 
     private lateinit var startButton: Button
     private lateinit var memoButton: Button
-    private lateinit var moreButton: Button
+    private lateinit var drawerLayout: DrawerLayout
     private val updateChecker = UpdateChecker()
 
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start_allocator)
+
+        // 初始化抽屉布局
+        drawerLayout = findViewById(R.id.drawer_layout)
+        val navView = findViewById<NavigationView>(R.id.nav_view)
+        
+        // 设置菜单按钮点击事件
+        val menuButton = findViewById<Button>(R.id.toolbar)
+        menuButton.setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.START)
+        }
+
+        // 设置导航菜单的头部图标
+        val headerView = navView.getHeaderView(0)
+        val headerIcon = headerView.findViewById<ImageView>(R.id.nav_header_icon)
+        headerIcon.setImageResource(IconManager.getCurrentIconResourceId(this))
+
+        // 设置导航菜单项的点击事件
+        navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.nav_appearance -> {
+                    startActivity(Intent(this, AppearanceActivity::class.java))
+                }
+                R.id.nav_about -> {
+                    startActivity(Intent(this, AboutActivity::class.java))
+                }
+                R.id.nav_update -> {
+                    checkForUpdates()
+                }
+            }
+            drawerLayout.closeDrawer(GravityCompat.START)
+            true
+        }
 
         // 更新当前图标
         findViewById<ImageView>(R.id.app_icon)?.setImageResource(
@@ -44,12 +79,6 @@ open class StartActivity : AppCompatActivity() {
 
         startButton = findViewById(R.id.start_button)
         memoButton = findViewById(R.id.memo_button)
-        moreButton = findViewById(R.id.toolbar)
-
-        // 设置更多按钮点击事件
-        moreButton.setOnClickListener { view ->
-            showPopupMenu(view)
-        }
 
         startButton.setOnClickListener {
             val intent = Intent(this@StartActivity, MainActivity::class.java)
@@ -170,31 +199,6 @@ open class StartActivity : AppCompatActivity() {
         }
     }
 
-    private fun showPopupMenu(view: View) {
-        val popupMenu = PopupMenu(this, view)
-        popupMenu.menuInflater.inflate(R.menu.menu_more, popupMenu.menu)
-
-        popupMenu.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.menu_about -> {
-                    startActivity(Intent(this, AboutActivity::class.java))
-                    true
-                }
-                R.id.menu_appearance -> {
-                    startActivity(Intent(this, AppearanceActivity::class.java))
-                    true
-                }
-                R.id.menu_update -> {
-                    checkForUpdates()
-                    true
-                }
-                else -> false
-            }
-        }
-
-        popupMenu.show()
-    }
-
     private fun checkForUpdates() {
         CoroutineScope(Dispatchers.Main).launch {
             val updateInfo = updateChecker.checkForUpdates(this@StartActivity)
@@ -284,6 +288,14 @@ open class StartActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "下载失败，请稍后重试", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
         }
     }
 }
