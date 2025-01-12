@@ -1,11 +1,8 @@
 package com.assiance.scabbard.update
 
 import android.app.Activity
-import android.app.DownloadManager
 import android.content.Context
 import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Environment
 import android.view.ContextThemeWrapper
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog

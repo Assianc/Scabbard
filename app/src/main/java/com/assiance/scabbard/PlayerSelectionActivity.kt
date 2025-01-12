@@ -57,19 +57,11 @@ class PlayerSelectionActivity : AppCompatActivity() {
 
         // 全选按钮事件
         selectAllButton.setOnClickListener {
-            if (isAllSelected) {
-                for (i in playerList.indices) {
-                    playerListView.setItemChecked(i, false)
-                }
-                isAllSelected = false
-                selectAllButton.text = "全选"
-            } else {
-                for (i in playerList.indices) {
-                    playerListView.setItemChecked(i, true)
-                }
-                isAllSelected = true
-                selectAllButton.text = "取消全选"
+            isAllSelected = !isAllSelected
+            for (i in playerList.indices) {
+                playerListView.setItemChecked(i, isAllSelected)
             }
+            selectAllButton.text = if (isAllSelected) "取消全选" else "全选"
         }
 
         // 设置 ListView 长按删除玩家功能
@@ -80,22 +72,38 @@ class PlayerSelectionActivity : AppCompatActivity() {
 
         // 完成按钮点击事件，返回主界面
         doneButton.setOnClickListener {
-            val selectedPlayers = arrayListOf<String>()
-            for (i in 0 until playerListView.count) {
-                if (playerListView.isItemChecked(i)) {
-                    selectedPlayers.add(playerList[i])
-                }
-            }
-            if (selectedPlayers.isEmpty()) {
-                Toast.makeText(this, "请选择至少一名玩家", Toast.LENGTH_SHORT).show()
-            } else {
+            if (isAnyPlayerSelected()) {
+                val selectedPlayers = getSelectedPlayers()
                 val resultIntent = Intent()
                 resultIntent.putStringArrayListExtra("selectedPlayers", selectedPlayers)
                 resultIntent.putStringArrayListExtra("allPlayers", playerList)
                 setResult(RESULT_OK, resultIntent)
                 finish()
+            } else {
+                Toast.makeText(this, "请选择至少一名玩家", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    // 判断是否有玩家被选中
+    private fun isAnyPlayerSelected(): Boolean {
+        for (i in 0 until playerListView.count) {
+            if (playerListView.isItemChecked(i)) {
+                return true
+            }
+        }
+        return false
+    }
+
+    // 获取选中的玩家列表
+    private fun getSelectedPlayers(): ArrayList<String> {
+        val selectedPlayers = arrayListOf<String>()
+        for (i in 0 until playerListView.count) {
+            if (playerListView.isItemChecked(i)) {
+                selectedPlayers.add(playerList[i])
+            }
+        }
+        return selectedPlayers
     }
 
     // 显示确认删除对话框

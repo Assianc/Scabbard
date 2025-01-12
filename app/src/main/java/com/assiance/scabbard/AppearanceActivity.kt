@@ -1,17 +1,15 @@
 package com.assiance.scabbard
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import com.assiance.scabbard.utils.IconManager
 import com.assiance.scabbard.utils.GradientAnimManager
+import com.assiance.scabbard.utils.IconManager
 
 class AppearanceActivity : AppCompatActivity() {
 
@@ -46,7 +44,7 @@ class AppearanceActivity : AppCompatActivity() {
         supportActionBar?.title = "外观设置"
 
         // 获取当前使用的图标
-        val currentIconAlias = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        val currentIconAlias = getSharedPreferences("app_settings", MODE_PRIVATE)
             .getString("current_icon", "MainActivity.Default")
 
         // 设置图标点击事件和初始选中状态
@@ -214,7 +212,7 @@ class AppearanceActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
 

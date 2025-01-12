@@ -58,15 +58,15 @@
 ## 🚀 开始使用
 
 ### 下载方式
-- [GitHub Release](https://github.com/YourUsername/Scabbard/releases/latest)
+- [GitHub Release](https://github.com/Assianc/Scabbard/releases/latest)
 - [蓝奏云](https://assiance.lanzoub.com/b00y9rfbud) (密码：7rwd)
 
 ### 系统要求
-- Android 5.0 及以上版本
+- Android 8.0 及以上版本
 
 ## 👥 关于我们
 
-本项目由 [@cuxt](https://github.com/cuxt) 和 [@Assianc](https://github.com/Assianc) 共同开发维护，由[@sy]() 提供部分ui设计以及个性化定制界面
+本项目由 [@bx](https://github.com/cuxt) 和 [@Assianc](https://github.com/Assianc) 共同开发维护，由[@sy]() 提供部分ui设计以及个性化定制界面
 
 ## 💡 反馈建议
 

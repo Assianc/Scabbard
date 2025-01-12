@@ -8,29 +8,45 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.assiance.scabbard.databinding.ActivityMainBinding
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
-
-    companion object {
-        private const val REQUEST_CODE_ADD_PLAYER = 1
-    }
-
     private lateinit var binding: ActivityMainBinding
     private var players: MutableList<String> = mutableListOf("示例元素1", "示例元素2", "示例元素3", "示例元素4")
     private var classificationType = 2 // 默认二分类
     private var selectedPlayers: MutableList<String> = mutableListOf()
     private var isTeamsAllocated = false // 标志是否已经进行过分类
     private lateinit var selectedPlayersText: TextView
+    private lateinit var addPlayerLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         selectedPlayersText = findViewById(R.id.selectedPlayersText)
+
+        // 初始化 ActivityResultLauncher
+        addPlayerLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.let { data ->
+                    data.getStringArrayListExtra("allPlayers")?.let {
+                        players.clear()
+                        players.addAll(it)
+                    }
+                    data.getStringArrayListExtra("selectedPlayers")?.let {
+                        selectedPlayers = ArrayList(it)
+                        // 更新已选择元素的显示
+                        updateSelectedPlayersText()
+                    }
+                }
+            }
+        }
 
         setupClassificationSpinner()
         setupButtons()
@@ -42,7 +58,6 @@ class MainActivity : AppCompatActivity() {
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.classificationSpinner.adapter = adapter
-
         // 设置Spinner的OnItemSelectedListener
         binding.classificationSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
@@ -66,27 +81,10 @@ class MainActivity : AppCompatActivity() {
         binding.addPlayerButton.setOnClickListener {
             val intent = Intent(this, PlayerSelectionActivity::class.java)
             intent.putStringArrayListExtra("currentPlayers", ArrayList(players))
-            startActivityForResult(intent, REQUEST_CODE_ADD_PLAYER)
+            addPlayerLauncher.launch(intent)
         }
-
         binding.allocateButton.setOnClickListener {
             allocateTeams(selectedPlayers)
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE_ADD_PLAYER && resultCode == RESULT_OK && data != null) {
-            data.getStringArrayListExtra("allPlayers")?.let {
-                players.clear()
-                players.addAll(it)
-            }
-
-            data.getStringArrayListExtra("selectedPlayers")?.let {
-                selectedPlayers = ArrayList(it)
-                // 更新已选择元素的显示
-                updateSelectedPlayersText()
-            }
         }
     }
 
@@ -98,12 +96,9 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "请选择玩家进行分类", Toast.LENGTH_SHORT).show()
             return
         }
-
         // 转换为可变列表并打乱顺序
         val shuffledPlayers = selectedPlayers.toMutableList().apply { shuffle() }
-
         resetTeamTexts()
-
         when (classificationType) {
             2 -> {
                 val halfSize = shuffledPlayers.size / 2
@@ -171,6 +166,7 @@ class MainActivity : AppCompatActivity() {
         val first: A, val second: B, val third: C, val fourth: D
     )
 
+    @SuppressLint("SetTextI18n")
     private fun updateSelectedPlayersText() {
         if (selectedPlayers.isEmpty()) {
             selectedPlayersText.text = "未选择任何元素"

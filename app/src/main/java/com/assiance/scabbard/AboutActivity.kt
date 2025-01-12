@@ -75,7 +75,7 @@ class AboutActivity : AppCompatActivity() {
                 @Suppress("DEPRECATION")
                 packageInfo.versionCode.toLong()
             }
-            versionInfo.text = "Version $versionName"
+            versionInfo.text = "Version $versionName($versionCode)"
         } catch (_: Exception) {
             versionInfo.text = "Version 未知"
         }
@@ -156,7 +156,7 @@ class AboutActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
+        onBackPressedDispatcher.onBackPressed()
         return true
     }
 } 

@@ -21,7 +21,7 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         if (oldVersion < 3) {
             try {
                 db.execSQL("ALTER TABLE $TABLE_NAME RENAME COLUMN $COLUMN_IMAGE_PATH TO $COLUMN_IMAGE_PATHS")
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 try {
                     db.execSQL("ALTER TABLE $TABLE_NAME ADD COLUMN $COLUMN_IMAGE_PATHS TEXT")
                 } catch (e: Exception) {

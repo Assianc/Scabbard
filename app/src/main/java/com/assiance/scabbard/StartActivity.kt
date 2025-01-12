@@ -2,28 +2,28 @@ package com.assiance.scabbard
 
 import android.annotation.SuppressLint
 import android.app.AlarmManager
-import android.content.Context
+import android.app.DownloadManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.PopupMenu
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.assiance.alm.MainActivityAlm
 import com.assiance.memo.MainActivityMemo
+import com.assiance.scabbard.update.UpdateChecker
+import com.assiance.scabbard.utils.IconManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.assiance.scabbard.update.UpdateChecker
-import android.widget.ImageView
-import com.assiance.scabbard.utils.IconManager
-import android.app.DownloadManager
-import android.os.Environment
-import android.widget.Toast
-import com.assiance.alm.MainActivityAlm
 
 open class StartActivity : AppCompatActivity() {
 
@@ -123,12 +123,13 @@ open class StartActivity : AppCompatActivity() {
 
     private fun checkAlarmPermission(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
             return alarmManager.canScheduleExactAlarms()
         }
         return true
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     private fun showAlarmPermissionDialog() {
         AlertDialog.Builder(this)
             .setTitle("需要权限")
@@ -276,7 +277,7 @@ open class StartActivity : AppCompatActivity() {
                 .setAllowedOverMetered(true)
                 .setAllowedOverRoaming(true)
 
-            val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
             downloadManager.enqueue(request)
 
             Toast.makeText(this, "开始下载更新", Toast.LENGTH_SHORT).show()
