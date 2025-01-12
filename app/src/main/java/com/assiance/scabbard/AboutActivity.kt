@@ -23,8 +23,11 @@ import com.assiance.scabbard.utils.GradientAnimManager
 class AboutActivity : AppCompatActivity() {
     private lateinit var appIcon: ImageView
     private var gradientAnimator: ValueAnimator? = null
+    private var gradientAnimatorNav: ValueAnimator? = null
     private var gradientMatrix: Matrix = Matrix()
+    private var gradientMatrixNav: Matrix = Matrix()
     private var translateX: Float = 0f
+    private var translateXNav: Float = 0f
     private val iconChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.assiance.scabbard.ACTION_ICON_CHANGED") {
@@ -36,8 +39,11 @@ class AboutActivity : AppCompatActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.assiance.scabbard.ACTION_GRADIENT_CHANGED") {
                 val scabbardText = findViewById<TextView>(R.id.scabbard_title)
+                val scabbardTextNav = findViewById<TextView>(R.id.nav_header_title)
                 val paint = scabbardText.paint
+                val paint1 = scabbardTextNav.paint
                 val width = paint.measureText(scabbardText.text.toString())
+                val width1 = paint1.measureText(scabbardTextNav.text.toString())
 
                 val currentStyle = GradientAnimManager.getCurrentStyle(this@AboutActivity)
                 val textShader = GradientAnimManager.createGradient(
@@ -46,8 +52,17 @@ class AboutActivity : AppCompatActivity() {
                     currentStyle
                 )
 
+                val currentStyle1 = GradientAnimManager.getCurrentStyle(this@AboutActivity)
+                val textshader1 = GradientAnimManager.createGradient(
+                    width1,
+                    scabbardTextNav.textSize,
+                    currentStyle1
+                )
+
                 paint.shader = textShader
+                paint1.shader = textshader1
                 scabbardText.invalidate()
+                scabbardTextNav.invalidate()
             }
         }
     }
@@ -92,41 +107,12 @@ class AboutActivity : AppCompatActivity() {
         appIcon = findViewById<ImageView>(R.id.app_icon)
         appIcon.setImageResource(IconManager.getCurrentIconResourceId(this))
 
-        // 找到 Scabbard 文字的 TextView
+        // 找到两个 TextView
         val scabbardText = findViewById<TextView>(R.id.scabbard_title)
+        val scabbardTextNav = findViewById<TextView>(R.id.nav_header_title)
 
-        // 创建动态渐变效果
-        val paint = scabbardText.paint
-        val width = paint.measureText(scabbardText.text.toString())
-
-        // 使用 GradientAnimManager 创建渐变
-        val currentStyle = GradientAnimManager.getCurrentStyle(this@AboutActivity)
-        val textShader = GradientAnimManager.createGradient(
-            width,
-            scabbardText.textSize,
-            currentStyle
-        )
-
-        // 设置着色器
-        paint.shader = textShader
-
-        // 创建动画
-        gradientAnimator = ValueAnimator.ofFloat(0f, width)  // 只需要移动一个宽度的距离
-        gradientAnimator?.apply {
-            duration = 2100 // 稍微加快动画速度
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.RESTART  // 使用 RESTART 模式
-            interpolator = LinearInterpolator()
-
-            addUpdateListener { animator ->
-                translateX = animator.animatedValue as Float
-                gradientMatrix.setTranslate(-translateX, 0f)
-                textShader.setLocalMatrix(gradientMatrix)
-                scabbardText.invalidate()
-            }
-
-            start()
-        }
+        // 为两个文本分别创建渐变效果
+        setupGradientEffect(scabbardText, scabbardTextNav)
 
         // 修改广播注册代码，添加 exported 标志
         val filter = IntentFilter("com.assiance.scabbard.ACTION_ICON_CHANGED")
@@ -136,10 +122,67 @@ class AboutActivity : AppCompatActivity() {
         registerReceiver(gradientChangeReceiver, gradientFilter, RECEIVER_NOT_EXPORTED)
     }
 
+    private fun setupGradientEffect(scabbardText: TextView, scabbardTextNav: TextView) {
+        // 主标题渐变设置
+        val paint = scabbardText.paint
+        val width = paint.measureText(scabbardText.text.toString())
+        val currentStyle = GradientAnimManager.getCurrentStyle(this)
+        val textShader = GradientAnimManager.createGradient(
+            width,
+            scabbardText.textSize,
+            currentStyle
+        )
+        paint.shader = textShader
+
+        // 导航标题渐变设置
+        val paintNav = scabbardTextNav.paint
+        val widthNav = paintNav.measureText(scabbardTextNav.text.toString())
+        val textShaderNav = GradientAnimManager.createGradient(
+            widthNav,
+            scabbardTextNav.textSize,
+            currentStyle
+        )
+        paintNav.shader = textShaderNav
+
+        // 主标题动画
+        gradientAnimator = ValueAnimator.ofFloat(0f, width).apply {
+            duration = 2100
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.RESTART
+            interpolator = LinearInterpolator()
+
+            addUpdateListener { animator ->
+                translateX = animator.animatedValue as Float
+                gradientMatrix.setTranslate(-translateX, 0f)
+                textShader.setLocalMatrix(gradientMatrix)
+                scabbardText.invalidate()
+            }
+            start()
+        }
+
+        // 导航标题动画
+        gradientAnimatorNav = ValueAnimator.ofFloat(0f, widthNav).apply {
+            duration = 2100
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.RESTART
+            interpolator = LinearInterpolator()
+
+            addUpdateListener { animator ->
+                translateXNav = animator.animatedValue as Float
+                gradientMatrixNav.setTranslate(-translateXNav, 0f)
+                textShaderNav.setLocalMatrix(gradientMatrixNav)
+                scabbardTextNav.invalidate()
+            }
+            start()
+        }
+    }
+
     override fun onDestroy() {
-        // 停止动画
+        // 停止所有动画
         gradientAnimator?.cancel()
         gradientAnimator = null
+        gradientAnimatorNav?.cancel()
+        gradientAnimatorNav = null
 
         super.onDestroy()
         try {
