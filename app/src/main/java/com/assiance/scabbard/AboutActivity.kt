@@ -38,31 +38,19 @@ class AboutActivity : AppCompatActivity() {
     private val gradientChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.assiance.scabbard.ACTION_GRADIENT_CHANGED") {
-                val scabbardText = findViewById<TextView>(R.id.scabbard_title)
-                val scabbardTextNav = findViewById<TextView>(R.id.nav_header_title)
+                val scabbardText = findViewById<TextView>(R.id.scabbard_title) ?: return
+                
+                // 更新主标题渐变
                 val paint = scabbardText.paint
-                val paint1 = scabbardTextNav.paint
                 val width = paint.measureText(scabbardText.text.toString())
-                val width1 = paint1.measureText(scabbardTextNav.text.toString())
-
                 val currentStyle = GradientAnimManager.getCurrentStyle(this@AboutActivity)
                 val textShader = GradientAnimManager.createGradient(
                     width,
                     scabbardText.textSize,
                     currentStyle
                 )
-
-                val currentStyle1 = GradientAnimManager.getCurrentStyle(this@AboutActivity)
-                val textshader1 = GradientAnimManager.createGradient(
-                    width1,
-                    scabbardTextNav.textSize,
-                    currentStyle1
-                )
-
                 paint.shader = textShader
-                paint1.shader = textshader1
                 scabbardText.invalidate()
-                scabbardTextNav.invalidate()
             }
         }
     }
@@ -84,35 +72,29 @@ class AboutActivity : AppCompatActivity() {
         try {
             val packageInfo = packageManager.getPackageInfo(packageName, 0)
             val versionName = packageInfo.versionName
-            val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                packageInfo.longVersionCode
-            } else {
-                @Suppress("DEPRECATION")
-                packageInfo.versionCode.toLong()
-            }
-            versionInfo.text = "Version $versionName($versionCode)"
+            versionInfo?.text = "Version $versionName"
         } catch (_: Exception) {
-            versionInfo.text = "Version 未知"
+            versionInfo?.text = "Version 未知"
         }
 
         // 设置开发者点击事件
-        findViewById<LinearLayout>(R.id.dev_1).setOnClickListener {
+        findViewById<LinearLayout>(R.id.dev_1)?.setOnClickListener {
             openGitHub("cuxt")
         }
 
-        findViewById<LinearLayout>(R.id.dev_2).setOnClickListener {
+        findViewById<LinearLayout>(R.id.dev_2)?.setOnClickListener {
             openGitHub("Assianc")
         }
 
-        appIcon = findViewById<ImageView>(R.id.app_icon)
+        // 设置应用图标
+        appIcon = findViewById(R.id.app_icon)
         appIcon.setImageResource(IconManager.getCurrentIconResourceId(this))
 
-        // 找到两个 TextView
+        // 找到标题 TextView
         val scabbardText = findViewById<TextView>(R.id.scabbard_title)
-        val scabbardTextNav = findViewById<TextView>(R.id.nav_header_title)
 
-        // 为两个文本分别创建渐变效果
-        setupGradientEffect(scabbardText, scabbardTextNav)
+        // 为标题创建渐变效果
+        setupGradientEffect(scabbardText)
 
         // 修改广播注册代码，添加 exported 标志
         val filter = IntentFilter("com.assiance.scabbard.ACTION_ICON_CHANGED")
@@ -122,7 +104,7 @@ class AboutActivity : AppCompatActivity() {
         registerReceiver(gradientChangeReceiver, gradientFilter, RECEIVER_NOT_EXPORTED)
     }
 
-    private fun setupGradientEffect(scabbardText: TextView, scabbardTextNav: TextView) {
+    private fun setupGradientEffect(scabbardText: TextView) {
         // 主标题渐变设置
         val paint = scabbardText.paint
         val width = paint.measureText(scabbardText.text.toString())
@@ -133,16 +115,6 @@ class AboutActivity : AppCompatActivity() {
             currentStyle
         )
         paint.shader = textShader
-
-        // 导航标题渐变设置
-        val paintNav = scabbardTextNav.paint
-        val widthNav = paintNav.measureText(scabbardTextNav.text.toString())
-        val textShaderNav = GradientAnimManager.createGradient(
-            widthNav,
-            scabbardTextNav.textSize,
-            currentStyle
-        )
-        paintNav.shader = textShaderNav
 
         // 主标题动画
         gradientAnimator = ValueAnimator.ofFloat(0f, width).apply {
@@ -156,22 +128,6 @@ class AboutActivity : AppCompatActivity() {
                 gradientMatrix.setTranslate(-translateX, 0f)
                 textShader.setLocalMatrix(gradientMatrix)
                 scabbardText.invalidate()
-            }
-            start()
-        }
-
-        // 导航标题动画
-        gradientAnimatorNav = ValueAnimator.ofFloat(0f, widthNav).apply {
-            duration = 2100
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.RESTART
-            interpolator = LinearInterpolator()
-
-            addUpdateListener { animator ->
-                translateXNav = animator.animatedValue as Float
-                gradientMatrixNav.setTranslate(-translateXNav, 0f)
-                textShaderNav.setLocalMatrix(gradientMatrixNav)
-                scabbardTextNav.invalidate()
             }
             start()
         }
