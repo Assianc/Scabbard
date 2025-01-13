@@ -124,6 +124,9 @@ open class StartActivity : AppCompatActivity() {
 
         // 初始化抽屉布局
         drawerLayout = findViewById(R.id.drawer_layout)
+        // 设置 scrimColor 为透明色，禁用暗色遮罩效果
+        drawerLayout.setScrimColor(Color.TRANSPARENT)
+        
         val navView = findViewById<NavigationView>(R.id.nav_view)
         
         // 设置导航菜单背景
@@ -477,6 +480,8 @@ open class StartActivity : AppCompatActivity() {
         
         // 设置NavigationView的背景为半透明白色
         navView.setBackgroundColor(Color.argb(alpha, 255, 255, 255))
+
+        drawerLayout.setScrimColor(Color.argb(33, 0, 0, 0))  // 设置为15%透明度的黑色
         
         // 获取header并设置渐变背景
         val headerView = navView.getHeaderView(0)
