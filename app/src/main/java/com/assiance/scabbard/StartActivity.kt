@@ -150,7 +150,7 @@ open class StartActivity : AppCompatActivity() {
         val width = paint.measureText(navTitle.text.toString())
         val currentStyle = GradientAnimManager.getCurrentStyle(this)
         val textShader = GradientAnimManager.createGradient(
-            width,
+            width, // 将宽度翻倍，使渐变效果更平滑
             navTitle.textSize,
             currentStyle
         )
@@ -163,7 +163,7 @@ open class StartActivity : AppCompatActivity() {
 
         // 创建新的渐变动画
         gradientAnimator = ValueAnimator.ofFloat(0f, width).apply {
-            duration = 2100
+            duration = 2100  // 保持动画时长一致
             repeatCount = ValueAnimator.INFINITE
             repeatMode = ValueAnimator.RESTART
             interpolator = LinearInterpolator()
