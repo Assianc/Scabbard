@@ -1,17 +1,23 @@
 package com.assiance.scabbard
 
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.assiance.scabbard.utils.GradientAnimManager
 import com.assiance.scabbard.utils.IconManager
+import android.app.Application
+import com.google.android.material.navigation.NavigationView
+import androidx.drawerlayout.widget.DrawerLayout
 
 class AppearanceActivity : AppCompatActivity() {
 
@@ -34,6 +40,7 @@ class AppearanceActivity : AppCompatActivity() {
 
     private var dialog: AlertDialog? = null
     private var currentSelectedIcon: View? = null
+    private var pendingAlpha: Int = 230 // 默认值
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -243,10 +250,12 @@ class AppearanceActivity : AppCompatActivity() {
     private fun setupAlphaSeekBar() {
         val seekBar = findViewById<SeekBar>(R.id.nav_alpha_seekbar)
         val alphaText = findViewById<TextView>(R.id.nav_alpha_text)
+        val confirmButton = findViewById<Button>(R.id.confirm_alpha_button)
         
         // 获取当前透明度设置
         val currentAlpha = GradientAnimManager.getCurrentNavAlpha(this)
         seekBar.progress = currentAlpha
+        pendingAlpha = currentAlpha
         
         // 更新文本显示
         updateAlphaText(alphaText, currentAlpha)
@@ -255,22 +264,66 @@ class AppearanceActivity : AppCompatActivity() {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 // 更新文本显示
                 updateAlphaText(alphaText, progress)
+                pendingAlpha = progress
                 
-                // 保存设置
-                GradientAnimManager.setCurrentNavAlpha(this@AppearanceActivity, progress)
-                
-                // 发送有序广播确保更新
-                val intent = Intent("com.assiance.scabbard.ACTION_NAV_ALPHA_CHANGED")
-                sendOrderedBroadcast(intent, null)
+                // 获取 StartActivity 实例
+                val startActivity = getStartActivity()
+                startActivity?.let { activity ->
+                    // 直接更新 StartActivity 的视图
+                    activity.runOnUiThread {
+                        try {
+                            val navView = activity.findViewById<NavigationView>(R.id.nav_view)
+                            navView?.let { view ->
+                                // 更新 NavigationView 的背景色
+                                view.setBackgroundColor(Color.argb(progress, 255, 255, 255))
+                                
+                                // 更新 header 的渐变背景
+                                val headerView = view.getHeaderView(0)
+                                val headerLayout = headerView.findViewById<LinearLayout>(R.id.nav_header_layout)
+                                
+                                // 创建新的渐变背景
+                                val gradientDrawable = GradientDrawable(
+                                    GradientDrawable.Orientation.TOP_BOTTOM,
+                                    intArrayOf(
+                                        Color.argb(progress, 232, 245, 233),
+                                        Color.argb(progress, 255, 255, 255)
+                                    )
+                                )
+                                
+                                // 应用新的背景
+                                headerLayout.background = gradientDrawable
+                                
+                                // 强制重绘
+                                view.invalidate()
+                                headerLayout.invalidate()
+                                activity.findViewById<DrawerLayout>(R.id.drawer_layout)?.invalidate()
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+                }
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                // 在拖动结束时再次发送广播确保更新
-                val intent = Intent("com.assiance.scabbard.ACTION_NAV_ALPHA_CHANGED")
-                sendOrderedBroadcast(intent, null)
-            }
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
+
+        confirmButton.setOnClickListener {
+            // 保存设置
+            GradientAnimManager.setCurrentNavAlpha(this@AppearanceActivity, pendingAlpha)
+            Toast.makeText(this, "透明度设置已保存", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun getStartActivity(): StartActivity? {
+        // 从 companion object 中获取 allActivities
+        for (activity in ScabbardApplication.allActivities) {
+            if (activity is StartActivity) {
+                return activity
+            }
+        }
+        return null
     }
 
     private fun updateAlphaText(textView: TextView, alpha: Int) {

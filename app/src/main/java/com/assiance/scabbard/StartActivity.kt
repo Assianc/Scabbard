@@ -77,8 +77,42 @@ open class StartActivity : AppCompatActivity() {
     private val alphaChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.assiance.scabbard.ACTION_NAV_ALPHA_CHANGED") {
-                val navView = findViewById<NavigationView>(R.id.nav_view)
-                setupNavigationViewBackground(navView)
+                // 直接从Intent中获取透明度值
+                val alpha = intent.getIntExtra("alpha", 230)
+                
+                // 获取 NavigationView
+                val navView = findViewById<NavigationView>(R.id.nav_view) ?: return
+                
+                // 立即在主线程上执行更新
+                runOnUiThread {
+                    try {
+                        // 更新 NavigationView 的背景色
+                        navView.setBackgroundColor(Color.argb(alpha, 255, 255, 255))
+                        
+                        // 更新 header 的渐变背景
+                        val headerView = navView.getHeaderView(0)
+                        val headerLayout = headerView.findViewById<LinearLayout>(R.id.nav_header_layout)
+                        
+                        // 创建新的渐变背景
+                        val gradientDrawable = GradientDrawable(
+                            GradientDrawable.Orientation.TOP_BOTTOM,
+                            intArrayOf(
+                                Color.argb(alpha, 232, 245, 233),
+                                Color.argb(alpha, 255, 255, 255)
+                            )
+                        )
+                        
+                        // 应用新的背景
+                        headerLayout.background = gradientDrawable
+                        
+                        // 强制重绘
+                        navView.postInvalidate()
+                        headerLayout.postInvalidate()
+                        drawerLayout.postInvalidate()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
             }
         }
     }
