@@ -481,7 +481,7 @@ open class StartActivity : AppCompatActivity() {
         // 设置NavigationView的背景为半透明白色
         navView.setBackgroundColor(Color.argb(alpha, 255, 255, 255))
 
-        drawerLayout.setScrimColor(Color.argb(33, 0, 0, 0))  // 设置为15%透明度的黑色
+        drawerLayout.setScrimColor(Color.argb(33, 0, 0, 0))  // 设置为13%透明度的黑色
         
         // 获取header并设置渐变背景
         val headerView = navView.getHeaderView(0)
