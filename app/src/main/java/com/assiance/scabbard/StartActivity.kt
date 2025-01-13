@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.drawable.ColorDrawable
@@ -422,19 +423,19 @@ open class StartActivity : AppCompatActivity() {
     }
 
     private fun setupNavigationViewBackground(navView: NavigationView) {
-        // 设置NavigationView的背景色
-        navView.setBackgroundColor(Color.WHITE)  // 设置主体背景为白色
+        // 设置NavigationView的背景为半透明白色
+        navView.setBackgroundColor(Color.argb(230, 255, 255, 255))  // 设置主体背景为90%不透明度的白色
         
         // 获取header并设置渐变背景
         val headerView = navView.getHeaderView(0)
         val headerLayout = headerView.findViewById<LinearLayout>(R.id.nav_header_layout)
         
-        // 创建渐变背景
+        // 创建渐变背景，使用带透明度的颜色
         val gradientDrawable = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
             intArrayOf(
-                Color.parseColor("#E8F5E9"),  // 浅绿色
-                Color.parseColor("#FFFFFF")    // 白色
+                Color.argb(230, 232, 245, 233),  // 90%不透明度的浅绿色
+                Color.argb(230, 255, 255, 255)   // 90%不透明度的白色
             )
         )
         
@@ -444,8 +445,14 @@ open class StartActivity : AppCompatActivity() {
         // 应用背景
         headerLayout.background = gradientDrawable
         
-        // 设置菜单项的背景色
+        // 设置菜单项的背景色为透明
         navView.itemBackground = ColorDrawable(Color.TRANSPARENT)
+        
+        // 设置菜单项的文字颜色为黑色
+        navView.itemTextColor = ColorStateList.valueOf(Color.BLACK)
+        
+        // 设置菜单项的图标颜色为黑色
+        navView.itemIconTintList = ColorStateList.valueOf(Color.BLACK)
     }
 }
 
