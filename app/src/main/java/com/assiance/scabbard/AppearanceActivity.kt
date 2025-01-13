@@ -285,8 +285,8 @@ class AppearanceActivity : AppCompatActivity() {
                                 val gradientDrawable = GradientDrawable(
                                     GradientDrawable.Orientation.TOP_BOTTOM,
                                     intArrayOf(
-                                        Color.argb(progress, 232, 245, 233),
-                                        Color.argb(progress, 255, 255, 255)
+                                        Color.argb(progress, 230, 220, 255),  // 浅紫色
+                                        Color.argb(progress, 255, 255, 255)   // 白色
                                     )
                                 )
                                 

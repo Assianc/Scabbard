@@ -482,12 +482,12 @@ open class StartActivity : AppCompatActivity() {
         val headerView = navView.getHeaderView(0)
         val headerLayout = headerView.findViewById<LinearLayout>(R.id.nav_header_layout)
         
-        // 创建渐变背景，使用带透明度的颜色
+        // 创建渐变背景，使用紫色系的渐变
         val gradientDrawable = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
             intArrayOf(
-                Color.argb(alpha, 232, 245, 233),  // 使用相同的透明度
-                Color.argb(alpha, 255, 255, 255)   // 使用相同的透明度
+                Color.argb(alpha, 230, 220, 255),  // 浅紫色
+                Color.argb(alpha, 255, 255, 255)   // 白色
             )
         )
         
