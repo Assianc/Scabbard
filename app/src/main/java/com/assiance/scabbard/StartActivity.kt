@@ -8,7 +8,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -17,6 +20,7 @@ import android.provider.Settings
 import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -76,6 +80,9 @@ open class StartActivity : AppCompatActivity() {
         // 初始化抽屉布局
         drawerLayout = findViewById(R.id.drawer_layout)
         val navView = findViewById<NavigationView>(R.id.nav_view)
+        
+        // 设置导航菜单背景
+        setupNavigationViewBackground(navView)
         
         // 设置菜单按钮点击事件
         val menuButton = findViewById<Button>(R.id.toolbar)
@@ -412,6 +419,33 @@ open class StartActivity : AppCompatActivity() {
         
         // 强制重绘
         navTitle.invalidate()
+    }
+
+    private fun setupNavigationViewBackground(navView: NavigationView) {
+        // 设置NavigationView的背景色
+        navView.setBackgroundColor(Color.WHITE)  // 设置主体背景为白色
+        
+        // 获取header并设置渐变背景
+        val headerView = navView.getHeaderView(0)
+        val headerLayout = headerView.findViewById<LinearLayout>(R.id.nav_header_layout)
+        
+        // 创建渐变背景
+        val gradientDrawable = GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(
+                Color.parseColor("#E8F5E9"),  // 浅绿色
+                Color.parseColor("#FFFFFF")    // 白色
+            )
+        )
+        
+        // 设置圆角
+        gradientDrawable.cornerRadius = 0f
+        
+        // 应用背景
+        headerLayout.background = gradientDrawable
+        
+        // 设置菜单项的背景色
+        navView.itemBackground = ColorDrawable(Color.TRANSPARENT)
     }
 }
 
