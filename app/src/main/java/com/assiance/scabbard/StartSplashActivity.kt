@@ -16,8 +16,10 @@ import android.view.animation.RotateAnimation
 import android.view.animation.ScaleAnimation
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.assiance.scabbard.update.UpdateChecker
 import com.assiance.scabbard.utils.IconManager
 import com.gyf.immersionbar.BarHide
@@ -28,9 +30,10 @@ import com.hjq.permissions.XXPermissions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @SuppressLint("CustomSplashScreen")
-class StartSplashActivity : StartActivity(), Animation.AnimationListener {
+class StartSplashActivity : AppCompatActivity(), Animation.AnimationListener {
 
     companion object {
         private const val ANIM_TIME = 2100L
@@ -50,27 +53,52 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-        // 初始化视图
-        mImageView = findViewById(R.id.iv_splash_bg)
-        mIconView = findViewById(R.id.iv_splash_icon)
-        mNameView = findViewById(R.id.iv_splash_name)
-        mDebugView = findViewById(R.id.tv_splash_debug)
+        // 使用 lifecycleScope 进行初始化
+        lifecycleScope.launch(Dispatchers.Default) {
+            // 在后台线程初始化视图引用
+            val imageView = findViewById<View>(R.id.iv_splash_bg)
+            val iconView = findViewById<ImageView>(R.id.iv_splash_icon)
+            val nameView = findViewById<View>(R.id.iv_splash_name)
+            val debugView = findViewById<View>(R.id.tv_splash_debug)
 
-        initView()
-        initData()
-
-        mIconView.setImageResource(IconManager.getSplashIconResourceId(this))
+            withContext(Dispatchers.Main) {
+                // 在主线程中设置视图引用
+                mImageView = imageView
+                mIconView = iconView
+                mNameView = nameView
+                mDebugView = debugView
+                
+                // 初始化视图和数据
+                initView()
+                initData()
+                
+                mIconView.setImageResource(IconManager.getSplashIconResourceId(this@StartSplashActivity))
+            }
+        }
     }
 
     private fun initView() {
-        // 初始化背景淡入动画
+        // 预先创建动画对象
+        val animations = lifecycleScope.launch(Dispatchers.Default) {
+            // 在后台线程准备所有动画
+            val animations = prepareAnimations()
+            
+            withContext(Dispatchers.Main) {
+                // 在主线程中应用动画
+                applyAnimations(animations)
+                
+                // 设置状态栏
+                setupStatusBar()
+            }
+        }
+    }
+
+    private fun prepareAnimations(): Triple<AlphaAnimation, ScaleAnimation, RotateAnimation> {
         val alphaAnimation = AlphaAnimation(0.4f, 1.0f).apply {
             duration = ANIM_TIME * 2
             setAnimationListener(this@StartSplashActivity)
         }
-        mImageView.startAnimation(alphaAnimation)
 
-        // 图标缩放动画
         val scaleAnimation = ScaleAnimation(
             0f, 2.2f, 0f, 2.2f,
             Animation.RELATIVE_TO_SELF, 0.5f,
@@ -79,17 +107,25 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
             duration = ANIM_TIME
             fillAfter = true
         }
-        mIconView.startAnimation(scaleAnimation)
 
-        // 名称旋转动画
         val rotateAnimation = RotateAnimation(
             180f, 360f,
             Animation.RELATIVE_TO_SELF, 0.5f,
             Animation.RELATIVE_TO_SELF, 0.5f
-        ).apply { duration = ANIM_TIME }
-        mNameView.startAnimation(rotateAnimation)
+        ).apply { 
+            duration = ANIM_TIME 
+        }
 
-        // 使用 ImmersionBar 设置状态栏和导航栏
+        return Triple(alphaAnimation, scaleAnimation, rotateAnimation)
+    }
+
+    private fun applyAnimations(animations: Triple<AlphaAnimation, ScaleAnimation, RotateAnimation>) {
+        mImageView.startAnimation(animations.first)
+        mIconView.startAnimation(animations.second)
+        mNameView.startAnimation(animations.third)
+    }
+
+    private fun setupStatusBar() {
         ImmersionBar.with(this)
             .fullScreen(true)
             .hideBar(BarHide.FLAG_HIDE_STATUS_BAR)
@@ -278,6 +314,9 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
         }
     }
 
+    override fun onAnimationStart(animation: Animation) {
+        // 动画开始时的处理
+    }
 
     override fun onAnimationEnd(animation: Animation) {
         isAnimationEnded = true
@@ -285,6 +324,10 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
         if (hasPermissionGranted) {
             startStartActivity()
         }
+    }
+
+    override fun onAnimationRepeat(animation: Animation) {
+        // 动画重复时的处理
     }
 
     private fun startStartActivity() {
@@ -297,8 +340,4 @@ class StartSplashActivity : StartActivity(), Animation.AnimationListener {
             e.printStackTrace()
         }
     }
-
-    override fun onAnimationStart(animation: Animation) {}
-
-    override fun onAnimationRepeat(animation: Animation) {}
 }

@@ -21,6 +21,7 @@ xxpermissions = "20.0"
 kotlin = "2.0.21"
 coreKtx = "1.15.0"
 xxpermissionsVersion = "20.0"
+lifecycle = "2.7.0"
 
 [libraries]
 appcompat-v161 = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
@@ -43,6 +44,7 @@ material-v190 = { module = "com.google.android.material:material", version.ref =
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 xxpermissions = { module = "com.hjq:xxpermissions", version.ref = "xxpermissions" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
