@@ -31,15 +31,19 @@
 
 
         <!-- 背景图片 -->
+
+        <!-- 分类器 按钮 -->
         <ImageView
             android:id="@+id/background_image"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="707dp"
             android:layout_below="@id/toolbar"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="-30dp"
+            android:layout_marginEnd="0dp"
             android:scaleType="centerCrop"
             android:src="@drawable/background4" />
 
-        <!-- 分类器 按钮 -->
         <Button
             android:id="@+id/start_button"
             android:layout_width="300dp"
@@ -100,7 +104,7 @@
             android:layout_centerInParent="true"
             android:background="@drawable/transparent_button_with_black_border"
             android:backgroundTint="@null" />
-        
+
     </RelativeLayout>
 
     <!-- 侧滑菜单 -->
