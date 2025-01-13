@@ -1,20 +1,31 @@
 package com.assiance.scabbard
 
 import android.annotation.SuppressLint
-import android.content.Intent
-import android.os.Bundle
+import android.graphics.Paint
+import android.graphics.Shader
+import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import com.assiance.scabbard.databinding.ActivityMainBinding
 import java.util.*
+import android.animation.ValueAnimator
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.graphics.Matrix
+import android.os.Bundle
+import android.view.animation.LinearInterpolator
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.navigation.NavigationView
+import com.assiance.scabbard.utils.GradientAnimManager
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : StartActivity() {
     private lateinit var binding: ActivityMainBinding
     private var players: MutableList<String> = mutableListOf("示例元素1", "示例元素2", "示例元素3", "示例元素4")
     private var classificationType = 2 // 默认二分类
@@ -22,11 +33,13 @@ class MainActivity : AppCompatActivity() {
     private var isTeamsAllocated = false // 标志是否已经进行过分类
     private lateinit var selectedPlayersText: TextView
     private lateinit var addPlayerLauncher: ActivityResultLauncher<Intent>
-
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        
         selectedPlayersText = findViewById(R.id.selectedPlayersText)
 
         // 初始化 ActivityResultLauncher
