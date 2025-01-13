@@ -23,6 +23,7 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:gravity="center_horizontal"
         android:textSize="24sp"
+        android:textStyle="bold"
         android:textColor="@android:color/black" />
 
 </LinearLayout> 

@@ -1,5 +1,6 @@
 package com.assiance.scabbard
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.DownloadManager
@@ -7,12 +8,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
-import android.view.View
+import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -20,23 +22,17 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.assiance.alm.MainActivityAlm
 import com.assiance.memo.MainActivityMemo
 import com.assiance.scabbard.update.UpdateChecker
-import com.assiance.scabbard.utils.IconManager
 import com.assiance.scabbard.utils.GradientAnimManager
+import com.assiance.scabbard.utils.IconManager
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import android.animation.ValueAnimator
-import android.graphics.Matrix
-import android.view.animation.LinearInterpolator
-import android.graphics.Shader
-import android.graphics.drawable.GradientDrawable
 
 open class StartActivity : AppCompatActivity() {
 
@@ -44,6 +40,9 @@ open class StartActivity : AppCompatActivity() {
     private lateinit var memoButton: Button
     private lateinit var drawerLayout: DrawerLayout
     private val updateChecker = UpdateChecker()
+    private var gradientAnimator: ValueAnimator? = null
+    private var gradientMatrix: Matrix = Matrix()
+    private var translateX: Float = 0f
 
     // 添加 gradientReceiver 作为类属性
     private val gradientReceiver = object : BroadcastReceiver() {
@@ -52,16 +51,18 @@ open class StartActivity : AppCompatActivity() {
                 val navView = findViewById<NavigationView>(R.id.nav_view)
                 val headerView = navView.getHeaderView(0)
                 val navTitle = headerView.findViewById<TextView>(R.id.nav_header_title)
-                val paint = navTitle.paint
-                val width = paint.measureText(navTitle.text.toString())
                 
-                val newStyle = GradientAnimManager.getCurrentStyle(this@StartActivity)
-                val newShader = GradientAnimManager.createGradient(
-                    width,
-                    navTitle.textSize,
-                    newStyle
-                )
-                paint.shader = newShader
+                // 停止并清除旧的动画
+                gradientAnimator?.cancel()
+                gradientAnimator = null
+                
+                // 清除旧的渐变效果
+                navTitle.paint.shader = null
+                
+                // 重新设置渐变效果
+                setupGradientEffect(navTitle)
+                
+                // 强制重绘
                 navTitle.invalidate()
             }
         }
@@ -82,46 +83,18 @@ open class StartActivity : AppCompatActivity() {
             drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        // 设置导航菜单的头部图标
+        // 设置导航菜单的头部图标和标题
         val headerView = navView.getHeaderView(0)
         val headerIcon = headerView.findViewById<ImageView>(R.id.nav_header_icon)
         headerIcon.setImageResource(IconManager.getCurrentIconResourceId(this))
-
+        
         // 设置导航菜单标题的渐变效果
         val navTitle = headerView.findViewById<TextView>(R.id.nav_header_title)
-        val paint = navTitle.paint
-        val width = paint.measureText(navTitle.text.toString())
-        val currentStyle = GradientAnimManager.getCurrentStyle(this)
-        val textShader = GradientAnimManager.createGradient(
-            width,
-            navTitle.textSize,
-            currentStyle
-        )
-        paint.shader = textShader
-
-        // 创建渐变动画
-        val gradientMatrix = Matrix()
-        val gradientAnimator = ValueAnimator.ofFloat(0f, width).apply {
-            duration = 2100
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.RESTART
-            interpolator = LinearInterpolator()
-
-            addUpdateListener { animator ->
-                val translateX = animator.animatedValue as Float
-                gradientMatrix.setTranslate(-translateX, 0f)
-                textShader.setLocalMatrix(gradientMatrix)
-                navTitle.invalidate()
-            }
-            start()
-        }
+        setupGradientEffect(navTitle)
 
         // 注册广播接收器的代码改为使用类属性
-        registerReceiver(
-            gradientReceiver, 
-            IntentFilter("com.assiance.scabbard.ACTION_GRADIENT_CHANGED"), 
-            RECEIVER_NOT_EXPORTED
-        )
+        val gradientFilter = IntentFilter("com.assiance.scabbard.ACTION_GRADIENT_CHANGED")
+        registerReceiver(gradientReceiver, gradientFilter, RECEIVER_NOT_EXPORTED)
 
         // 设置导航菜单项的点击事件
         navView.setNavigationItemSelectedListener { menuItem ->
@@ -166,6 +139,43 @@ open class StartActivity : AppCompatActivity() {
 
         // 在应用启动时检查并请求权限
         checkAndRequestPermissions()
+    }
+
+    private fun setupGradientEffect(navTitle: TextView) {
+        // 停止现有动画
+        gradientAnimator?.cancel()
+        
+        // 主标题渐变设置
+        val paint = navTitle.paint
+        val width = paint.measureText(navTitle.text.toString())
+        val currentStyle = GradientAnimManager.getCurrentStyle(this)
+        val textShader = GradientAnimManager.createGradient(
+            width,
+            navTitle.textSize,
+            currentStyle
+        )
+        
+        // 重置矩阵和位移
+        gradientMatrix = Matrix()
+        translateX = 0f
+        
+        paint.shader = textShader
+
+        // 创建新的渐变动画
+        gradientAnimator = ValueAnimator.ofFloat(0f, width).apply {
+            duration = 2100
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.RESTART
+            interpolator = LinearInterpolator()
+
+            addUpdateListener { animator ->
+                translateX = animator.animatedValue as Float
+                gradientMatrix.setTranslate(-translateX, 0f)
+                textShader.setLocalMatrix(gradientMatrix)
+                navTitle.invalidate()
+            }
+            start()
+        }
     }
 
     private fun checkAndRequestPermissions() {
@@ -368,12 +378,40 @@ open class StartActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+
+        gradientAnimator?.cancel()
+        gradientAnimator = null
+
         super.onDestroy()
         try {
             unregisterReceiver(gradientReceiver)
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        
+        // 检查是否存在NavigationView
+        val navView = findViewById<NavigationView>(R.id.nav_view) ?: return
+        
+        // 获取headerView
+        val headerView = navView.getHeaderView(0)
+        val navTitle = headerView.findViewById<TextView>(R.id.nav_header_title)
+        
+        // 停止并清除旧的动画
+        gradientAnimator?.cancel()
+        gradientAnimator = null
+        
+        // 清除旧的渐变效果
+        navTitle.paint.shader = null
+        
+        // 重新设置渐变效果
+        setupGradientEffect(navTitle)
+        
+        // 强制重绘
+        navTitle.invalidate()
     }
 }
 

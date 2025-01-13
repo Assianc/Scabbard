@@ -1,29 +1,17 @@
 package com.assiance.scabbard
 
 import android.annotation.SuppressLint
-import android.graphics.Paint
-import android.graphics.Shader
-import android.graphics.drawable.GradientDrawable
+import android.content.Intent
+import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import com.assiance.scabbard.databinding.ActivityMainBinding
 import java.util.*
-import android.animation.ValueAnimator
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.graphics.Matrix
-import android.os.Bundle
-import android.view.animation.LinearInterpolator
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.navigation.NavigationView
-import com.assiance.scabbard.utils.GradientAnimManager
 
 class MainActivity : StartActivity() {
     private lateinit var binding: ActivityMainBinding

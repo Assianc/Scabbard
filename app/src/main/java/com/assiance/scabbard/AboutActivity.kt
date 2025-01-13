@@ -23,11 +23,8 @@ import com.assiance.scabbard.utils.GradientAnimManager
 class AboutActivity : AppCompatActivity() {
     private lateinit var appIcon: ImageView
     private var gradientAnimator: ValueAnimator? = null
-    private var gradientAnimatorNav: ValueAnimator? = null
     private var gradientMatrix: Matrix = Matrix()
-    private var gradientMatrixNav: Matrix = Matrix()
     private var translateX: Float = 0f
-    private var translateXNav: Float = 0f
     private val iconChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.assiance.scabbard.ACTION_ICON_CHANGED") {
@@ -137,8 +134,6 @@ class AboutActivity : AppCompatActivity() {
         // 停止所有动画
         gradientAnimator?.cancel()
         gradientAnimator = null
-        gradientAnimatorNav?.cancel()
-        gradientAnimatorNav = null
 
         super.onDestroy()
         try {
