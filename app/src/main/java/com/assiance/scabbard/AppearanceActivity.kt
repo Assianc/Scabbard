@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -107,6 +109,9 @@ class AppearanceActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.gradient_style_container).setOnClickListener {
             showGradientStyleDialog()
         }
+
+        // 设置透明度SeekBar
+        setupAlphaSeekBar()
     }
 
     private fun changeAppIcon(activityName: String) {
@@ -233,5 +238,43 @@ class AppearanceActivity : AppCompatActivity() {
                 Toast.makeText(this, "渐变样式已更改为：${selectedStyle.title}", Toast.LENGTH_SHORT).show()
             }
             .show()
+    }
+
+    private fun setupAlphaSeekBar() {
+        val seekBar = findViewById<SeekBar>(R.id.nav_alpha_seekbar)
+        val alphaText = findViewById<TextView>(R.id.nav_alpha_text)
+        
+        // 获取当前透明度设置
+        val currentAlpha = GradientAnimManager.getCurrentNavAlpha(this)
+        seekBar.progress = currentAlpha
+        
+        // 更新文本显示
+        updateAlphaText(alphaText, currentAlpha)
+        
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                // 更新文本显示
+                updateAlphaText(alphaText, progress)
+                
+                // 保存设置
+                GradientAnimManager.setCurrentNavAlpha(this@AppearanceActivity, progress)
+                
+                // 发送有序广播确保更新
+                val intent = Intent("com.assiance.scabbard.ACTION_NAV_ALPHA_CHANGED")
+                sendOrderedBroadcast(intent, null)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                // 在拖动结束时再次发送广播确保更新
+                val intent = Intent("com.assiance.scabbard.ACTION_NAV_ALPHA_CHANGED")
+                sendOrderedBroadcast(intent, null)
+            }
+        })
+    }
+
+    private fun updateAlphaText(textView: TextView, alpha: Int) {
+        val percentage = (alpha / 255f * 100).toInt()
+        textView.text = "不透明度: $percentage%"
     }
 }

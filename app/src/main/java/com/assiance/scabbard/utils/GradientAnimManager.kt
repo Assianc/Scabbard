@@ -116,4 +116,16 @@ object GradientAnimManager {
             Shader.TileMode.MIRROR
         )
     }
+
+    fun getCurrentNavAlpha(context: Context): Int {
+        return context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+            .getInt("nav_alpha", 230) // 默认值为230，约90%不透明度
+    }
+
+    fun setCurrentNavAlpha(context: Context, alpha: Int) {
+        context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+            .edit()
+            .putInt("nav_alpha", alpha)
+            .apply()
+    }
 } 

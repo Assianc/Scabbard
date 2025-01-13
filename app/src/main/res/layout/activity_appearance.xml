@@ -234,4 +234,26 @@
             android:textSize="14sp" />
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/nav_alpha_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="不透明度: 90%"
+            android:textSize="16sp"/>
+
+        <SeekBar
+            android:id="@+id/nav_alpha_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:max="255"/>
+
+    </LinearLayout>
+
 </LinearLayout> 

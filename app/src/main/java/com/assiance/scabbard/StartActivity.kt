@@ -73,6 +73,16 @@ open class StartActivity : AppCompatActivity() {
         }
     }
 
+    // 在 class StartActivity 中添加广播接收器
+    private val alphaChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "com.assiance.scabbard.ACTION_NAV_ALPHA_CHANGED") {
+                val navView = findViewById<NavigationView>(R.id.nav_view)
+                setupNavigationViewBackground(navView)
+            }
+        }
+    }
+
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,6 +113,10 @@ open class StartActivity : AppCompatActivity() {
         // 注册广播接收器的代码改为使用类属性
         val gradientFilter = IntentFilter("com.assiance.scabbard.ACTION_GRADIENT_CHANGED")
         registerReceiver(gradientReceiver, gradientFilter, RECEIVER_NOT_EXPORTED)
+
+        // 注册透明度变化广播接收器
+        val alphaFilter = IntentFilter("com.assiance.scabbard.ACTION_NAV_ALPHA_CHANGED")
+        registerReceiver(alphaChangeReceiver, alphaFilter, RECEIVER_NOT_EXPORTED)
 
         // 设置导航菜单项的点击事件
         navView.setNavigationItemSelectedListener { menuItem ->
@@ -393,6 +407,7 @@ open class StartActivity : AppCompatActivity() {
         super.onDestroy()
         try {
             unregisterReceiver(gradientReceiver)
+            unregisterReceiver(alphaChangeReceiver)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -423,8 +438,11 @@ open class StartActivity : AppCompatActivity() {
     }
 
     private fun setupNavigationViewBackground(navView: NavigationView) {
+        // 获取当前设置的透明度
+        val alpha = GradientAnimManager.getCurrentNavAlpha(this)
+        
         // 设置NavigationView的背景为半透明白色
-        navView.setBackgroundColor(Color.argb(230, 255, 255, 255))  // 设置主体背景为90%不透明度的白色
+        navView.setBackgroundColor(Color.argb(alpha, 255, 255, 255))
         
         // 获取header并设置渐变背景
         val headerView = navView.getHeaderView(0)
@@ -434,8 +452,8 @@ open class StartActivity : AppCompatActivity() {
         val gradientDrawable = GradientDrawable(
             GradientDrawable.Orientation.TOP_BOTTOM,
             intArrayOf(
-                Color.argb(230, 232, 245, 233),  // 90%不透明度的浅绿色
-                Color.argb(230, 255, 255, 255)   // 90%不透明度的白色
+                Color.argb(alpha, 232, 245, 233),  // 使用相同的透明度
+                Color.argb(alpha, 255, 255, 255)   // 使用相同的透明度
             )
         )
         
