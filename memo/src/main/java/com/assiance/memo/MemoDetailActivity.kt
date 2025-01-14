@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.Menu
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
@@ -707,12 +708,34 @@ class MemoDetailActivity : AppCompatActivity() {
     }
 
     override fun finish() {
+        // 在结束活动前清空文本内容
+        titleEditText.text = null
+        contentEditText.text = null
+        updateTimeTextView.text = null
+        
+        // 清除所有视图
+        val rootView = findViewById<View>(android.R.id.content)
+        if (rootView is ViewGroup) {
+            rootView.removeAllViews()
+        }
+        
         super.finish()
         // 应用退出动画
         overridePendingTransition(R.anim.slide_down_enter, R.anim.slide_down_exit)
     }
 
     override fun onBackPressed() {
+        // 在返回前清空文本内容
+        titleEditText.text = null
+        contentEditText.text = null
+        updateTimeTextView.text = null
+        
+        // 清除所有视图
+        val rootView = findViewById<View>(android.R.id.content)
+        if (rootView is ViewGroup) {
+            rootView.removeAllViews()
+        }
+        
         super.onBackPressed()
         overridePendingTransition(R.anim.slide_down_enter, R.anim.slide_down_exit)
     }
