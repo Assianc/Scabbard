@@ -11,29 +11,32 @@ import android.widget.CheckBox
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 
 class MemoAdapter(
     private val memoList: MutableList<Memo>,
-    private val context: Context,
+    private val activity: MainActivityMemo,
     private val memoDAO: MemoDAO
-) : RecyclerView.Adapter<MemoAdapter.MemoViewHolder>() {
+) : RecyclerView.Adapter<MemoAdapter.ViewHolder>() {
 
     companion object {
         private const val MAX_CONTENT_LENGTH = 50
     }
 
+    private val selectedItems = HashSet<Int>()
     var isMultiSelectMode = false
-        private set
 
-    private val selectedItems = mutableListOf<Memo>()
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MemoViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.memo_item, parent, false)
-        return MemoViewHolder(view)
+        return ViewHolder(view)
     }
 
     @SuppressLint("SetTextI18n", "NotifyDataSetChanged")
-    override fun onBindViewHolder(holder: MemoViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val memo = memoList[position]
         holder.titleTextView.text = memo.title
         holder.updateTimeTextView.text = "上次更新: ${memo.updateTime}"
@@ -52,9 +55,9 @@ class MemoAdapter(
 
         try {
             when (memo.titleFontName) {
-                "宋体" -> ResourcesCompat.getFont(context, R.font.simsunch)
-                "仿宋" -> ResourcesCompat.getFont(context, R.font.fasimsunch)
-                "黑体" -> ResourcesCompat.getFont(context, R.font.simheich)
+                "宋体" -> ResourcesCompat.getFont(activity, R.font.simsunch)
+                "仿宋" -> ResourcesCompat.getFont(activity, R.font.fasimsunch)
+                "黑体" -> ResourcesCompat.getFont(activity, R.font.simheich)
                 else -> Typeface.DEFAULT
             }?.let { typeface ->
                 holder.titleTextView.typeface = typeface
@@ -66,9 +69,9 @@ class MemoAdapter(
 
         try {
             when (memo.fontName) {
-                "宋体" -> ResourcesCompat.getFont(context, R.font.simsunch)
-                "仿宋" -> ResourcesCompat.getFont(context, R.font.fasimsunch)
-                "黑体" -> ResourcesCompat.getFont(context, R.font.simheich)
+                "宋体" -> ResourcesCompat.getFont(activity, R.font.simsunch)
+                "仿宋" -> ResourcesCompat.getFont(activity, R.font.fasimsunch)
+                "黑体" -> ResourcesCompat.getFont(activity, R.font.simheich)
                 else -> Typeface.DEFAULT
             }?.let { typeface ->
                 holder.contentTextView.typeface = typeface
@@ -79,10 +82,10 @@ class MemoAdapter(
         }
 
         holder.checkBox.visibility = if (isMultiSelectMode) View.VISIBLE else View.GONE
-        holder.checkBox.isChecked = selectedItems.contains(memo)
+        holder.checkBox.isChecked = selectedItems.contains(position)
 
         holder.itemView.setOnClickListener {
-            val intent = Intent(context, MemoDetailActivity::class.java).apply {
+            val intent = Intent(activity, MemoDetailActivity::class.java).apply {
                 putExtra("memo_id", memo.id)
                 putExtra("memo_title", memo.title)
                 putExtra("memo_content", memo.content)
@@ -98,14 +101,14 @@ class MemoAdapter(
                 putExtra("memo_content_font_size", memo.contentFontSize)
             }
             
-            if (context is MainActivityMemo) {
+            if (activity is MainActivityMemo) {
                 val options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
-                    context,
+                    activity,
                     androidx.core.util.Pair(holder.titleTextView, "memo_title"),
                     androidx.core.util.Pair(holder.contentTextView, "memo_content"),
                     androidx.core.util.Pair(holder.updateTimeTextView, "memo_time")
                 )
-                context.startActivity(intent, options.toBundle())
+                activity.startActivity(intent, options.toBundle())
             }
         }
 
@@ -121,8 +124,8 @@ class MemoAdapter(
         holder.itemView.setOnLongClickListener {
             if (!isMultiSelectMode) {
                 isMultiSelectMode = true
-                if (context is MainActivityMemo) {
-                    context.toggleDeleteButton(true)
+                if (activity is MainActivityMemo) {
+                    activity.toggleDeleteButton(true)
                 }
                 notifyDataSetChanged()
             }
@@ -131,9 +134,9 @@ class MemoAdapter(
 
         holder.checkBox.setOnClickListener {
             if (holder.checkBox.isChecked) {
-                selectedItems.add(memo)
+                selectedItems.add(position)
             } else {
-                selectedItems.remove(memo)
+                selectedItems.remove(position)
             }
         }
 
@@ -147,16 +150,38 @@ class MemoAdapter(
 
     @SuppressLint("NotifyDataSetChanged")
     fun deleteSelectedMemos() {
-        for (memo in selectedItems) {
-            memoDAO.deleteMemo(memo.id)
-        }
-        memoList.removeAll(selectedItems)
-        selectedItems.clear()
-        isMultiSelectMode = false
-        notifyDataSetChanged()
-
-        if (context is MainActivityMemo) {
-            context.toggleDeleteButton(false)
+        activity.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // 获取要删除的备忘录
+                val memosToDelete = selectedItems.mapNotNull { index ->
+                    if (index < memoList.size) memoList[index] else null
+                }
+                
+                // 在数据库中删除
+                memosToDelete.forEach { memo ->
+                    memoDAO.deleteMemo(memo.id)
+                }
+                
+                withContext(Dispatchers.Main) {
+                    // 从列表中删除，从大到小删除以避免索引变化
+                    selectedItems.sortedByDescending { it }.forEach { index ->
+                        if (index < memoList.size) {
+                            memoList.removeAt(index)
+                            notifyItemRemoved(index)
+                        }
+                    }
+                    
+                    // 清理选择状态
+                    selectedItems.clear()
+                    isMultiSelectMode = false
+                    activity.toggleDeleteButton(false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(activity, "删除失败", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -165,12 +190,12 @@ class MemoAdapter(
         isMultiSelectMode = false
         selectedItems.clear()
         notifyDataSetChanged()
-        if (context is MainActivityMemo) {
-            context.toggleDeleteButton(false)
+        if (activity is MainActivityMemo) {
+            activity.toggleDeleteButton(false)
         }
     }
 
-    class MemoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val titleTextView: TextView = itemView.findViewById(R.id.memo_title)
         val contentTextView: TextView = itemView.findViewById(R.id.memo_content)
         val checkBox: CheckBox = itemView.findViewById(R.id.checkbox)

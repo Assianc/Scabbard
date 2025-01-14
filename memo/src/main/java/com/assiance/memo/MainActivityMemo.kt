@@ -5,11 +5,20 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.lifecycle.lifecycleScope
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import android.view.Gravity
 
 class MainActivityMemo : AppCompatActivity() {
 
@@ -23,7 +32,7 @@ class MainActivityMemo : AppCompatActivity() {
     private var lastAction = 0
 
     companion object {
-        private const val ANIMATION_DURATION = 300L
+        private const val ANIMATION_DURATION = 150L
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -35,67 +44,65 @@ class MainActivityMemo : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         memoDAO = MemoDAO(this)
-        memoList = memoDAO.getAllMemos().toMutableList()
+        
+        // 使用协程加载数据
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val memos = memoDAO.getAllMemos()
+                withContext(Dispatchers.Main) {
+                    memoList = memos.toMutableList()
+                    memoAdapter = MemoAdapter(memoList, this@MainActivityMemo, memoDAO)
+                    recyclerView.adapter = memoAdapter
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    memoList = mutableListOf()
+                    memoAdapter = MemoAdapter(memoList, this@MainActivityMemo, memoDAO)
+                    recyclerView.adapter = memoAdapter
+                    // 可以在这里显示错误提示
+                    Toast.makeText(this@MainActivityMemo, "加载数据失败", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
 
-        // 设置适配器
-        memoAdapter = MemoAdapter(memoList, this, memoDAO) // 传递 memoDAO 实例
-        recyclerView.adapter = memoAdapter
+        val fab = findViewById<FloatingActionButton>(R.id.fab).apply {
+            isClickable = true
+            isFocusable = true
+            
+            // 简化为纯点击事件
+            setOnClickListener {
+                startActivity(Intent(this@MainActivityMemo, AddMemoActivity::class.java))
+            }
 
-        val fab = findViewById<FloatingActionButton>(R.id.fab)
+            // 禁用长按和触摸事件
+            setOnLongClickListener { true }
+            setOnTouchListener { _, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        performClick()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }
+
+        // 将 FAB 固定在右下角
+        (fab.layoutParams as? CoordinatorLayout.LayoutParams)?.apply {
+            gravity = Gravity.BOTTOM or Gravity.END
+            marginEnd = resources.getDimensionPixelSize(R.dimen.fab_margin)
+            bottomMargin = resources.getDimensionPixelSize(R.dimen.fab_margin)
+        }
+
         deleteButton = findViewById(R.id.delete_button)
         deleteButton.visibility = View.GONE // 初始状态隐藏删除按钮
-
-        fab.setOnClickListener {
-            // 跳转到添加备忘录界面
-            val intent = Intent(this@MainActivityMemo, AddMemoActivity::class.java)
-            startActivity(intent)
-        }
 
         // 设置点击事件，删除选中的备忘录
         deleteButton.setOnClickListener {
             memoAdapter.deleteSelectedMemos()
             toggleDeleteButton(false) // 删除完成后隐藏按钮
         }
-
-        // 设置 FloatingActionButton 可拖动
-        fab.setOnTouchListener(object : View.OnTouchListener {
-            @SuppressLint("ClickableViewAccessibility")
-            override fun onTouch(view: View, event: MotionEvent): Boolean {
-                when (event.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> {
-                        dX = view.x - event.rawX
-                        dY = view.y - event.rawY
-                        lastAction = MotionEvent.ACTION_DOWN
-                        return true
-                    }
-                    MotionEvent.ACTION_MOVE -> {
-                        view.x = event.rawX + dX
-                        view.y = event.rawY + dY
-                        lastAction = MotionEvent.ACTION_MOVE
-                        return true
-                    }
-                    MotionEvent.ACTION_UP -> {
-                        if (lastAction == MotionEvent.ACTION_MOVE) {
-                            // 松手后将按钮移动到最近的屏幕侧边
-                            val finalX = if ((view.x + view.width / 2) >= (window.decorView.width / 2)) {
-                                window.decorView.width - view.width.toFloat() // 右侧
-                            } else {
-                                0f // 左侧
-                            }
-
-                            view.animate()
-                                .x(finalX)
-                                .setDuration(ANIMATION_DURATION)
-                                .start()
-                        } else if (lastAction == MotionEvent.ACTION_DOWN) {
-                            view.performClick()
-                        }
-                        return true
-                    }
-                    else -> return false
-                }
-            }
-        })
 
         // 使用 OnBackPressedDispatcher 代替 onBackPressed
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -108,7 +115,6 @@ class MainActivityMemo : AppCompatActivity() {
                 }
             }
         })
-
     }
 
     // 控制删除按钮的显示/隐藏
@@ -120,10 +126,23 @@ class MainActivityMemo : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        // 重新加载数据库中的备忘录数据，确保删除或添加操作后的数据是最新的
-        memoList.clear()
-        memoList.addAll(memoDAO.getAllMemos())  // 从数据库重新加载最新的备忘录列表
-        memoAdapter.notifyDataSetChanged()      // 通知适配器更新显示
+        // 在后台线程刷新数据
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val newMemos = memoDAO.getAllMemos()
+                withContext(Dispatchers.Main) {
+                    memoList.clear()
+                    memoList.addAll(newMemos)
+                    memoAdapter.notifyDataSetChanged()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivityMemo, "刷新数据失败", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
 }
+

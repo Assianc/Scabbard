@@ -68,4 +68,9 @@ dependencies {
     // 添加 Glide 依赖
     implementation(libs.glide)
     implementation(libs.gson)
+
+    // 添加 lifecycle 相关依赖
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
 }
