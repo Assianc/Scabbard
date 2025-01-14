@@ -113,7 +113,26 @@ class MainActivityMemo : AppCompatActivity() {
                         // 如果没有明显的移动，则触发点击
                         if (lastAction != MotionEvent.ACTION_MOVE) {
                             view.performClick()
+                        } else {
+                            // 自动停靠到最近的边缘
+                            val parent = view.parent as View
+                            val parentWidth = parent.width
+                            val centerX = view.x + view.width / 2
+                            
+                            // 计算目标X坐标（左边或右边）
+                            val targetX = if (centerX < parentWidth / 2) {
+                                0f // 靠左
+                            } else {
+                                parentWidth - view.width.toFloat() // 靠右
+                            }
+                            
+                            // 使用动画平滑移动到目标位置
+                            view.animate()
+                                .x(targetX)
+                                .setDuration(200)
+                                .start()
                         }
+                        
                         lastAction = 0
                         true
                     }
