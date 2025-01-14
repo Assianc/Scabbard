@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import androidx.lifecycle.lifecycleScope
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import android.view.Gravity
+import androidx.recyclerview.widget.DiffUtil
 
 class MainActivityMemo : AppCompatActivity() {
 
@@ -37,6 +38,7 @@ class MainActivityMemo : AppCompatActivity() {
     private var touchStartTime = 0L
     private val CLICK_DURATION_THRESHOLD = 50L // 点击时间阈值，单位毫秒
     private val MOVE_THRESHOLD = 10f // 移动距离阈值，单位像素
+    private var isFirstLoad = true
 
     companion object {
         private const val ANIMATION_DURATION = 150L
@@ -49,29 +51,14 @@ class MainActivityMemo : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-
-        memoDAO = MemoDAO(this)
         
-        // 使用协程加载数据
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val memos = memoDAO.getAllMemos()
-                withContext(Dispatchers.Main) {
-                    memoList = memos.toMutableList()
-                    memoAdapter = MemoAdapter(memoList, this@MainActivityMemo, memoDAO)
-                    recyclerView.adapter = memoAdapter
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    memoList = mutableListOf()
-                    memoAdapter = MemoAdapter(memoList, this@MainActivityMemo, memoDAO)
-                    recyclerView.adapter = memoAdapter
-                    // 可以在这里显示错误提示
-                    Toast.makeText(this@MainActivityMemo, "加载数据失败", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
+        memoList = mutableListOf()
+        memoDAO = MemoDAO(this)
+        memoAdapter = MemoAdapter(memoList, this, memoDAO)
+        recyclerView.adapter = memoAdapter
+
+        // 首次加载数据
+        loadMemos()
 
         val fab = findViewById<FloatingActionButton>(R.id.fab).apply {
             isClickable = true
@@ -167,6 +154,56 @@ class MainActivityMemo : AppCompatActivity() {
         })
     }
 
+    private fun loadMemos() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val newMemos = memoDAO.getAllMemos()
+                withContext(Dispatchers.Main) {
+                    updateMemoList(newMemos)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                if (e !is IllegalStateException && memoList.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@MainActivityMemo,
+                            "数据加载异常，请重试",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateMemoList(newMemos: List<Memo>) {
+        if (isFirstLoad) {
+            memoList.clear()
+            memoList.addAll(newMemos)
+            memoAdapter.notifyDataSetChanged()
+            isFirstLoad = false
+            return
+        }
+
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize() = memoList.size
+            override fun getNewListSize() = newMemos.size
+
+            override fun areItemsTheSame(oldPos: Int, newPos: Int): Boolean {
+                return memoList[oldPos].id == newMemos[newPos].id
+            }
+
+            override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean {
+                return memoList[oldPos] == newMemos[newPos]
+            }
+        }
+
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
+        memoList.clear()
+        memoList.addAll(newMemos)
+        diffResult.dispatchUpdatesTo(memoAdapter)
+    }
+
     // 控制删除按钮的显示/隐藏
     fun toggleDeleteButton(show: Boolean) {
         deleteButton.visibility = if (show) View.VISIBLE else View.GONE
@@ -175,22 +212,8 @@ class MainActivityMemo : AppCompatActivity() {
     @SuppressLint("NotifyDataSetChanged")
     override fun onResume() {
         super.onResume()
-
-        // 在后台线程刷新数据
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val newMemos = memoDAO.getAllMemos()
-                withContext(Dispatchers.Main) {
-                    memoList.clear()
-                    memoList.addAll(newMemos)
-                    memoAdapter.notifyDataSetChanged()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivityMemo, "刷新数据失败", Toast.LENGTH_SHORT).show()
-                }
-            }
+        if (!isFirstLoad) {
+            loadMemos()
         }
     }
 
