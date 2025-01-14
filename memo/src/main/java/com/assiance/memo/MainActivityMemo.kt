@@ -30,6 +30,13 @@ class MainActivityMemo : AppCompatActivity() {
     private var dX = 0f
     private var dY = 0f
     private var lastAction = 0
+    private var initialX = 0f
+    private var initialY = 0f
+    private var initialTouchX = 0f
+    private var initialTouchY = 0f
+    private var touchStartTime = 0L
+    private val CLICK_DURATION_THRESHOLD = 50L // 点击时间阈值，单位毫秒
+    private val MOVE_THRESHOLD = 10f // 移动距离阈值，单位像素
 
     companion object {
         private const val ANIMATION_DURATION = 150L
@@ -70,29 +77,53 @@ class MainActivityMemo : AppCompatActivity() {
             isClickable = true
             isFocusable = true
             
-            // 简化为纯点击事件
-            setOnClickListener {
-                startActivity(Intent(this@MainActivityMemo, AddMemoActivity::class.java))
-            }
-
-            // 禁用长按和触摸事件
-            setOnLongClickListener { true }
-            setOnTouchListener { _, event ->
+            setOnTouchListener { view, event ->
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
-                        performClick()
+                        // 记录初始位置
+                        dX = view.x - event.rawX
+                        dY = view.y - event.rawY
+                        initialTouchX = event.rawX
+                        initialTouchY = event.rawY
+                        view.parent?.requestDisallowInterceptTouchEvent(true)
+                        true
+                    }
+                    MotionEvent.ACTION_MOVE -> {
+                        // 计算移动距离
+                        val moveX = Math.abs(event.rawX - initialTouchX)
+                        val moveY = Math.abs(event.rawY - initialTouchY)
+                        
+                        // 如果移动距离超过阈值，则更新位置
+                        if (moveX > MOVE_THRESHOLD || moveY > MOVE_THRESHOLD) {
+                            lastAction = MotionEvent.ACTION_MOVE
+                            view.x = (event.rawX + dX).coerceIn(
+                                0f, 
+                                (view.parent as View).width - view.width.toFloat()
+                            )
+                            view.y = (event.rawY + dY).coerceIn(
+                                0f, 
+                                (view.parent as View).height - view.height.toFloat()
+                            )
+                        }
+                        true
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        view.parent?.requestDisallowInterceptTouchEvent(false)
+                        
+                        // 如果没有明显的移动，则触发点击
+                        if (lastAction != MotionEvent.ACTION_MOVE) {
+                            view.performClick()
+                        }
+                        lastAction = 0
                         true
                     }
                     else -> false
                 }
             }
-        }
 
-        // 将 FAB 固定在右下角
-        (fab.layoutParams as? CoordinatorLayout.LayoutParams)?.apply {
-            gravity = Gravity.BOTTOM or Gravity.END
-            marginEnd = resources.getDimensionPixelSize(R.dimen.fab_margin)
-            bottomMargin = resources.getDimensionPixelSize(R.dimen.fab_margin)
+            setOnClickListener {
+                startActivity(Intent(this@MainActivityMemo, AddMemoActivity::class.java))
+            }
         }
 
         deleteButton = findViewById(R.id.delete_button)
