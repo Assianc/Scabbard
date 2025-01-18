@@ -30,7 +30,7 @@ object GradientAnimManager {
                 Color.parseColor("#0000FF"),  // 蓝
                 Color.parseColor("#4B0082"),  // 靛
                 Color.parseColor("#9400D3"),  // 紫
-                Color.parseColor("#FF0000"),  // 红
+                Color.parseColor("#FF0000"),  // 红（重复以实现平滑过渡）
                 Color.parseColor("#FF7F00"),  // 橙
                 Color.parseColor("#FFFF00"),  // 黄
                 Color.parseColor("#00FF00"),  // 绿
@@ -108,7 +108,7 @@ object GradientAnimManager {
         } else {
             width * 2f
         }
-        
+
         return LinearGradient(
             0f, 0f, gradientWidth, height,
             style.colors,
