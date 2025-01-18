@@ -118,22 +118,7 @@ class ImageAdapter(
             return
         }
 
-        val dialog = Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
-        val imageView = ImageView(context).apply {
-            scaleType = ImageView.ScaleType.FIT_CENTER
-        }
-
-        Glide.with(context)
-            .load(file)
-            .diskCacheStrategy(DiskCacheStrategy.ALL)
-            .error(R.drawable.ic_image_error)
-            .into(imageView)
-
-        imageView.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialog.setContentView(imageView)
+        val dialog = PhotoViewDialog(context, imagePath)
         dialog.show()
     }
 
