@@ -27,6 +27,13 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.view.animation.DecelerateInterpolator
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 
 class MemoDetailActivity : AppCompatActivity() {
     private lateinit var titleEditText: EditText
@@ -401,50 +408,90 @@ class MemoDetailActivity : AppCompatActivity() {
 
     private fun toggleEditMode(edit: Boolean) {
         isEditMode = edit
+        
+        // 为编辑相关的按钮设置动画
+        val editButtons = listOf(
+            saveButton,
+            addImageButton,
+            fontButton,
+            titleFontButton,
+            boldButton,
+            italicButton,
+            underlineButton,
+            titleBoldButton,
+            titleItalicButton,
+            titleUnderlineButton,
+            fontSizeButton,
+            titleFontSizeButton,
+            titleFontSizeInput,
+            contentFontSizeInput
+        )
+        
+        // 为预览模式的按钮设置动画
+        val viewButtons = listOf(editButton)
+
+        // 使用 ValueAnimator 控制透明度变化
+        ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 200L
+            interpolator = FastOutSlowInInterpolator()
+            
+            addUpdateListener { animator ->
+                val value = animator.animatedValue as Float
+                if (edit) {
+                    editButtons.forEach { it.alpha = value }
+                    viewButtons.forEach { it.alpha = 1 - value }
+                } else {
+                    editButtons.forEach { it.alpha = 1 - value }
+                    viewButtons.forEach { it.alpha = value }
+                }
+            }
+            
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationStart(animation: Animator) {
+                    if (edit) {
+                        editButtons.forEach { it.visibility = View.VISIBLE }
+                    } else {
+                        viewButtons.forEach { it.visibility = View.VISIBLE }
+                    }
+                }
+                
+                override fun onAnimationEnd(animation: Animator) {
+                    if (edit) {
+                        viewButtons.forEach { it.visibility = View.GONE }
+                    } else {
+                        editButtons.forEach { it.visibility = View.GONE }
+                    }
+                }
+            })
+            start()
+        }
+
+        // 使用 ValueAnimator 处理文本颜色变化
+        ValueAnimator.ofArgb(
+            if (edit) getColor(R.color.view_mode_text) else getColor(R.color.edit_mode_text),
+            if (edit) getColor(R.color.edit_mode_text) else getColor(R.color.view_mode_text)
+        ).apply {
+            duration = 200L
+            interpolator = FastOutSlowInInterpolator()
+            
+            addUpdateListener { animator ->
+                val color = animator.animatedValue as Int
+                titleEditText.setTextColor(color)
+                contentEditText.setTextColor(color)
+            }
+            start()
+        }
+
+        // 在动画开始前设置状态
         titleEditText.isEnabled = edit
         contentEditText.isEnabled = edit
-
-        val textColor = if (edit) {
-            getColor(R.color.edit_mode_text)
-        } else {
-            getColor(R.color.view_mode_text)
+        
+        // 更新 ImageAdapter 的编辑模式状态
+        imageAdapter.updateEditMode(edit) { position ->
+            if (edit) {
+                showDeleteConfirmationDialog(position)
+            }
         }
-
-        titleEditText.setTextColor(textColor)
-        contentEditText.setTextColor(textColor)
-
-        editButton.visibility = if (edit) View.GONE else View.VISIBLE
-        saveButton.visibility = if (edit) View.VISIBLE else View.GONE
-        addImageButton.visibility = if (edit) View.VISIBLE else View.GONE
-        fontButton.visibility = if (edit) View.VISIBLE else View.GONE
-        titleFontButton.visibility = if (edit) View.VISIBLE else View.GONE
-
-        // 添加字体大小按钮的可见性控制
-        fontSizeButton.visibility = if (edit) View.VISIBLE else View.GONE
-        titleFontSizeButton.visibility = if (edit) View.VISIBLE else View.GONE
-        // 更新 ImageAdapter 的编辑模式
-        imageAdapter = ImageAdapter(
-            this,
-            imagePaths,
-            isEditMode = edit
-        ) { position ->
-            // 长按时显示确认对话框
-            showDeleteConfirmationDialog(position)
-        }
-        imagesRecyclerView.adapter = imageAdapter
-        // 显示/隐藏内容样式按钮
-        boldButton.visibility = if (edit) View.VISIBLE else View.GONE
-        italicButton.visibility = if (edit) View.VISIBLE else View.GONE
-        underlineButton.visibility = if (edit) View.VISIBLE else View.GONE
-        // 显示/隐藏标题样式按钮
-        titleBoldButton.visibility = if (edit) View.VISIBLE else View.GONE
-        titleItalicButton.visibility = if (edit) View.VISIBLE else View.GONE
-        titleUnderlineButton.visibility = if (edit) View.VISIBLE else View.GONE
-        // 添加字体大小输入框的可见性控制
-        titleFontSizeInput.visibility = if (edit) View.VISIBLE else View.GONE
-        contentFontSizeInput.visibility = if (edit) View.VISIBLE else View.GONE
-        titleFontSizeInput.isEnabled = edit
-        contentFontSizeInput.isEnabled = edit
     }
 
     private fun showDeleteConfirmationDialog(position: Int) {

@@ -25,8 +25,8 @@ import android.os.Build
 class ImageAdapter(
     private val context: Context,
     private val imagePaths: List<String>,
-    private val isEditMode: Boolean,
-    private val onLongClick: (Int) -> Unit
+    private var isEditMode: Boolean,
+    private var onLongClick: (Int) -> Unit
 ) : RecyclerView.Adapter<ImageAdapter.ImageViewHolder>() {
 
     class ImageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -138,4 +138,10 @@ class ImageAdapter(
     }
 
     override fun getItemCount() = imagePaths.size
+
+    fun updateEditMode(editMode: Boolean, newOnLongClick: (Int) -> Unit) {
+        isEditMode = editMode
+        onLongClick = newOnLongClick
+        notifyDataSetChanged()
+    }
 }
