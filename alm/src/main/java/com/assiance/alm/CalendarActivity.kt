@@ -90,6 +90,9 @@ class CalendarActivity : AppCompatActivity() {
         val startDate = Calendar.getInstance()
         val endDate = Calendar.getInstance().apply {
             add(Calendar.DAY_OF_YEAR, 7)  // 只看未来7天
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
         }
         
         val alarmTimes = mutableListOf<HistoryAdapter.HistoryItem>()
@@ -139,8 +142,42 @@ class CalendarActivity : AppCompatActivity() {
         }
 
         // 加载待办数据
-        val todos = getTodosForDate(System.currentTimeMillis())
+        val todosPrefs = getSharedPreferences(MainActivityAlm.TODO_PREFS, MODE_PRIVATE)
+        val todosJson = todosPrefs.getString(MainActivityAlm.TODO_LIST_KEY, "[]")
+        val todos = mutableListOf<TodoData>()
         
+        try {
+            val jsonArray = org.json.JSONArray(todosJson)
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val startTime = obj.optLong("startTime")
+                val dueTime = obj.optLong("dueTime")
+                val isCompleted = obj.getBoolean("isCompleted")
+                
+                // 只加载未完成的待办
+                if (!isCompleted) {
+                    // 对于无时间限制的待办，只加载当天的
+                    if ((startTime == 0L && dueTime == 0L && 
+                         isSameDay(System.currentTimeMillis(), System.currentTimeMillis())) ||
+                        // 对于有时间限制的待办，检查是否在未来7天内
+                        (startTime > 0 && startTime < endDate.timeInMillis) ||
+                        (dueTime > 0 && dueTime > System.currentTimeMillis())) {
+                        
+                        todos.add(TodoData(
+                            id = obj.getInt("id"),
+                            title = obj.getString("title"),
+                            description = obj.getString("description"),
+                            startTime = if (startTime > 0) startTime else null,
+                            dueTime = if (dueTime > 0) dueTime else null,
+                            isCompleted = isCompleted
+                        ))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         // 合并所有数据并按时间排序
         historyItems.clear()
         historyItems.addAll(alarmTimes)
@@ -155,7 +192,7 @@ class CalendarActivity : AppCompatActivity() {
                     when {
                         todo.startTime != null -> todo.startTime
                         todo.dueTime != null -> todo.dueTime
-                        else -> Long.MAX_VALUE
+                        else -> System.currentTimeMillis() // 无时间限制的待办按当前时间排序
                     }
                 }
             }
@@ -180,6 +217,16 @@ class CalendarActivity : AppCompatActivity() {
             add(Calendar.DAY_OF_YEAR, 1)
         }
 
+        val currentTime = System.currentTimeMillis()
+
+        // 获取一周后的时间戳
+        val oneWeekLater = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, 7)
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+        }.timeInMillis
+
         // 过滤出选定日期的项目
         val filteredItems = historyItems.filter { item ->
             when (item) {
@@ -195,9 +242,34 @@ class CalendarActivity : AppCompatActivity() {
                     val startTime = todo.startTime
                     val dueTime = todo.dueTime
                     val isCompleted = todo.isCompleted
-                    val isInRange = (startTime == null || startTime <= date) &&
-                                   (dueTime == null || dueTime > date)
-                    !isCompleted && isInRange
+                    
+                    when {
+                        isCompleted -> false
+                        // 有开始时间或截止时间的待办
+                        startTime != null || dueTime != null -> {
+                            when {
+                                // 只有开始时间
+                                startTime != null && dueTime == null -> {
+                                    isSameDay(startTime, date)
+                                }
+                                // 只有截止时间
+                                startTime == null && dueTime != null -> {
+                                    // 从当前时间到截止时间之间都显示
+                                    date >= currentTime && date <= dueTime
+                                }
+                                // 同时有开始时间和截止时间
+                                startTime != null && dueTime != null -> {
+                                    date >= startTime && date <= dueTime
+                                }
+                                else -> false
+                            }
+                        }
+                        // 无时间限制的待办只在当天且未来一周内显示
+                        else -> {
+                            isSameDay(date, System.currentTimeMillis()) && 
+                            date <= oneWeekLater
+                        }
+                    }
                 }
             }
         }
@@ -216,6 +288,14 @@ class CalendarActivity : AppCompatActivity() {
         
         try {
             val jsonArray = org.json.JSONArray(todosJson)
+            // 获取一周后的时间戳
+            val oneWeekLater = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, 7)
+                set(Calendar.HOUR_OF_DAY, 23)
+                set(Calendar.MINUTE, 59)
+                set(Calendar.SECOND, 59)
+            }.timeInMillis
+
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
                 val startTime = obj.optLong("startTime")
@@ -223,10 +303,12 @@ class CalendarActivity : AppCompatActivity() {
                 
                 // 修改筛选逻辑：
                 // 1. 如果有开始时间或截止时间，检查是否是同一天
-                // 2. 如果都没有时间，就显示在当天的记录中
+                // 2. 如果都没有时间，只在当天显示，且仅显示未来一周内的
                 if ((startTime > 0 && isSameDay(startTime, timestamp)) ||
                     (dueTime > 0 && isSameDay(dueTime, timestamp)) ||
-                    (startTime == 0L && dueTime == 0L && isSameDay(timestamp, System.currentTimeMillis()))) {
+                    (startTime == 0L && dueTime == 0L && 
+                     isSameDay(timestamp, System.currentTimeMillis()) && 
+                     timestamp <= oneWeekLater)) {
                         
                     todos.add(TodoData(
                         id = obj.getInt("id"),
