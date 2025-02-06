@@ -55,5 +55,10 @@
             android:name=".TodoFloatingService"
             android:enabled="true"
             android:exported="false" />
+
+        <activity
+            android:name=".CalendarActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"/>
     </application>
 </manifest>

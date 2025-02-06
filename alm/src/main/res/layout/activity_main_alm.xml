@@ -34,7 +34,11 @@
                 android:textSize="48sp"
                 android:textStyle="bold"
                 android:textColor="#1766EF"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"/>
 
             <FrameLayout
                 android:layout_width="match_parent"

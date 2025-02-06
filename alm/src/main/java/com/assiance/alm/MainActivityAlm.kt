@@ -339,6 +339,17 @@ class MainActivityAlm : AppCompatActivity() {
                 }
             )
         }
+
+        // 在 onCreate 方法中修改
+        timeText.setOnClickListener {
+            try {
+                val intent = Intent(this, CalendarActivity::class.java)
+                startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "打开日历失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
+            }
+        }
     }
 
     private fun createNotificationChannel() {
