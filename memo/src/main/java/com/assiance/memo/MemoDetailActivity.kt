@@ -97,6 +97,8 @@ class MemoDetailActivity : AppCompatActivity() {
             Pair("六号", 7.5f),
             Pair("小六", 6.5f)
         )
+
+        private const val HISTORY_REQUEST_CODE = 100
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -159,6 +161,14 @@ class MemoDetailActivity : AppCompatActivity() {
         applyStoredSettings()
 
         requestStoragePermission()
+
+        // 在 onCreate 方法中添加历史记录按钮
+        val historyButton = findViewById<ImageButton>(R.id.history_button)
+        historyButton.setOnClickListener {
+            val intent = Intent(this, MemoHistoryActivity::class.java)
+            intent.putExtra("memo_id", memoId)
+            startActivityForResult(intent, HISTORY_REQUEST_CODE)
+        }
     }
 
     private fun requestStoragePermission() {
@@ -222,6 +232,14 @@ class MemoDetailActivity : AppCompatActivity() {
         titleFontButton.visibility = View.GONE
         titleFontSizeInput.visibility = View.GONE
         contentFontSizeInput.visibility = View.GONE
+
+        // 添加历史记录按钮到工具栏
+        val historyButton = findViewById<ImageButton>(R.id.history_button)
+        historyButton.setOnClickListener {
+            val intent = Intent(this, MemoHistoryActivity::class.java)
+            intent.putExtra("memo_id", memoId)
+            startActivityForResult(intent, HISTORY_REQUEST_CODE)
+        }
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -785,5 +803,19 @@ class MemoDetailActivity : AppCompatActivity() {
         
         super.onBackPressed()
         overridePendingTransition(R.anim.slide_down_enter, R.anim.slide_down_exit)
+    }
+
+    // 添加 onActivityResult 方法
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == HISTORY_REQUEST_CODE && resultCode == RESULT_OK) {
+            // 刷新备忘录内容
+            val memo = memoDAO.getMemoById(memoId)
+            memo?.let {
+                titleEditText.setText(it.title)
+                contentEditText.setText(it.content)
+                // 更新其他UI元素...
+            }
+        }
     }
 }

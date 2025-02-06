@@ -7,7 +7,8 @@ import android.database.sqlite.SQLiteOpenHelper
 class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL(CREATE_TABLE)
+        db.execSQL(CREATE_MEMO_TABLE)
+        db.execSQL(CREATE_HISTORY_TABLE)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -81,11 +82,27 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 e.printStackTrace()
             }
         }
+        if (oldVersion < 10) {
+            try {
+                val cursor = db.rawQuery(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                    arrayOf(HISTORY_TABLE_NAME)
+                )
+                val tableExists = cursor.count > 0
+                cursor.close()
+
+                if (!tableExists) {
+                    db.execSQL(CREATE_HISTORY_TABLE)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     companion object {
         private const val DATABASE_NAME = "memo.db"
-        private const val DATABASE_VERSION = 9
+        private const val DATABASE_VERSION = 10
 
         // 表和列名
         const val TABLE_NAME = "memo"
@@ -105,8 +122,16 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
         const val COLUMN_TITLE_FONT_SIZE = "title_font_size"
         const val COLUMN_CONTENT_FONT_SIZE = "content_font_size"
 
-        // 创建表语句
-        val CREATE_TABLE = """
+        // 添加历史记录表相关常量
+        const val HISTORY_TABLE_NAME = "memo_history"
+        const val COLUMN_MEMO_ID = "memo_id"
+        const val COLUMN_OLD_TITLE = "old_title"
+        const val COLUMN_OLD_CONTENT = "old_content"
+        const val COLUMN_OLD_IMAGE_PATHS = "old_image_paths"
+        const val COLUMN_MODIFY_TIME = "modify_time"
+
+        // 创建表语句 - 移除 const 修饰符
+        private val CREATE_MEMO_TABLE = """
             CREATE TABLE $TABLE_NAME (
                 $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_TITLE TEXT,
@@ -122,6 +147,19 @@ class MemoDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_
                 $COLUMN_CONTENT_UNDERLINE INTEGER DEFAULT 0,
                 $COLUMN_TITLE_FONT_SIZE REAL DEFAULT 32,
                 $COLUMN_CONTENT_FONT_SIZE REAL DEFAULT 16
+            )
+        """.trimIndent()
+
+        // 添加创建历史记录表的 SQL 语句 - 移除 const 修饰符
+        private val CREATE_HISTORY_TABLE = """
+            CREATE TABLE $HISTORY_TABLE_NAME (
+                $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                $COLUMN_MEMO_ID INTEGER,
+                $COLUMN_OLD_TITLE TEXT,
+                $COLUMN_OLD_CONTENT TEXT,
+                $COLUMN_OLD_IMAGE_PATHS TEXT,
+                $COLUMN_MODIFY_TIME TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY($COLUMN_MEMO_ID) REFERENCES $TABLE_NAME($COLUMN_ID) ON DELETE CASCADE
             )
         """.trimIndent()
     }
