@@ -153,6 +153,7 @@ class CalendarActivity : AppCompatActivity() {
                 val startTime = obj.optLong("startTime")
                 val dueTime = obj.optLong("dueTime")
                 val isCompleted = obj.getBoolean("isCompleted")
+                val completedTime = obj.optLong("completedTime").takeIf { it > 0 }
                 
                 // 只加载未完成的待办
                 if (!isCompleted) {
@@ -169,7 +170,10 @@ class CalendarActivity : AppCompatActivity() {
                             description = obj.getString("description"),
                             startTime = if (startTime > 0) startTime else null,
                             dueTime = if (dueTime > 0) dueTime else null,
-                            isCompleted = isCompleted
+                            isCompleted = isCompleted,
+                            startRingtoneUri = obj.optString("startRingtoneUri", null),
+                            dueRingtoneUri = obj.optString("dueRingtoneUri", null),
+                            completedTime = completedTime
                         ))
                     }
                 }
@@ -242,9 +246,14 @@ class CalendarActivity : AppCompatActivity() {
                     val startTime = todo.startTime
                     val dueTime = todo.dueTime
                     val isCompleted = todo.isCompleted
+                    val completedTime = todo.completedTime
                     
                     when {
-                        isCompleted -> false
+                        // 已完成的待办，在完成当天显示
+                        isCompleted -> {
+                            val actualCompletedTime = completedTime ?: dueTime ?: System.currentTimeMillis()
+                            isSameDay(actualCompletedTime, date)
+                        }
                         // 有开始时间或截止时间的待办
                         startTime != null || dueTime != null -> {
                             when {

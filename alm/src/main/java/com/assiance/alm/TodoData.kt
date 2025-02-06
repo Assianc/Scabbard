@@ -8,5 +8,6 @@ data class TodoData(
     val dueTime: Long? = null,
     val isCompleted: Boolean = false,
     val startRingtoneUri: String? = null,
-    val dueRingtoneUri: String? = null
+    val dueRingtoneUri: String? = null,
+    val completedTime: Long? = null
 ) 

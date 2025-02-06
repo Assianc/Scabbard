@@ -726,7 +726,16 @@ class MainActivityAlm : AppCompatActivity() {
     private fun toggleTodo(todo: TodoData, isCompleted: Boolean) {
         val index = todoList.indexOf(todo)
         if (index != -1) {
-            val updatedTodo = todo.copy(isCompleted = isCompleted)
+            val completedTime = if (isCompleted) {
+                System.currentTimeMillis() // 用户手动完成时使用当前时间
+            } else {
+                null // 取消完成时清除完成时间
+            }
+            
+            val updatedTodo = todo.copy(
+                isCompleted = isCompleted,
+                completedTime = completedTime
+            )
             todoList[index] = updatedTodo
 
             // 如果待办被标记为完成，取消所有提醒
@@ -738,7 +747,27 @@ class MainActivityAlm : AppCompatActivity() {
             todoList.sortWith(compareBy<TodoData> { it.isCompleted }
                 .thenBy { it.dueTime ?: Long.MAX_VALUE })
             todoAdapter.updateTodos(todoList.toList())
-            saveTodos()
+            
+            // 保存更新后的待办列表
+            val jsonArray = org.json.JSONArray()
+            todoList.forEach { item ->
+                jsonArray.put(org.json.JSONObject().apply {
+                    put("id", item.id)
+                    put("title", item.title)
+                    put("description", item.description)
+                    put("startTime", item.startTime ?: 0L)
+                    put("dueTime", item.dueTime ?: 0L)
+                    put("isCompleted", item.isCompleted)
+                    put("startRingtoneUri", item.startRingtoneUri)
+                    put("dueRingtoneUri", item.dueRingtoneUri)
+                    put("completedTime", item.completedTime ?: 0L)  // 保存完成时间
+                })
+            }
+            
+            getSharedPreferences(TODO_PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putString(TODO_LIST_KEY, jsonArray.toString())
+                .apply()
         }
     }
 
