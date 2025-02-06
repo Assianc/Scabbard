@@ -6,6 +6,10 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.widget.ImageButton
+import android.view.LayoutInflater
+import android.app.AlertDialog
+import android.widget.NumberPicker
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -46,6 +50,11 @@ class CalendarActivity : AppCompatActivity() {
 
         // 显示当前日期的历史记录
         updateHistoryForDate(System.currentTimeMillis())
+
+        // 设置跳转按钮点击事件
+        findViewById<ImageButton>(R.id.jumpButton).setOnClickListener {
+            showDateJumpDialog()
+        }
     }
 
     private fun updateHistoryForDate(timestamp: Long) {
@@ -126,6 +135,44 @@ class CalendarActivity : AppCompatActivity() {
         val cal2 = Calendar.getInstance().apply { timeInMillis = timestamp2 }
         return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
                 cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    }
+
+    private fun showDateJumpDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_date_jump, null)
+        
+        val yearPicker = dialogView.findViewById<NumberPicker>(R.id.yearPicker).apply {
+            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+            minValue = 2000  // 设置最小年份
+            maxValue = currentYear + 10  // 设置最大年份为当前年份后10年
+            value = currentYear
+            wrapSelectorWheel = false
+        }
+        
+        val monthPicker = dialogView.findViewById<NumberPicker>(R.id.monthPicker).apply {
+            minValue = 1
+            maxValue = 12
+            value = Calendar.getInstance().get(Calendar.MONTH) + 1
+            wrapSelectorWheel = true
+            displayedValues = arrayOf(
+                "1月", "2月", "3月", "4月", "5月", "6月",
+                "7月", "8月", "9月", "10月", "11月", "12月"
+            )
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("跳转到指定日期")
+            .setView(dialogView)
+            .setPositiveButton("确定") { _, _ ->
+                val calendar = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, yearPicker.value)
+                    set(Calendar.MONTH, monthPicker.value - 1)
+                    set(Calendar.DAY_OF_MONTH, 1)
+                }
+                calendarView.date = calendar.timeInMillis
+                updateHistoryForDate(calendar.timeInMillis)
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 
     override fun onSupportNavigateUp(): Boolean {
