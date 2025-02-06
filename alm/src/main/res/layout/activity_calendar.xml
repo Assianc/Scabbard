@@ -39,7 +39,7 @@
             android:id="@+id/calendarView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/white"
+            android:background="@drawable/gradient_background_rili"
             android:dateTextAppearance="@style/CalendarDateText"
             android:weekDayTextAppearance="@style/CalendarWeekText"
             android:theme="@style/CalendarViewTheme"/>
@@ -55,7 +55,7 @@
         android:textStyle="bold"
         android:textColor="#1766EF"
         android:gravity="center"
-        android:background="@drawable/date_title_background"/>
+        android:background="@drawable/gradient_background_totile_rili"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/historyList"
