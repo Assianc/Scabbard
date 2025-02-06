@@ -3,22 +3,35 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@drawable/gradient_background_alm">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="@drawable/gradient_background_toolbar"
         android:elevation="4dp"
         android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
         app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light" />
 
-    <CalendarView
-        android:id="@+id/calendarView"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"/>
+        android:layout_margin="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp">
+
+        <CalendarView
+            android:id="@+id/calendarView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/white"
+            android:dateTextAppearance="@style/CalendarDateText"
+            android:weekDayTextAppearance="@style/CalendarWeekText"
+            android:theme="@style/CalendarViewTheme"/>
+
+    </com.google.android.material.card.MaterialCardView>
 
     <TextView
         android:id="@+id/dateTitle"
@@ -27,7 +40,9 @@
         android:padding="16dp"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:gravity="center"/>
+        android:textColor="#1766EF"
+        android:gravity="center"
+        android:background="@drawable/date_title_background"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/historyList"
@@ -35,6 +50,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:padding="8dp"
-        android:clipToPadding="false"/>
+        android:clipToPadding="false"
+        android:scrollbars="vertical"/>
 
 </LinearLayout> 

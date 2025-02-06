@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="CalendarViewTheme" parent="ThemeOverlay.MaterialComponents.Light">
+        <item name="colorAccent">#1976D2</item>
+        <item name="android:textColorPrimary">#212121</item>
+        <item name="android:textColorSecondary">#757575</item>
+    </style>
+
+    <style name="CalendarDateText" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">#212121</item>
+    </style>
+
+    <style name="CalendarWeekText" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#757575</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources> 
