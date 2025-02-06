@@ -9,5 +9,6 @@ data class TodoData(
     val isCompleted: Boolean = false,
     val startRingtoneUri: String? = null,
     val dueRingtoneUri: String? = null,
-    val completedTime: Long? = null
+    val completedTime: Long? = null,
+    val createdTime: Long = System.currentTimeMillis()
 ) 

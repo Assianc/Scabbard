@@ -154,28 +154,43 @@ class CalendarActivity : AppCompatActivity() {
                 val dueTime = obj.optLong("dueTime")
                 val isCompleted = obj.getBoolean("isCompleted")
                 val completedTime = obj.optLong("completedTime").takeIf { it > 0 }
+                // 读取创建时间，如果没有则使用id作为创建时间
+                val createdTime = obj.optLong("createdTime", obj.getInt("id").toLong())
                 
-                // 只加载未完成的待办
-                if (!isCompleted) {
-                    // 对于无时间限制的待办，只加载当天的
-                    if ((startTime == 0L && dueTime == 0L && 
+                // 移除 if (!isCompleted) 条件，加载所有待办
+                // 对于已完成的待办，直接添加
+                if (isCompleted) {
+                    todos.add(TodoData(
+                        id = obj.getInt("id"),
+                        title = obj.getString("title"),
+                        description = obj.getString("description"),
+                        startTime = if (startTime > 0) startTime else null,
+                        dueTime = if (dueTime > 0) dueTime else null,
+                        isCompleted = isCompleted,
+                        startRingtoneUri = obj.optString("startRingtoneUri", null),
+                        dueRingtoneUri = obj.optString("dueRingtoneUri", null),
+                        completedTime = completedTime,
+                        createdTime = createdTime
+                    ))
+                }
+                // 对于未完成的待办，保持原有的时间限制逻辑
+                else if ((startTime == 0L && dueTime == 0L && 
                          isSameDay(System.currentTimeMillis(), System.currentTimeMillis())) ||
-                        // 对于有时间限制的待办，检查是否在未来7天内
                         (startTime > 0 && startTime < endDate.timeInMillis) ||
                         (dueTime > 0 && dueTime > System.currentTimeMillis())) {
-                        
-                        todos.add(TodoData(
-                            id = obj.getInt("id"),
-                            title = obj.getString("title"),
-                            description = obj.getString("description"),
-                            startTime = if (startTime > 0) startTime else null,
-                            dueTime = if (dueTime > 0) dueTime else null,
-                            isCompleted = isCompleted,
-                            startRingtoneUri = obj.optString("startRingtoneUri", null),
-                            dueRingtoneUri = obj.optString("dueRingtoneUri", null),
-                            completedTime = completedTime
-                        ))
-                    }
+                    
+                    todos.add(TodoData(
+                        id = obj.getInt("id"),
+                        title = obj.getString("title"),
+                        description = obj.getString("description"),
+                        startTime = if (startTime > 0) startTime else null,
+                        dueTime = if (dueTime > 0) dueTime else null,
+                        isCompleted = isCompleted,
+                        startRingtoneUri = obj.optString("startRingtoneUri", null),
+                        dueRingtoneUri = obj.optString("dueRingtoneUri", null),
+                        completedTime = completedTime,
+                        createdTime = createdTime
+                    ))
                 }
             }
         } catch (e: Exception) {
@@ -187,16 +202,17 @@ class CalendarActivity : AppCompatActivity() {
         historyItems.addAll(alarmTimes)
         historyItems.addAll(todos.map { HistoryAdapter.HistoryItem.TodoItem(it) })
         
-        // 按时间排序
+        // 修改排序逻辑，考虑完成时间
         historyItems.sortBy { item ->
             when (item) {
                 is HistoryAdapter.HistoryItem.AlarmItem -> item.alarm.timeInMillis
                 is HistoryAdapter.HistoryItem.TodoItem -> {
                     val todo = item.todo
                     when {
+                        todo.isCompleted -> todo.completedTime ?: todo.dueTime ?: Long.MAX_VALUE
                         todo.startTime != null -> todo.startTime
                         todo.dueTime != null -> todo.dueTime
-                        else -> System.currentTimeMillis() // 无时间限制的待办按当前时间排序
+                        else -> System.currentTimeMillis()
                     }
                 }
             }
@@ -222,14 +238,13 @@ class CalendarActivity : AppCompatActivity() {
         }
 
         val currentTime = System.currentTimeMillis()
-
-        // 获取一周后的时间戳
-        val oneWeekLater = Calendar.getInstance().apply {
-            add(Calendar.DAY_OF_YEAR, 7)
-            set(Calendar.HOUR_OF_DAY, 23)
-            set(Calendar.MINUTE, 59)
-            set(Calendar.SECOND, 59)
-        }.timeInMillis
+        val currentDay = Calendar.getInstance().apply {
+            timeInMillis = currentTime
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
 
         // 过滤出选定日期的项目
         val filteredItems = historyItems.filter { item ->
@@ -275,10 +290,10 @@ class CalendarActivity : AppCompatActivity() {
                                 else -> false
                             }
                         }
-                        // 无时间限制的待办只在当天且未来一周内显示
+                        // 无时间限制的待办，从当前时间开始显示，直到完成
                         else -> {
-                            isSameDay(date, System.currentTimeMillis()) && 
-                            date <= oneWeekLater
+                            // 只显示当前时间及之后的日期
+                            date >= currentDay.timeInMillis
                         }
                     }
                 }

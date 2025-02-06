@@ -642,6 +642,7 @@ class MainActivityAlm : AppCompatActivity() {
                 val obj = jsonArray.getJSONObject(i)
                 val dueTime = obj.optLong("dueTime").takeIf { it != 0L }
                 val isCompleted = obj.getBoolean("isCompleted")
+                val completedTime = obj.optLong("completedTime").takeIf { it > 0L }
                 
                 // 如果待办已过期且未完成，自动标记为完成
                 val shouldComplete = dueTime != null && 
@@ -650,6 +651,7 @@ class MainActivityAlm : AppCompatActivity() {
 
                 if (shouldComplete) {
                     obj.put("isCompleted", true)
+                    obj.put("completedTime", dueTime) // 设置完成时间为截止时间
                     hasChanges = true
                 }
 
@@ -660,8 +662,9 @@ class MainActivityAlm : AppCompatActivity() {
                     startTime = obj.optLong("startTime").takeIf { it != 0L },
                     dueTime = dueTime,
                     isCompleted = shouldComplete || isCompleted,
-                    startRingtoneUri = obj.optString("startRingtoneUri", null),  // 加载开始时间铃声
-                    dueRingtoneUri = obj.optString("dueRingtoneUri", null)       // 加载截止时间铃声
+                    startRingtoneUri = obj.optString("startRingtoneUri", null),
+                    dueRingtoneUri = obj.optString("dueRingtoneUri", null),
+                    completedTime = if (shouldComplete) dueTime else completedTime // 设置完成时间
                 ))
             }
 
@@ -694,8 +697,9 @@ class MainActivityAlm : AppCompatActivity() {
                 put("startTime", todo.startTime ?: 0L)
                 put("dueTime", todo.dueTime ?: 0L)
                 put("isCompleted", todo.isCompleted)
-                put("startRingtoneUri", todo.startRingtoneUri)    // 保存开始时间铃声
-                put("dueRingtoneUri", todo.dueRingtoneUri)        // 保存截止时间铃声
+                put("startRingtoneUri", todo.startRingtoneUri)
+                put("dueRingtoneUri", todo.dueRingtoneUri)
+                put("completedTime", todo.completedTime ?: 0L)  // 添加完成时间的保存
             }
             jsonArray.put(obj)
         }

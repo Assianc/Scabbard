@@ -311,7 +311,12 @@ class TodoSettingActivity : AppCompatActivity() {
         var originalIsCompleted = false
         var originalStartTime: Long? = null
         var originalDueTime: Long? = null
+        var originalCompletedTime: Long? = null
+        var originalCreatedTime: Long = System.currentTimeMillis()  // 默认为当前时间
         
+        // 生成新的ID（如果是新建待办）
+        val newTodoId = if (todoId != -1) todoId else System.currentTimeMillis().toInt()
+
         if (todoId != -1) {
             val prefs = getSharedPreferences(MainActivityAlm.TODO_PREFS, Context.MODE_PRIVATE)
             val todosJson = prefs.getString(MainActivityAlm.TODO_LIST_KEY, "[]")
@@ -323,36 +328,33 @@ class TodoSettingActivity : AppCompatActivity() {
                     originalIsCompleted = obj.getBoolean("isCompleted")
                     originalStartTime = obj.getLong("startTime").takeIf { it != 0L }
                     originalDueTime = obj.getLong("dueTime").takeIf { it != 0L }
+                    originalCompletedTime = obj.optLong("completedTime").takeIf { it > 0L }
+                    originalCreatedTime = obj.optLong("createdTime", obj.getInt("id").toLong())
                     break
                 }
             }
         }
 
-        // 检查时间是否发生变化
-        val newStartTime = if (startDateCheckBox.isChecked) startTime else null
-        val newDueTime = if (dueDateCheckBox.isChecked) dueTime else null
-        val timeChanged = newStartTime != originalStartTime || newDueTime != originalDueTime
-
-        // 如果时间发生变化，则重置完成状态
-        val isCompleted = if (timeChanged) false else originalIsCompleted
-
+        // 创建新的待办对象
         val todo = TodoData(
-            id = if (todoId != -1) todoId else System.currentTimeMillis().toInt(),
+            id = newTodoId,
             title = title,
             description = description,
-            startTime = newStartTime,
-            dueTime = newDueTime,
-            isCompleted = isCompleted,
+            startTime = startTime,
+            dueTime = dueTime,
+            isCompleted = originalIsCompleted,
             startRingtoneUri = startRingtoneUri,
-            dueRingtoneUri = dueRingtoneUri
+            dueRingtoneUri = dueRingtoneUri,
+            completedTime = originalCompletedTime,
+            createdTime = if (todoId == -1) System.currentTimeMillis() else originalCreatedTime
         )
 
         // 保存到 SharedPreferences
         val prefs = getSharedPreferences(MainActivityAlm.TODO_PREFS, Context.MODE_PRIVATE)
         val todosJson = prefs.getString(MainActivityAlm.TODO_LIST_KEY, "[]")
         val jsonArray = org.json.JSONArray(todosJson)
-
-        // 如果是编辑，先删除旧的
+        
+        // 如果是编辑现有待办，先删除旧的
         if (todoId != -1) {
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
@@ -370,26 +372,24 @@ class TodoSettingActivity : AppCompatActivity() {
             put("description", todo.description)
             put("startTime", todo.startTime ?: 0L)
             put("dueTime", todo.dueTime ?: 0L)
-            put("isCompleted", isCompleted)
+            put("isCompleted", todo.isCompleted)
             put("startRingtoneUri", todo.startRingtoneUri)
             put("dueRingtoneUri", todo.dueRingtoneUri)
+            put("completedTime", todo.completedTime ?: 0L)
+            put("createdTime", todo.createdTime)
         })
-
+        
         prefs.edit()
             .putString(MainActivityAlm.TODO_LIST_KEY, jsonArray.toString())
             .apply()
 
-        // 如果待办未完成，则设置提醒
-        if (!isCompleted) {
+        // 设置提醒
+        if (!todo.isCompleted) {
             setTodoReminder(todo)
         }
 
-        // 根据状态显示不同的提示信息
-        val message = when {
-            todoId == -1 -> "待办已添加"
-            timeChanged -> "待办已更新并重置为未完成状态"
-            else -> "待办已更新"
-        }
+        // 显示提示信息
+        val message = if (todoId == -1) "待办已添加" else "待办已更新"
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         finish()
     }
