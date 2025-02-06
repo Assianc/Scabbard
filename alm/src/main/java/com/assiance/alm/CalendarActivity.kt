@@ -87,7 +87,6 @@ class CalendarActivity : AppCompatActivity() {
     }
 
     private fun getTodosForDate(timestamp: Long): List<TodoData> {
-        // 从SharedPreferences获取待办数据并筛选指定日期的待办
         val prefs = getSharedPreferences(MainActivityAlm.TODO_PREFS, MODE_PRIVATE)
         val todosJson = prefs.getString(MainActivityAlm.TODO_LIST_KEY, "[]")
         val todos = mutableListOf<TodoData>()
@@ -98,8 +97,14 @@ class CalendarActivity : AppCompatActivity() {
                 val obj = jsonArray.getJSONObject(i)
                 val startTime = obj.optLong("startTime")
                 val dueTime = obj.optLong("dueTime")
-                if (startTime > 0 && isSameDay(startTime, timestamp) ||
-                    dueTime > 0 && isSameDay(dueTime, timestamp)) {
+                
+                // 修改筛选逻辑：
+                // 1. 如果有开始时间或截止时间，检查是否是同一天
+                // 2. 如果都没有时间，就显示在当天的记录中
+                if ((startTime > 0 && isSameDay(startTime, timestamp)) ||
+                    (dueTime > 0 && isSameDay(dueTime, timestamp)) ||
+                    (startTime == 0L && dueTime == 0L && isSameDay(timestamp, System.currentTimeMillis()))) {
+                        
                     todos.add(TodoData(
                         id = obj.getInt("id"),
                         title = obj.getString("title"),

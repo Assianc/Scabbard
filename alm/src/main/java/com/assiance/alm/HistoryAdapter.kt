@@ -66,12 +66,16 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 holder.descriptionText.text = todo.description
                 
                 val timeText = StringBuilder()
-                todo.startTime?.let { 
-                    timeText.append("开始: ${timeFormat.format(it)}")
-                }
-                todo.dueTime?.let {
-                    if (timeText.isNotEmpty()) timeText.append(" | ")
-                    timeText.append("截止: ${timeFormat.format(it)}")
+                if (todo.startTime != null || todo.dueTime != null) {
+                    todo.startTime?.let { 
+                        timeText.append("开始: ${timeFormat.format(it)}")
+                    }
+                    todo.dueTime?.let {
+                        if (timeText.isNotEmpty()) timeText.append(" | ")
+                        timeText.append("截止: ${timeFormat.format(it)}")
+                    }
+                } else {
+                    timeText.append("无时间限制")
                 }
                 holder.timeText.text = timeText
                 
@@ -96,11 +100,20 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         // 添加待办项
         items.addAll(todos.map { HistoryItem.TodoItem(it) })
         
-        // 按时间排序
+        // 修改排序逻辑：
+        // 1. 有时间的项目按时间排序
+        // 2. 无时间的待办放在最后
         items.sortBy {
             when (it) {
                 is HistoryItem.AlarmItem -> it.alarm.timeInMillis
-                is HistoryItem.TodoItem -> it.todo.startTime ?: it.todo.dueTime ?: Long.MAX_VALUE
+                is HistoryItem.TodoItem -> {
+                    val todo = it.todo
+                    when {
+                        todo.startTime != null -> todo.startTime
+                        todo.dueTime != null -> todo.dueTime
+                        else -> Long.MAX_VALUE  // 无时间的待办排在最后
+                    }
+                }
             }
         }
         
