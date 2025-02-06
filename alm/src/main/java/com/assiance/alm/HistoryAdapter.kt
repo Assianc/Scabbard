@@ -94,20 +94,27 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     fun updateItems(alarms: List<AlarmData>, todos: List<TodoData>) {
         items.clear()
         
-        // 添加闹钟项
-        items.addAll(alarms.map { HistoryItem.AlarmItem(it) })
-        
         // 添加待办项
         items.addAll(todos.map { HistoryItem.TodoItem(it) })
         
+        // 添加闹钟项
+        items.addAll(alarms.map { HistoryItem.AlarmItem(it) })
+        
         // 修改排序逻辑：
-        // 1. 有时间的项目按时间排序
-        // 2. 无时间的待办放在最后
-        items.sortBy {
-            when (it) {
-                is HistoryItem.AlarmItem -> it.alarm.timeInMillis
+        // 1. 首先按类型排序（待办在前，闹钟在后）
+        // 2. 同类型内部再按时间排序
+        items.sortWith(compareBy<HistoryItem> { item ->
+            // 首先按类型排序
+            when (item) {
+                is HistoryItem.TodoItem -> 0  // 待办排在前面
+                is HistoryItem.AlarmItem -> 1 // 闹钟排在后面
+            }
+        }.thenBy { item ->
+            // 然后按时间排序
+            when (item) {
+                is HistoryItem.AlarmItem -> item.alarm.timeInMillis
                 is HistoryItem.TodoItem -> {
-                    val todo = it.todo
+                    val todo = item.todo
                     when {
                         todo.startTime != null -> todo.startTime
                         todo.dueTime != null -> todo.dueTime
@@ -115,7 +122,7 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                     }
                 }
             }
-        }
+        })
         
         notifyDataSetChanged()
     }
