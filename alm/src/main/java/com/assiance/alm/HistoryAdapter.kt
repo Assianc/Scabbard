@@ -28,9 +28,7 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     class TodoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val titleText: TextView = view.findViewById(R.id.titleText)
-        val descriptionText: TextView = view.findViewById(R.id.descriptionText)
         val timeText: TextView = view.findViewById(R.id.timeText)
-        val statusText: TextView = view.findViewById(R.id.statusText)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -50,80 +48,42 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-        
-        when (val item = items[position]) {
-            is HistoryItem.AlarmItem -> {
-                holder as AlarmViewHolder
-                val alarm = item.alarm
-                holder.timeText.text = timeFormat.format(alarm.timeInMillis)
-                holder.statusText.text = if (alarm.isEnabled) "已启用" else "已禁用"
-            }
-            is HistoryItem.TodoItem -> {
-                holder as TodoViewHolder
-                val todo = item.todo
-                holder.titleText.text = todo.title
-                holder.descriptionText.text = todo.description
-                
-                val timeText = StringBuilder()
-                if (todo.startTime != null || todo.dueTime != null) {
-                    todo.startTime?.let { 
-                        timeText.append("开始: ${timeFormat.format(it)}")
-                    }
-                    todo.dueTime?.let {
-                        if (timeText.isNotEmpty()) timeText.append(" | ")
-                        timeText.append("截止: ${timeFormat.format(it)}")
-                    }
-                } else {
-                    timeText.append("无时间限制")
+        val item = items[position]
+        when (holder) {
+            is AlarmViewHolder -> {
+                if (item is HistoryItem.AlarmItem) {
+                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    holder.timeText.text = timeFormat.format(item.alarm.timeInMillis)
+                    holder.statusText.text = if (item.alarm.isEnabled) "已启用" else "已禁用"
                 }
-                holder.timeText.text = timeText
-                
-                holder.statusText.text = if (todo.isCompleted) "已完成" else "未完成"
+            }
+            is TodoViewHolder -> {
+                if (item is HistoryItem.TodoItem) {
+                    holder.titleText.text = item.todo.title
+                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val timeText = when {
+                        item.todo.startTime != null -> "开始：${timeFormat.format(item.todo.startTime)}"
+                        item.todo.dueTime != null -> "截止：${timeFormat.format(item.todo.dueTime)}"
+                        else -> "无时间限制"
+                    }
+                    holder.timeText.text = timeText
+                }
             }
         }
     }
 
     override fun getItemCount() = items.size
 
-    override fun getItemViewType(position: Int) = when (items[position]) {
-        is HistoryItem.AlarmItem -> TYPE_ALARM
-        is HistoryItem.TodoItem -> TYPE_TODO
+    override fun getItemViewType(position: Int): Int {
+        return when (items[position]) {
+            is HistoryItem.AlarmItem -> TYPE_ALARM
+            is HistoryItem.TodoItem -> TYPE_TODO
+        }
     }
 
-    fun updateItems(alarms: List<AlarmData>, todos: List<TodoData>) {
+    fun updateItems(newItems: List<HistoryItem>) {
         items.clear()
-        
-        // 添加待办项
-        items.addAll(todos.map { HistoryItem.TodoItem(it) })
-        
-        // 添加闹钟项
-        items.addAll(alarms.map { HistoryItem.AlarmItem(it) })
-        
-        // 修改排序逻辑：
-        // 1. 首先按类型排序（待办在前，闹钟在后）
-        // 2. 同类型内部再按时间排序
-        items.sortWith(compareBy<HistoryItem> { item ->
-            // 首先按类型排序
-            when (item) {
-                is HistoryItem.TodoItem -> 0  // 待办排在前面
-                is HistoryItem.AlarmItem -> 1 // 闹钟排在后面
-            }
-        }.thenBy { item ->
-            // 然后按时间排序
-            when (item) {
-                is HistoryItem.AlarmItem -> item.alarm.timeInMillis
-                is HistoryItem.TodoItem -> {
-                    val todo = item.todo
-                    when {
-                        todo.startTime != null -> todo.startTime
-                        todo.dueTime != null -> todo.dueTime
-                        else -> Long.MAX_VALUE  // 无时间的待办排在最后
-                    }
-                }
-            }
-        })
-        
+        items.addAll(newItems)
         notifyDataSetChanged()
     }
 } 

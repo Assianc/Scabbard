@@ -1,5 +1,6 @@
 package com.assiance.alm
 
+import android.content.Context
 import android.os.Bundle
 import android.widget.CalendarView
 import android.widget.TextView
@@ -18,6 +19,7 @@ class CalendarActivity : AppCompatActivity() {
     private lateinit var historyList: RecyclerView
     private lateinit var dateTitle: TextView
     private lateinit var historyAdapter: HistoryAdapter
+    private val historyItems = mutableListOf<HistoryAdapter.HistoryItem>()
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,8 +50,8 @@ class CalendarActivity : AppCompatActivity() {
         historyAdapter = HistoryAdapter()
         historyList.adapter = historyAdapter
 
-        // 显示当前日期的历史记录
-        updateHistoryForDate(System.currentTimeMillis())
+        // 加载所有闹钟和待办数据
+        loadData()
 
         // 设置跳转按钮点击事件
         findViewById<ImageButton>(R.id.jumpButton).setOnClickListener {
@@ -57,42 +59,154 @@ class CalendarActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateHistoryForDate(timestamp: Long) {
-        val dateFormat = SimpleDateFormat("yyyy年MM月dd日 EEEE", Locale.CHINESE)
-        dateTitle.text = dateFormat.format(Date(timestamp))
-
-        // 获取选定日期的闹钟和待办事项
-        val alarms = getAlarmsForDate(timestamp)
-        val todos = getTodosForDate(timestamp)
-        
-        // 更新列表显示
-        historyAdapter.updateItems(alarms, todos)
-    }
-
-    private fun getAlarmsForDate(timestamp: Long): List<AlarmData> {
-        // 从SharedPreferences获取闹钟数据并筛选指定日期的闹钟
-        val prefs = getSharedPreferences(MainActivityAlm.ALARM_PREFS, MODE_PRIVATE)
+    private fun loadData() {
+        // 加载闹钟数据
+        val prefs = getSharedPreferences(MainActivityAlm.ALARM_PREFS, Context.MODE_PRIVATE)
         val alarmsJson = prefs.getString(MainActivityAlm.ALARM_LIST_KEY, "[]")
-        val alarms = mutableListOf<AlarmData>()
-        
-        try {
+        val alarms = try {
             val jsonArray = org.json.JSONArray(alarmsJson)
-            for (i in 0 until jsonArray.length()) {
+            (0 until jsonArray.length()).map { i ->
                 val obj = jsonArray.getJSONObject(i)
-                val alarmTime = obj.getLong("timeInMillis")
-                if (isSameDay(alarmTime, timestamp)) {
-                    alarms.add(AlarmData(
-                        id = obj.getInt("id"),
-                        timeInMillis = alarmTime,
-                        isEnabled = obj.getBoolean("isEnabled"),
-                        ringtoneUri = obj.optString("ringtoneUri", null)
-                    ))
+                val repeatDaysArray = obj.optJSONArray("repeatDays")
+                val repeatDays = BooleanArray(7) { true }
+                if (repeatDaysArray != null) {
+                    for (j in 0 until repeatDaysArray.length()) {
+                        repeatDays[j] = repeatDaysArray.getBoolean(j)
+                    }
                 }
+                AlarmData(
+                    id = obj.getInt("id"),
+                    timeInMillis = obj.getLong("timeInMillis"),
+                    isEnabled = obj.getBoolean("isEnabled"),
+                    ringtoneUri = obj.optString("ringtoneUri", null),
+                    repeatDays = repeatDays
+                )
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            emptyList()
         }
-        return alarms
+
+        // 生成未来7天的闹钟时间
+        val startDate = Calendar.getInstance()
+        val endDate = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, 7)  // 只看未来7天
+        }
+        
+        val alarmTimes = mutableListOf<HistoryAdapter.HistoryItem>()
+        
+        // 遍历每个启用的闹钟
+        alarms.filter { it.isEnabled }.forEach { alarm ->
+            val alarmCalendar = Calendar.getInstance().apply {
+                timeInMillis = alarm.timeInMillis
+            }
+            
+            // 如果是重复闹钟
+            if (alarm.repeatDays.any { it }) {
+                val currentCal = Calendar.getInstance()
+                while (currentCal.before(endDate)) {
+                    val dayOfWeek = (currentCal.get(Calendar.DAY_OF_WEEK) + 5) % 7
+                    if (alarm.repeatDays[dayOfWeek]) {
+                        // 创建该日期的闹钟时间
+                        val alarmTime = Calendar.getInstance().apply {
+                            set(Calendar.YEAR, currentCal.get(Calendar.YEAR))
+                            set(Calendar.MONTH, currentCal.get(Calendar.MONTH))
+                            set(Calendar.DAY_OF_MONTH, currentCal.get(Calendar.DAY_OF_MONTH))
+                            set(Calendar.HOUR_OF_DAY, alarmCalendar.get(Calendar.HOUR_OF_DAY))
+                            set(Calendar.MINUTE, alarmCalendar.get(Calendar.MINUTE))
+                            set(Calendar.SECOND, 0)
+                        }
+                        
+                        // 只添加未来的时间
+                        if (alarmTime.timeInMillis > System.currentTimeMillis()) {
+                            alarmTimes.add(HistoryAdapter.HistoryItem.AlarmItem(
+                                AlarmData(
+                                    id = alarm.id,
+                                    timeInMillis = alarmTime.timeInMillis,
+                                    isEnabled = true,
+                                    ringtoneUri = alarm.ringtoneUri,
+                                    repeatDays = alarm.repeatDays
+                                )
+                            ))
+                        }
+                    }
+                    currentCal.add(Calendar.DAY_OF_YEAR, 1)
+                }
+            } else if (alarm.timeInMillis > System.currentTimeMillis() && 
+                      alarm.timeInMillis < endDate.timeInMillis) {
+                // 非重复闹钟，只添加未来7天内的时间
+                alarmTimes.add(HistoryAdapter.HistoryItem.AlarmItem(alarm))
+            }
+        }
+
+        // 加载待办数据
+        val todos = getTodosForDate(System.currentTimeMillis())
+        
+        // 合并所有数据并按时间排序
+        historyItems.clear()
+        historyItems.addAll(alarmTimes)
+        historyItems.addAll(todos.map { HistoryAdapter.HistoryItem.TodoItem(it) })
+        
+        // 按时间排序
+        historyItems.sortBy { item ->
+            when (item) {
+                is HistoryAdapter.HistoryItem.AlarmItem -> item.alarm.timeInMillis
+                is HistoryAdapter.HistoryItem.TodoItem -> {
+                    val todo = item.todo
+                    when {
+                        todo.startTime != null -> todo.startTime
+                        todo.dueTime != null -> todo.dueTime
+                        else -> Long.MAX_VALUE
+                    }
+                }
+            }
+        }
+
+        // 更新适配器
+        historyAdapter.updateItems(historyItems)
+        updateHistoryForDate(calendarView.date)
+    }
+
+    private fun updateHistoryForDate(date: Long) {
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = date
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        
+        val nextDay = Calendar.getInstance().apply {
+            timeInMillis = calendar.timeInMillis
+            add(Calendar.DAY_OF_YEAR, 1)
+        }
+
+        // 过滤出选定日期的项目
+        val filteredItems = historyItems.filter { item ->
+            when (item) {
+                is HistoryAdapter.HistoryItem.AlarmItem -> {
+                    val itemCal = Calendar.getInstance().apply {
+                        timeInMillis = item.alarm.timeInMillis
+                    }
+                    itemCal.timeInMillis >= calendar.timeInMillis && 
+                    itemCal.timeInMillis < nextDay.timeInMillis
+                }
+                is HistoryAdapter.HistoryItem.TodoItem -> {
+                    val todo = item.todo
+                    val startTime = todo.startTime
+                    val dueTime = todo.dueTime
+                    val isCompleted = todo.isCompleted
+                    val isInRange = (startTime == null || startTime <= date) &&
+                                   (dueTime == null || dueTime > date)
+                    !isCompleted && isInRange
+                }
+            }
+        }
+
+        historyAdapter.updateItems(filteredItems)
+        
+        // 更新日期标题
+        val dateFormat = SimpleDateFormat("yyyy年MM月dd日 EEEE", Locale.CHINESE)
+        dateTitle.text = dateFormat.format(date)
     }
 
     private fun getTodosForDate(timestamp: Long): List<TodoData> {
@@ -134,25 +248,25 @@ class CalendarActivity : AppCompatActivity() {
         val cal1 = Calendar.getInstance().apply { timeInMillis = timestamp1 }
         val cal2 = Calendar.getInstance().apply { timeInMillis = timestamp2 }
         return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+               cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
+               cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH)
     }
 
     private fun showDateJumpDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_date_jump, null)
-        
-        val yearPicker = dialogView.findViewById<NumberPicker>(R.id.yearPicker).apply {
-            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-            minValue = 2000  // 设置最小年份
-            maxValue = currentYear + 10  // 设置最大年份为当前年份后10年
+        val yearPicker = dialogView.findViewById<NumberPicker>(R.id.yearPicker)
+        val monthPicker = dialogView.findViewById<NumberPicker>(R.id.monthPicker)
+
+        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+        yearPicker.apply {
+            minValue = currentYear - 10
+            maxValue = currentYear + 10
             value = currentYear
-            wrapSelectorWheel = false
         }
-        
-        val monthPicker = dialogView.findViewById<NumberPicker>(R.id.monthPicker).apply {
+
+        monthPicker.apply {
             minValue = 1
             maxValue = 12
-            value = Calendar.getInstance().get(Calendar.MONTH) + 1
-            wrapSelectorWheel = true
             displayedValues = arrayOf(
                 "1月", "2月", "3月", "4月", "5月", "6月",
                 "7月", "8月", "9月", "10月", "11月", "12月"
