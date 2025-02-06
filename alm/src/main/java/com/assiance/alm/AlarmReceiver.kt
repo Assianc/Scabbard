@@ -43,9 +43,43 @@ class AlarmReceiver : BroadcastReceiver() {
             }
             MainActivityAlm.ALARM_ACTION -> {
                 val ringtoneUri = intent.getStringExtra("ringtone_uri")
+                val isRepeating = intent.getBooleanExtra("is_repeating", true)
+                
                 playAlarm(context, ringtoneUri)
-                // 启动悬浮窗服务
                 context.startService(Intent(context, AlarmFloatingService::class.java))
+                
+                // 如果是非重复闹钟，响铃后自动禁用
+                if (!isRepeating) {
+                    // 获取闹钟ID并更新状态
+                    val alarmId = intent.getIntExtra("alarm_id", -1)
+                    if (alarmId != -1) {
+                        val prefs = context.getSharedPreferences(
+                            MainActivityAlm.ALARM_PREFS, 
+                            Context.MODE_PRIVATE
+                        )
+                        val alarmsJson = prefs.getString(MainActivityAlm.ALARM_LIST_KEY, "[]")
+                        val jsonArray = org.json.JSONArray(alarmsJson)
+                        
+                        // 查找并更新闹钟状态
+                        for (i in 0 until jsonArray.length()) {
+                            val obj = jsonArray.getJSONObject(i)
+                            if (obj.getInt("id") == alarmId) {
+                                obj.put("isEnabled", false)
+                                break
+                            }
+                        }
+                        
+                        // 保存更新后的闹钟列表
+                        prefs.edit()
+                            .putString(MainActivityAlm.ALARM_LIST_KEY, jsonArray.toString())
+                            .apply()
+                        
+                        // 发送广播通知主界面更新
+                        context.sendBroadcast(
+                            Intent(MainActivityAlm.ALARM_STATUS_CHANGED_ACTION)
+                        )
+                    }
+                }
             }
         }
     }

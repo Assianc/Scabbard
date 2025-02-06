@@ -8,12 +8,16 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TimePicker
 import android.widget.Toast
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class AlarmSettingActivity : AppCompatActivity() {
     private lateinit var timePicker: TimePicker
@@ -22,6 +26,9 @@ class AlarmSettingActivity : AppCompatActivity() {
     private var selectedRingtoneUri: String? = null
     private lateinit var ringtoneButton: ImageButton
     private lateinit var ringtoneName: TextView
+    private lateinit var repeatDaysContainer: LinearLayout
+    private val repeatDays = BooleanArray(7) { true } // 默认每天重复
+    private val dayNames = arrayOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
 
     companion object {
         private const val RINGTONE_PICKER_REQUEST = 1
@@ -54,10 +61,21 @@ class AlarmSettingActivity : AppCompatActivity() {
             openRingtonePicker()
         }
 
+        // 初始化重复日期选择
+        repeatDaysContainer = findViewById(R.id.repeatDaysContainer)
+        initRepeatDays()
+
         // 获取传入的闹钟信息
         alarmId = intent.getIntExtra("alarm_id", -1)
         val alarmTime = intent.getLongExtra("alarm_time", -1L)
         selectedRingtoneUri = intent.getStringExtra("ringtone_uri")
+        
+        // 获取重复日期设置
+        val repeatDaysArray = intent.getBooleanArrayExtra("repeat_days")
+        if (repeatDaysArray != null && repeatDaysArray.size == 7) {
+            System.arraycopy(repeatDaysArray, 0, repeatDays, 0, 7)
+            updateRepeatDaysUI()
+        }
         
         if (alarmTime != -1L) {
             // 设置时间选择器的初始值
@@ -75,27 +93,58 @@ class AlarmSettingActivity : AppCompatActivity() {
         updateRingtoneText()
     }
 
+    private fun initRepeatDays() {
+        repeatDaysContainer.removeAllViews() // 先清除所有已有的视图
+        
+        for (i in 0..6) {
+            val checkBox = CheckBox(this).apply {
+                text = dayNames[i]
+                isChecked = repeatDays[i]
+                setOnCheckedChangeListener { _, isChecked ->
+                    repeatDays[i] = isChecked
+                }
+                // 设置 CheckBox 的布局参数，使其均匀分布
+                val params = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1.0f
+                )
+                params.setMargins(4, 0, 4, 0)
+                layoutParams = params
+            }
+            repeatDaysContainer.addView(checkBox)
+        }
+    }
+
+    private fun updateRepeatDaysUI() {
+        for (i in 0..6) {
+            val checkBox = repeatDaysContainer.getChildAt(i) as? CheckBox
+            checkBox?.isChecked = repeatDays[i]
+        }
+    }
+
     private fun setAlarm() {
         val calendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, timePicker.hour)
             set(Calendar.MINUTE, timePicker.minute)
             set(Calendar.SECOND, 0)
             
-            if (timeInMillis <= System.currentTimeMillis()) {
+            // 如果时间已过，且没有设置重复，则设置为明天
+            if (timeInMillis <= System.currentTimeMillis() && !repeatDays.any { it }) {
                 add(Calendar.DAY_OF_YEAR, 1)
             }
         }
 
-        // 使用传入的ID或生成新ID
         val newAlarmId = if (alarmId != -1) alarmId else System.currentTimeMillis().toInt()
 
         val alarm = AlarmData(
             id = newAlarmId,
             timeInMillis = calendar.timeInMillis,
-            ringtoneUri = selectedRingtoneUri
+            ringtoneUri = selectedRingtoneUri,
+            repeatDays = repeatDays
         )
 
-        // 更新闹钟列表
+        // 保存到 SharedPreferences
         val prefs = getSharedPreferences(MainActivityAlm.ALARM_PREFS, Context.MODE_PRIVATE)
         val alarmsJson = prefs.getString(MainActivityAlm.ALARM_LIST_KEY, "[]")
         val jsonArray = org.json.JSONArray(alarmsJson)
@@ -117,17 +166,65 @@ class AlarmSettingActivity : AppCompatActivity() {
             put("timeInMillis", alarm.timeInMillis)
             put("isEnabled", alarm.isEnabled)
             put("ringtoneUri", alarm.ringtoneUri)
+            put("repeatDays", org.json.JSONArray(alarm.repeatDays.toList()))
         })
         
         prefs.edit()
             .putString(MainActivityAlm.ALARM_LIST_KEY, jsonArray.toString())
             .apply()
 
-        // 设置闹钟
+        // 设置下一次闹钟
+        setNextAlarm(alarm)
+
+        // 发送广播通知主界面更新
+        sendBroadcast(Intent(MainActivityAlm.ALARM_STATUS_CHANGED_ACTION))
+        
+        // 显示设置成功提示
+        val message = if (alarm.repeatDays.any { it }) {
+            "已设置重复闹钟"
+        } else {
+            val dateFormat = SimpleDateFormat("MM月dd日 HH:mm", Locale.getDefault())
+            "已设置单次闹钟：${dateFormat.format(calendar.time)}"
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        
+        finish()
+    }
+
+    private fun setNextAlarm(alarm: AlarmData) {
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = alarm.timeInMillis
+        }
+        
+        // 检查是否有任何重复日期被选中
+        val hasRepeatDays = alarm.repeatDays.any { it }
+        
+        if (!hasRepeatDays) {
+            // 如果没有选择重复日期，只响铃一次
+            if (calendar.timeInMillis <= System.currentTimeMillis()) {
+                calendar.add(Calendar.DAY_OF_YEAR, 1)
+            }
+        } else {
+            // 找到下一个需要响铃的日期
+            var daysToAdd = 0
+            val today = (calendar.get(Calendar.DAY_OF_WEEK) + 5) % 7 // 转换为周一为0的索引
+            
+            for (i in 0..7) {
+                val checkDay = (today + i) % 7
+                if (alarm.repeatDays[checkDay]) {
+                    daysToAdd = i
+                    break
+                }
+            }
+            calendar.add(Calendar.DAY_OF_YEAR, daysToAdd)
+        }
+
         val intent = Intent(MainActivityAlm.ALARM_ACTION).apply {
             `package` = packageName
-            putExtra("ringtone_uri", selectedRingtoneUri)
+            putExtra("ringtone_uri", alarm.ringtoneUri)
+            putExtra("is_repeating", hasRepeatDays) // 添加是否重复的标志
         }
+        
         val pendingIntent = PendingIntent.getBroadcast(
             this,
             alarm.id,
@@ -140,10 +237,14 @@ class AlarmSettingActivity : AppCompatActivity() {
             pendingIntent
         )
 
-        // 立即发送广播通知主界面更新
-        sendBroadcast(Intent(MainActivityAlm.ALARM_STATUS_CHANGED_ACTION))
-        Toast.makeText(this, if (alarmId != -1) "闹钟已更新" else "闹钟已设置", Toast.LENGTH_SHORT).show()
-        finish()
+        // 显示提示信息
+        val message = if (hasRepeatDays) {
+            "已设置重复闹钟"
+        } else {
+            val dateFormat = SimpleDateFormat("MM月dd日 HH:mm", Locale.getDefault())
+            "已设置单次闹钟：${dateFormat.format(calendar.time)}"
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     private fun openRingtonePicker() {

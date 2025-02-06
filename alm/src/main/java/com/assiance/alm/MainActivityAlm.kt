@@ -33,6 +33,7 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import android.provider.Settings
 import android.net.Uri
 import androidx.activity.result.contract.ActivityResultContracts
+import android.util.Log
 
 class MainActivityAlm : AppCompatActivity() {
     private lateinit var alarmManager: AlarmManager
@@ -440,11 +441,21 @@ class MainActivityAlm : AppCompatActivity() {
             alarmList.clear()
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
+                // 获取重复日期数组
+                val repeatDaysArray = obj.optJSONArray("repeatDays")
+                val repeatDays = BooleanArray(7) { true } // 默认每天重复
+                if (repeatDaysArray != null) {
+                    for (j in 0 until repeatDaysArray.length()) {
+                        repeatDays[j] = repeatDaysArray.getBoolean(j)
+                    }
+                }
+                
                 alarmList.add(AlarmData(
                     id = obj.getInt("id"),
                     timeInMillis = obj.getLong("timeInMillis"),
                     isEnabled = obj.getBoolean("isEnabled"),
-                    ringtoneUri = obj.optString("ringtoneUri", null)
+                    ringtoneUri = obj.optString("ringtoneUri", null),
+                    repeatDays = repeatDays
                 ))
             }
             // 按时间排序
@@ -531,6 +542,8 @@ class MainActivityAlm : AppCompatActivity() {
         val intent = Intent(ALARM_ACTION).apply {
             `package` = packageName
             putExtra("ringtone_uri", alarm.ringtoneUri)
+            putExtra("alarm_id", alarm.id)
+            putExtra("is_repeating", alarm.repeatDays.any { it })
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this,
@@ -541,16 +554,39 @@ class MainActivityAlm : AppCompatActivity() {
 
         val calendar = Calendar.getInstance().apply {
             timeInMillis = alarm.timeInMillis
-            // 如果时间已过，设置为下一天
+            // 如果时间已过，设置为下一个有效日期
             if (timeInMillis <= System.currentTimeMillis()) {
-                add(Calendar.DAY_OF_YEAR, 1)
+                // 检查是否有重复日期
+                val hasRepeatDays = alarm.repeatDays.any { it }
+                if (hasRepeatDays) {
+                    // 找到下一个重复的日期
+                    val today = (get(Calendar.DAY_OF_WEEK) + 5) % 7
+                    var daysToAdd = 1
+                    for (i in 1..7) {
+                        val checkDay = (today + i) % 7
+                        if (alarm.repeatDays[checkDay]) {
+                            daysToAdd = i
+                            break
+                        }
+                    }
+                    add(Calendar.DAY_OF_YEAR, daysToAdd)
+                } else {
+                    // 非重复闹钟，只往后延一天
+                    add(Calendar.DAY_OF_YEAR, 1)
+                }
             }
         }
 
-        alarmManager.setAlarmClock(
-            AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent),
-            pendingIntent
-        )
+        try {
+            alarmManager.setAlarmClock(
+                AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent),
+                pendingIntent
+            )
+            Log.d("Alarm", "设置闹钟：${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(calendar.time)}")
+        } catch (e: Exception) {
+            Log.e("Alarm", "设置闹钟失败", e)
+            Toast.makeText(this, "设置闹钟失败：${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun cancelAlarm(alarm: AlarmData) {

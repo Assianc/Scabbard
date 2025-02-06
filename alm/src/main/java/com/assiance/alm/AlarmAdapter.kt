@@ -42,6 +42,10 @@ class AlarmAdapter(
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         holder.timeText.text = timeFormat.format(alarm.timeInMillis)
         
+        // 添加重复日期显示
+        val repeatText = buildRepeatText(alarm.repeatDays)
+        holder.repeatText.text = repeatText
+        
         holder.enableSwitch.setOnCheckedChangeListener(null)
         holder.enableSwitch.isChecked = alarm.isEnabled
         holder.enableSwitch.setOnCheckedChangeListener { _, isChecked ->
@@ -147,5 +151,20 @@ class AlarmAdapter(
         })
 
         itemTouchHelper.attachToRecyclerView(recyclerView)
+    }
+
+    private fun buildRepeatText(repeatDays: BooleanArray): String {
+        val days = arrayOf("一", "二", "三", "四", "五", "六", "日")
+        val selectedDays = repeatDays.mapIndexed { index, selected -> 
+            if (selected) days[index] else null 
+        }.filterNotNull()
+
+        return when {
+            selectedDays.isEmpty() -> "不重复"
+            selectedDays.size == 7 -> "每天"
+            selectedDays.size == 5 && !repeatDays[5] && !repeatDays[6] -> "工作日"
+            selectedDays.size == 2 && repeatDays[5] && repeatDays[6] -> "周末"
+            else -> "每周${selectedDays.joinToString("、")}"
+        }
     }
 } 

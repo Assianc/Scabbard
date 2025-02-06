@@ -28,6 +28,16 @@
             android:layout_marginBottom="16dp" />
 
         <LinearLayout
+            android:id="@+id/repeatDaysContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center">
+            <!-- CheckBox会在代码中动态添加 -->
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
