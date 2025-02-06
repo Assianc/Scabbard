@@ -254,12 +254,14 @@ class CalendarActivity : AppCompatActivity() {
                                 }
                                 // 只有截止时间
                                 startTime == null && dueTime != null -> {
-                                    // 从当前时间到截止时间之间都显示
-                                    date >= currentTime && date <= dueTime
+                                    // 从当前时间到截止时间之间都显示，包括截止当天
+                                    date >= currentTime && 
+                                    (date <= dueTime || isSameDay(date, dueTime))
                                 }
                                 // 同时有开始时间和截止时间
                                 startTime != null && dueTime != null -> {
-                                    date >= startTime && date <= dueTime
+                                    date >= startTime && 
+                                    (date <= dueTime || isSameDay(date, dueTime))
                                 }
                                 else -> false
                             }
