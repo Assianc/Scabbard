@@ -3,6 +3,7 @@ package com.assiance.alm
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
@@ -27,7 +28,9 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     class TodoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val titleText: TextView = view.findViewById(R.id.titleText)
+        val todoTitle: TextView = view.findViewById(R.id.todoTitle)
+        val todoDescription: TextView = view.findViewById(R.id.todoDescription)
+        val todoStatus: TextView = view.findViewById(R.id.todoStatus)
         val timeText: TextView = view.findViewById(R.id.timeText)
     }
 
@@ -48,26 +51,36 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val item = items[position]
-        when (holder) {
-            is AlarmViewHolder -> {
-                if (item is HistoryItem.AlarmItem) {
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                    holder.timeText.text = timeFormat.format(item.alarm.timeInMillis)
-                    holder.statusText.text = if (item.alarm.isEnabled) "已启用" else "已禁用"
-                }
+        when (val item = items[position]) {
+            is HistoryItem.AlarmItem -> {
+                holder as AlarmViewHolder
+                val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                holder.timeText.text = timeFormat.format(item.alarm.timeInMillis)
+                holder.statusText.text = if (item.alarm.isEnabled) "已启用" else "已禁用"
             }
-            is TodoViewHolder -> {
-                if (item is HistoryItem.TodoItem) {
-                    holder.titleText.text = item.todo.title
-                    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                    val timeText = when {
-                        item.todo.startTime != null -> "开始：${timeFormat.format(item.todo.startTime)}"
-                        item.todo.dueTime != null -> "截止：${timeFormat.format(item.todo.dueTime)}"
-                        else -> "无时间限制"
-                    }
-                    holder.timeText.text = timeText
+            is HistoryItem.TodoItem -> {
+                holder as TodoViewHolder
+                val todo = item.todo
+                holder.todoTitle.text = todo.title
+                holder.todoDescription.text = todo.description
+                
+                // 显示完成状态
+                if (todo.isCompleted) {
+                    holder.todoStatus.visibility = View.VISIBLE
+                    holder.todoStatus.text = "已完成"
+                } else {
+                    holder.todoStatus.visibility = View.GONE
                 }
+
+                // 显示时间
+                val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                val timeText = when {
+                    todo.startTime != null -> "开始时间：${timeFormat.format(todo.startTime)}"
+                    todo.dueTime != null -> "截止时间：${timeFormat.format(todo.dueTime)}"
+                    else -> ""
+                }
+                holder.timeText.text = timeText
+                holder.timeText.visibility = if (timeText.isEmpty()) View.GONE else View.VISIBLE
             }
         }
     }

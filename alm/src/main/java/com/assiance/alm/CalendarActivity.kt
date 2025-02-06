@@ -154,11 +154,9 @@ class CalendarActivity : AppCompatActivity() {
                 val dueTime = obj.optLong("dueTime")
                 val isCompleted = obj.getBoolean("isCompleted")
                 val completedTime = obj.optLong("completedTime").takeIf { it > 0 }
-                // 读取创建时间，如果没有则使用id作为创建时间
                 val createdTime = obj.optLong("createdTime", obj.getInt("id").toLong())
                 
-                // 移除 if (!isCompleted) 条件，加载所有待办
-                // 对于已完成的待办，直接添加
+                // 已完成的待办直接添加
                 if (isCompleted) {
                     todos.add(TodoData(
                         id = obj.getInt("id"),
@@ -173,12 +171,15 @@ class CalendarActivity : AppCompatActivity() {
                         createdTime = createdTime
                     ))
                 }
-                // 对于未完成的待办，保持原有的时间限制逻辑
-                else if ((startTime == 0L && dueTime == 0L && 
-                         isSameDay(System.currentTimeMillis(), System.currentTimeMillis())) ||
-                        (startTime > 0 && startTime < endDate.timeInMillis) ||
-                        (dueTime > 0 && dueTime > System.currentTimeMillis())) {
-                    
+                // 未完成的待办，只要满足以下任一条件就添加：
+                // 1. 无时间限制
+                // 2. 有开始时间且在未来7天内
+                // 3. 有截止时间且未过期
+                else if (
+                    (startTime == 0L && dueTime == 0L) || // 无时间限制
+                    (startTime > 0 && startTime < endDate.timeInMillis) || // 有开始时间且在未来7天内
+                    (dueTime > 0 && dueTime > System.currentTimeMillis()) // 有截止时间且未过期
+                ) {
                     todos.add(TodoData(
                         id = obj.getInt("id"),
                         title = obj.getString("title"),
@@ -290,10 +291,19 @@ class CalendarActivity : AppCompatActivity() {
                                 else -> false
                             }
                         }
-                        // 无时间限制的待办，从当前时间开始显示，直到完成
+                        // 无时间限制的待办
                         else -> {
-                            // 只显示当前时间及之后的日期
-                            date >= currentDay.timeInMillis
+                            when {
+                                // 已完成的待办，在创建时间到完成时间之间显示
+                                isCompleted -> {
+                                    val actualCompletedTime = completedTime ?: System.currentTimeMillis()
+                                    date >= todo.createdTime && date <= actualCompletedTime
+                                }
+                                // 未完成的待办，在创建时间到当前时间之间显示
+                                else -> {
+                                    date >= todo.createdTime && (date <= currentDay.timeInMillis || isSameDay(date, todo.createdTime))
+                                }
+                            }
                         }
                     }
                 }
