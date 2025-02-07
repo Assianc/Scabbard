@@ -13,6 +13,9 @@ import java.util.Date
 class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val items = mutableListOf<HistoryItem>()
     
+    // 添加长按删除回调
+    var onDeleteClick: ((HistoryItem, Int) -> Unit)? = null
+
     companion object {
         private const val TYPE_ALARM = 0
         private const val TYPE_TODO = 1
@@ -107,6 +110,11 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 }
             }
         }
+        // 新增：添加长按监听，触发删除回调
+        holder.itemView.setOnLongClickListener {
+            onDeleteClick?.invoke(items[position], holder.adapterPosition)
+            true
+        }
     }
 
     override fun getItemCount() = items.size
@@ -122,5 +130,10 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         items.clear()
         items.addAll(newItems)
         notifyDataSetChanged()
+    }
+
+    fun removeItemAt(position: Int) {
+        items.removeAt(position)
+        notifyItemRemoved(position)
     }
 } 
