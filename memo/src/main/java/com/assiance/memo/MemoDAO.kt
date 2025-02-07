@@ -374,4 +374,16 @@ class MemoDAO(context: Context) {
         db.close()
         return memo
     }
+
+    // 新增：删除指定历史记录（根据记录ID删除）
+    fun deleteMemoHistory(historyId: Int) {
+        val db = dbHelper.writableDatabase
+        try {
+            db.delete(MemoDatabaseHelper.HISTORY_TABLE_NAME, "${MemoDatabaseHelper.COLUMN_ID}=?", arrayOf(historyId.toString()))
+        } catch (e: SQLException) {
+            e.printStackTrace()
+        } finally {
+            db.close()
+        }
+    }
 }

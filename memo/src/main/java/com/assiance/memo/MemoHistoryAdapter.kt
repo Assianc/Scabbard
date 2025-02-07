@@ -8,8 +8,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class MemoHistoryAdapter(
-    private val historyList: List<MemoHistory>,
-    private val onRestoreClick: (MemoHistory) -> Unit
+    private val historyList: MutableList<MemoHistory>,
+    private val onRestoreClick: (MemoHistory) -> Unit,
+    private val onDeleteClick: (MemoHistory, Int) -> Unit
 ) : RecyclerView.Adapter<MemoHistoryAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -32,6 +33,10 @@ class MemoHistoryAdapter(
         holder.contentText.text = history.oldContent
         holder.restoreButton.setOnClickListener {
             onRestoreClick(history)
+        }
+        holder.itemView.setOnLongClickListener {
+            onDeleteClick(history, holder.adapterPosition)
+            true
         }
     }
 

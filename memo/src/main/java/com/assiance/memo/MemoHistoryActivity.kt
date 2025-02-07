@@ -27,11 +27,27 @@ class MemoHistoryActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.history_recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        val historyList = memoDAO.getMemoHistory(memoId)
-        val adapter = MemoHistoryAdapter(historyList) { history ->
-            showRestoreConfirmDialog(history)
-        }
-        recyclerView.adapter = adapter
+        val historyList = memoDAO.getMemoHistory(memoId).toMutableList()
+        var historyAdapter: MemoHistoryAdapter? = null
+        historyAdapter = MemoHistoryAdapter(
+            historyList,
+            onRestoreClick = { history ->
+                showRestoreConfirmDialog(history)
+            },
+            onDeleteClick = { history, position ->
+                AlertDialog.Builder(this)
+                    .setTitle("删除历史记录")
+                    .setMessage("确定要删除这条历史记录吗？")
+                    .setPositiveButton("删除") { dialog, _ ->
+                        memoDAO.deleteMemoHistory(history.id)
+                        historyList.removeAt(position)
+                        historyAdapter?.notifyItemRemoved(position)
+                    }
+                    .setNegativeButton("取消", null)
+                    .show()
+            }
+        )
+        recyclerView.adapter = historyAdapter
     }
 
     private fun showRestoreConfirmDialog(history: MemoHistory) {
