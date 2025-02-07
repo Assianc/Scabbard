@@ -290,16 +290,13 @@ class CalendarActivity : AppCompatActivity() {
                                 startTime != null && dueTime == null -> {
                                     isSameDay(startTime, date)
                                 }
-                                // 只有截止时间
+                                // 只有截止时间：使用待办的创建时间进行判断，确保当天能显示
                                 startTime == null && dueTime != null -> {
-                                    // 从当前时间到截止时间之间都显示，包括截止当天
-                                    date >= currentTime && 
-                                    (date <= dueTime || isSameDay(date, dueTime))
+                                    date >= todo.createdTime && (date <= dueTime || isSameDay(date, dueTime))
                                 }
                                 // 同时有开始时间和截止时间
                                 startTime != null && dueTime != null -> {
-                                    date >= startTime && 
-                                    (date <= dueTime || isSameDay(date, dueTime))
+                                    date >= startTime && (date <= dueTime || isSameDay(date, dueTime))
                                 }
                                 else -> false
                             }
