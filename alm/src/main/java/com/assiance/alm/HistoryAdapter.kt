@@ -74,25 +74,36 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                     holder.todoStatus.visibility = View.GONE
                 }
 
-                // 显示时间
+                // 根据待办事项的开始时间和截止时间分别显示
                 val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                val timeText = when {
-                    todo.startTime != null -> "开始时间：${timeFormat.format(todo.startTime)}"
-                    todo.dueTime != null -> "截止时间：${timeFormat.format(todo.dueTime)}"
-                    else -> ""
-                }
-                holder.timeText.text = timeText
-                holder.timeText.visibility = if (timeText.isEmpty()) View.GONE else View.VISIBLE
+                val hasStart = todo.startTime != null && todo.startTime > 0
+                val hasDue = todo.dueTime != null && todo.dueTime > 0
 
-                // 新增：显示截止时间（dueTime）逻辑
-                if (todo.dueTime != null && todo.dueTime > 0) {
-                    // 如果存在截止时间，则显示并格式化展示
-                    holder.dueTimeText.visibility = View.VISIBLE
-                    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-                    holder.dueTimeText.text = "截止: " + sdf.format(Date(todo.dueTime))
-                } else {
-                    // 没有截止时间，则隐藏该控件
-                    holder.dueTimeText.visibility = View.GONE
+                when {
+                    hasStart && hasDue -> {
+                        // 同时存在：显示开始时间（左侧）和截止时间（右侧）
+                        holder.timeText.visibility = View.VISIBLE
+                        holder.dueTimeText.visibility = View.VISIBLE
+                        holder.timeText.text = "开始时间：${timeFormat.format(Date(todo.startTime!!))}"
+                        holder.dueTimeText.text = "截止：${timeFormat.format(Date(todo.dueTime!!))}"
+                    }
+                    hasStart -> {
+                        // 只有开始时间
+                        holder.timeText.visibility = View.VISIBLE
+                        holder.dueTimeText.visibility = View.GONE
+                        holder.timeText.text = "开始时间：${timeFormat.format(Date(todo.startTime!!))}"
+                    }
+                    hasDue -> {
+                        // 只有截止时间
+                        holder.timeText.visibility = View.VISIBLE
+                        holder.dueTimeText.visibility = View.GONE
+                        holder.timeText.text = "截止时间：${timeFormat.format(Date(todo.dueTime!!))}"
+                    }
+                    else -> {
+                        // 都没有：隐藏时间控件
+                        holder.timeText.visibility = View.GONE
+                        holder.dueTimeText.visibility = View.GONE
+                    }
                 }
             }
         }
