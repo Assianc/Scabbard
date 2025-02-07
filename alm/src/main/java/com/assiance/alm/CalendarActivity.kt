@@ -278,23 +278,50 @@ class CalendarActivity : AppCompatActivity() {
                     val completedTime = todo.completedTime
                     
                     when {
-                        // 已完成的待办，在完成当天显示
+                        // 已完成的待办
                         isCompleted -> {
-                            val actualCompletedTime = completedTime ?: dueTime ?: System.currentTimeMillis()
-                            isSameDay(actualCompletedTime, date)
+                            if (startTime != null && dueTime == null) {
+                                // 对于只有开始日期的已完成待办，显示从开始当天到完成当天
+                                val startCal = Calendar.getInstance().apply {
+                                    timeInMillis = startTime
+                                    set(Calendar.HOUR_OF_DAY, 0)
+                                    set(Calendar.MINUTE, 0)
+                                    set(Calendar.SECOND, 0)
+                                    set(Calendar.MILLISECOND, 0)
+                                }
+                                val compCal = Calendar.getInstance().apply {
+                                    timeInMillis = completedTime ?: System.currentTimeMillis()
+                                    set(Calendar.HOUR_OF_DAY, 0)
+                                    set(Calendar.MINUTE, 0)
+                                    set(Calendar.SECOND, 0)
+                                    set(Calendar.MILLISECOND, 0)
+                                }
+                                (calendar.timeInMillis in startCal.timeInMillis..compCal.timeInMillis)
+                            } else {
+                                // 其它已完成待办：只显示完成当天（原逻辑）
+                                val actualCompletedTime = completedTime ?: dueTime ?: System.currentTimeMillis()
+                                isSameDay(actualCompletedTime, date)
+                            }
                         }
-                        // 有开始时间或截止时间的待办
+                        // 未完成的待办，且有开始时间或截止时间
                         startTime != null || dueTime != null -> {
                             when {
-                                // 只有开始时间
+                                // 只有开始时间：显示从待办设置当天开始到当前日期（历史记录中仅显示过去或今天）
                                 startTime != null && dueTime == null -> {
-                                    isSameDay(startTime, date)
+                                    val startCal = Calendar.getInstance().apply {
+                                        timeInMillis = startTime
+                                        set(Calendar.HOUR_OF_DAY, 0)
+                                        set(Calendar.MINUTE, 0)
+                                        set(Calendar.SECOND, 0)
+                                        set(Calendar.MILLISECOND, 0)
+                                    }
+                                    (calendar.timeInMillis >= startCal.timeInMillis && calendar.timeInMillis <= currentDay.timeInMillis)
                                 }
-                                // 只有截止时间：使用待办的创建时间进行判断，确保当天能显示
+                                // 只有截止时间：使用创建时间判断
                                 startTime == null && dueTime != null -> {
                                     date >= todo.createdTime && (date <= dueTime || isSameDay(date, dueTime))
                                 }
-                                // 同时有开始时间和截止时间
+                                // 同时有开始和截止时间：显示在该区间内
                                 startTime != null && dueTime != null -> {
                                     date >= startTime && (date <= dueTime || isSameDay(date, dueTime))
                                 }
@@ -303,17 +330,7 @@ class CalendarActivity : AppCompatActivity() {
                         }
                         // 无时间限制的待办
                         else -> {
-                            when {
-                                // 已完成的待办，在创建时间到完成时间之间显示
-                                isCompleted -> {
-                                    val actualCompletedTime = completedTime ?: System.currentTimeMillis()
-                                    date >= todo.createdTime && date <= actualCompletedTime
-                                }
-                                // 未完成的待办，在创建时间到当前时间之间显示
-                                else -> {
-                                    date >= todo.createdTime && (date <= currentDay.timeInMillis || isSameDay(date, todo.createdTime))
-                                }
-                            }
+                            date >= todo.createdTime && (date <= currentDay.timeInMillis || isSameDay(date, todo.createdTime))
                         }
                     }
                 }
