@@ -86,46 +86,53 @@ class CalendarActivity : AppCompatActivity() {
             emptyList()
         }
 
-        // 生成未来7天的闹钟时间
-        val startDate = Calendar.getInstance()
+        // 生成未来7天的闹钟时间，从当天凌晨开始
+        val startDate = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
         val endDate = Calendar.getInstance().apply {
             add(Calendar.DAY_OF_YEAR, 7)  // 只看未来7天
             set(Calendar.HOUR_OF_DAY, 23)
             set(Calendar.MINUTE, 59)
             set(Calendar.SECOND, 59)
+            set(Calendar.MILLISECOND, 999)
         }
-        
+
         val alarmTimes = mutableListOf<HistoryAdapter.HistoryItem>()
-        
-        // 遍历每个启用的闹钟
-        alarms.filter { it.isEnabled }.forEach { alarm ->
+
+        // 遍历每个闹钟
+        alarms.forEach { alarm ->
             val alarmCalendar = Calendar.getInstance().apply {
                 timeInMillis = alarm.timeInMillis
             }
-            
-            // 如果是重复闹钟
+
+            // 如果是重复闹钟，生成该闹钟在 [startDate, endDate] 每天对应的时间
             if (alarm.repeatDays.any { it }) {
-                val currentCal = Calendar.getInstance()
-                while (currentCal.before(endDate)) {
-                    val dayOfWeek = (currentCal.get(Calendar.DAY_OF_WEEK) + 5) % 7
+                // 使用 startDate 的副本作为循环起始
+                val currentCal = Calendar.getInstance().apply {
+                    timeInMillis = startDate.timeInMillis
+                }
+                while (currentCal.timeInMillis <= endDate.timeInMillis) {
+                    val dayOfWeek = (currentCal.get(Calendar.DAY_OF_WEEK) + 5) % 7 // 转换为周一为0的索引
                     if (alarm.repeatDays[dayOfWeek]) {
                         // 创建该日期的闹钟时间
                         val alarmTime = Calendar.getInstance().apply {
-                            set(Calendar.YEAR, currentCal.get(Calendar.YEAR))
-                            set(Calendar.MONTH, currentCal.get(Calendar.MONTH))
-                            set(Calendar.DAY_OF_MONTH, currentCal.get(Calendar.DAY_OF_MONTH))
+                            timeInMillis = currentCal.timeInMillis // 基础日期
                             set(Calendar.HOUR_OF_DAY, alarmCalendar.get(Calendar.HOUR_OF_DAY))
                             set(Calendar.MINUTE, alarmCalendar.get(Calendar.MINUTE))
                             set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
                         }
-                        
-                        // 只添加未来的时间
-                        if (alarmTime.timeInMillis > System.currentTimeMillis()) {
+                        // 添加在 [startDate, endDate] 范围内的闹钟
+                        if (alarmTime.timeInMillis in startDate.timeInMillis..endDate.timeInMillis) {
                             alarmTimes.add(HistoryAdapter.HistoryItem.AlarmItem(
                                 AlarmData(
                                     id = alarm.id,
                                     timeInMillis = alarmTime.timeInMillis,
-                                    isEnabled = true,
+                                    isEnabled = alarm.isEnabled,
                                     ringtoneUri = alarm.ringtoneUri,
                                     repeatDays = alarm.repeatDays
                                 )
@@ -134,9 +141,8 @@ class CalendarActivity : AppCompatActivity() {
                     }
                     currentCal.add(Calendar.DAY_OF_YEAR, 1)
                 }
-            } else if (alarm.timeInMillis > System.currentTimeMillis() && 
-                      alarm.timeInMillis < endDate.timeInMillis) {
-                // 非重复闹钟，只添加未来7天内的时间
+            } else if (alarm.timeInMillis in startDate.timeInMillis until endDate.timeInMillis) {
+                // 非重复闹钟：添加在 [startDate, endDate) 内的闹钟，无论是否已过
                 alarmTimes.add(HistoryAdapter.HistoryItem.AlarmItem(alarm))
             }
         }

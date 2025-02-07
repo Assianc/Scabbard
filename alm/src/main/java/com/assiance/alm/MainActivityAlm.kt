@@ -138,7 +138,7 @@ class MainActivityAlm : AppCompatActivity() {
                     addAction(ALARM_STOP_ACTION)
                     addAction(ALARM_STATUS_CHANGED_ACTION)
                 },
-                Context.RECEIVER_NOT_EXPORTED  // 添加这个标志
+                Context.RECEIVER_NOT_EXPORTED
             )
         } else {
             registerReceiver(
