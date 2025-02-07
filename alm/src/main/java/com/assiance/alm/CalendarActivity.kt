@@ -62,53 +62,54 @@ class CalendarActivity : AppCompatActivity() {
 
         // 新增删除回调：
         historyAdapter.onDeleteClick = { historyItem, position ->
-            AlertDialog.Builder(this)
-                .setTitle("删除历史记录")
-                .setMessage("确定删除该历史记录吗？")
-                .setPositiveButton("删除") { dialog, _ ->
-                    when (historyItem) {
-                        is HistoryAdapter.HistoryItem.AlarmItem -> {
-                            val prefs = getSharedPreferences(MainActivityAlm.ALARM_PREFS, Context.MODE_PRIVATE)
-                            val alarmsJsonString = prefs.getString(MainActivityAlm.ALARM_LIST_KEY, "[]")
-                            val jsonArray = org.json.JSONArray(alarmsJsonString)
-                            val newJsonArray = org.json.JSONArray()
-                            for (i in 0 until jsonArray.length()) {
-                                val obj = jsonArray.getJSONObject(i)
-                                if (obj.getInt("id") != historyItem.alarm.id) {
-                                    newJsonArray.put(obj)
-                                }
-                            }
-                            // 使用 commit() 保证同步更新并打印日志
-                            val success = prefs.edit()
-                                .putString(MainActivityAlm.ALARM_LIST_KEY, newJsonArray.toString())
-                                .commit()
-                            Log.d("CalendarActivity", "删除闹钟历史记录, commit: $success, 新数据: $newJsonArray")
-                        }
-                        is HistoryAdapter.HistoryItem.TodoItem -> {
-                            val prefs = getSharedPreferences(MainActivityAlm.TODO_PREFS, Context.MODE_PRIVATE)
-                            val todosJsonString = prefs.getString(MainActivityAlm.TODO_LIST_KEY, "[]")
-                            val jsonArray = org.json.JSONArray(todosJsonString)
-                            val newJsonArray = org.json.JSONArray()
-                            for (i in 0 until jsonArray.length()) {
-                                val obj = jsonArray.getJSONObject(i)
-                                if (obj.getInt("id") != historyItem.todo.id) {
-                                    newJsonArray.put(obj)
-                                }
-                            }
-                            val success = prefs.edit()
-                                .putString(MainActivityAlm.TODO_LIST_KEY, newJsonArray.toString())
-                                .commit()
-                            Log.d("CalendarActivity", "删除待办历史记录, commit: $success, 新数据: $newJsonArray")
-                        }
-                    }
-                    Toast.makeText(this, "删除成功", Toast.LENGTH_SHORT).show()
-                    // 立即移除该项，直接从 adapter 中删除，使其第一时间消失
-                    historyAdapter.removeItemAt(position)
-                    // 如果需要重新加载数据，也可以调用 updateHistoryForDate(currentDate)
-                    // updateHistoryForDate(currentDate)
-                }
-                .setNegativeButton("取消", null)
-                .show()
+            if (isSameDay(currentDate, System.currentTimeMillis())) {
+                 Toast.makeText(this, "当天记录不能删除", Toast.LENGTH_SHORT).show()
+            } else {
+                 AlertDialog.Builder(this)
+                     .setTitle("删除历史记录")
+                     .setMessage("确定删除该历史记录吗？")
+                     .setPositiveButton("删除") { dialog, _ ->
+                         when (historyItem) {
+                             is HistoryAdapter.HistoryItem.AlarmItem -> {
+                                 val prefs = getSharedPreferences(MainActivityAlm.ALARM_PREFS, Context.MODE_PRIVATE)
+                                 val alarmsJsonString = prefs.getString(MainActivityAlm.ALARM_LIST_KEY, "[]")
+                                 val jsonArray = org.json.JSONArray(alarmsJsonString)
+                                 val newJsonArray = org.json.JSONArray()
+                                 for (i in 0 until jsonArray.length()) {
+                                     val obj = jsonArray.getJSONObject(i)
+                                     if (obj.getInt("id") != historyItem.alarm.id) {
+                                         newJsonArray.put(obj)
+                                     }
+                                 }
+                                 val success = prefs.edit()
+                                     .putString(MainActivityAlm.ALARM_LIST_KEY, newJsonArray.toString())
+                                     .commit()
+                                 Log.d("CalendarActivity", "删除闹钟历史记录, commit: $success, 新数据: $newJsonArray")
+                             }
+                             is HistoryAdapter.HistoryItem.TodoItem -> {
+                                 val prefs = getSharedPreferences(MainActivityAlm.TODO_PREFS, Context.MODE_PRIVATE)
+                                 val todosJsonString = prefs.getString(MainActivityAlm.TODO_LIST_KEY, "[]")
+                                 val jsonArray = org.json.JSONArray(todosJsonString)
+                                 val newJsonArray = org.json.JSONArray()
+                                 for (i in 0 until jsonArray.length()) {
+                                     val obj = jsonArray.getJSONObject(i)
+                                     if (obj.getInt("id") != historyItem.todo.id) {
+                                         newJsonArray.put(obj)
+                                     }
+                                 }
+                                 val success = prefs.edit()
+                                     .putString(MainActivityAlm.TODO_LIST_KEY, newJsonArray.toString())
+                                     .commit()
+                                 Log.d("CalendarActivity", "删除待办历史记录, commit: $success, 新数据: $newJsonArray")
+                             }
+                         }
+                         Toast.makeText(this, "删除成功", Toast.LENGTH_SHORT).show()
+                         // 立即移除该项
+                         historyAdapter.removeItemAt(position)
+                     }
+                     .setNegativeButton("取消", null)
+                     .show()
+            }
         }
 
         // 加载所有闹钟和待办数据
@@ -450,12 +451,11 @@ class CalendarActivity : AppCompatActivity() {
         return todos
     }
 
-    private fun isSameDay(timestamp1: Long, timestamp2: Long): Boolean {
-        val cal1 = Calendar.getInstance().apply { timeInMillis = timestamp1 }
-        val cal2 = Calendar.getInstance().apply { timeInMillis = timestamp2 }
+    private fun isSameDay(time1: Long, time2: Long): Boolean {
+        val cal1 = Calendar.getInstance().apply { timeInMillis = time1 }
+        val cal2 = Calendar.getInstance().apply { timeInMillis = time2 }
         return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-               cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
-               cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH)
+               cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
     }
 
     private fun showDateJumpDialog() {
