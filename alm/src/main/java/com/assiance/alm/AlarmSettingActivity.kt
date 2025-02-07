@@ -236,6 +236,7 @@ class AlarmSettingActivity : AppCompatActivity() {
             `package` = packageName
             putExtra("ringtone_uri", alarm.ringtoneUri)
             putExtra("is_repeating", hasRepeatDays) // 添加是否重复的标志
+            putExtra("alarm_id", alarm.id)           // 传递当前闹钟的 ID
         }
         
         val pendingIntent = PendingIntent.getBroadcast(

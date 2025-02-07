@@ -48,36 +48,31 @@ class AlarmReceiver : BroadcastReceiver() {
                 playAlarm(context, ringtoneUri)
                 context.startService(Intent(context, AlarmFloatingService::class.java))
                 
-                // 如果是非重复闹钟，响铃后自动禁用
+                // 如果是单次（非重复）闹钟，响铃后自动将状态更新为 false
                 if (!isRepeating) {
-                    // 获取闹钟ID并更新状态
+                    // 从 Intent 传入 alarm_id
                     val alarmId = intent.getIntExtra("alarm_id", -1)
                     if (alarmId != -1) {
-                        val prefs = context.getSharedPreferences(
-                            MainActivityAlm.ALARM_PREFS, 
-                            Context.MODE_PRIVATE
-                        )
+                        val prefs = context.getSharedPreferences(MainActivityAlm.ALARM_PREFS, Context.MODE_PRIVATE)
                         val alarmsJson = prefs.getString(MainActivityAlm.ALARM_LIST_KEY, "[]")
-                        val jsonArray = org.json.JSONArray(alarmsJson)
-                        
-                        // 查找并更新闹钟状态
-                        for (i in 0 until jsonArray.length()) {
-                            val obj = jsonArray.getJSONObject(i)
-                            if (obj.getInt("id") == alarmId) {
-                                obj.put("isEnabled", false)
-                                break
+                        try {
+                            val jsonArray = org.json.JSONArray(alarmsJson)
+                            for (i in 0 until jsonArray.length()) {
+                                val obj = jsonArray.getJSONObject(i)
+                                if (obj.getInt("id") == alarmId) {
+                                    // 将单次闹钟标记为禁用
+                                    obj.put("isEnabled", false)
+                                    break
+                                }
                             }
+                            prefs.edit()
+                                .putString(MainActivityAlm.ALARM_LIST_KEY, jsonArray.toString())
+                                .apply()
+                            // 发送广播通知界面更新状态
+                            context.sendBroadcast(Intent(MainActivityAlm.ALARM_STATUS_CHANGED_ACTION))
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
-                        
-                        // 保存更新后的闹钟列表
-                        prefs.edit()
-                            .putString(MainActivityAlm.ALARM_LIST_KEY, jsonArray.toString())
-                            .apply()
-                        
-                        // 发送广播通知主界面更新
-                        context.sendBroadcast(
-                            Intent(MainActivityAlm.ALARM_STATUS_CHANGED_ACTION)
-                        )
                     }
                 }
             }
