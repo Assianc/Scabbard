@@ -53,7 +53,7 @@ class AlarmSettingActivity : AppCompatActivity() {
         // 设置24小时制
         timePicker.setIs24HourView(true)
 
-        findViewById<android.widget.Button>(R.id.setAlarmButton).setOnClickListener {
+        findViewById<Button>(R.id.setAlarmButton).setOnClickListener {
             setAlarm()
         }
 
@@ -61,35 +61,48 @@ class AlarmSettingActivity : AppCompatActivity() {
             openRingtonePicker()
         }
 
-        // 初始化重复日期选择
+        // 初始化重复日期选择（使用 repeatDays 数组的初始值，全选）
         repeatDaysContainer = findViewById(R.id.repeatDaysContainer)
         initRepeatDays()
 
-        // 获取传入的闹钟信息
+        // 根据编辑状态加载当前闹钟的重复天数设置
         alarmId = intent.getIntExtra("alarm_id", -1)
+        if (alarmId != -1) {
+            // 编辑模式：从 SharedPreferences 中加载当前闹钟数据
+            val prefs = getSharedPreferences(MainActivityAlm.ALARM_PREFS, Context.MODE_PRIVATE)
+            val alarmsJson = prefs.getString(MainActivityAlm.ALARM_LIST_KEY, "[]")
+            try {
+                val jsonArray = org.json.JSONArray(alarmsJson)
+                for (i in 0 until jsonArray.length()) {
+                    val obj = jsonArray.getJSONObject(i)
+                    if (obj.getInt("id") == alarmId) {
+                        val jsonRepeat = obj.optJSONArray("repeatDays")
+                        if (jsonRepeat != null && jsonRepeat.length() == 7) {
+                            for (j in 0 until 7) {
+                                repeatDays[j] = jsonRepeat.getBoolean(j)
+                            }
+                            updateRepeatDaysUI() // 更新 UI
+                        }
+                        break
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        // 若不在编辑模式则保持默认全选状态
+
+        // 获取传入的闹钟信息（时间、铃声等）
         val alarmTime = intent.getLongExtra("alarm_time", -1L)
         selectedRingtoneUri = intent.getStringExtra("ringtone_uri")
-        
-        // 获取重复日期设置
-        val repeatDaysArray = intent.getBooleanArrayExtra("repeat_days")
-        if (repeatDaysArray != null && repeatDaysArray.size == 7) {
-            System.arraycopy(repeatDaysArray, 0, repeatDays, 0, 7)
-            updateRepeatDaysUI()
-        }
-        
         if (alarmTime != -1L) {
-            // 设置时间选择器的初始值
             val calendar = Calendar.getInstance().apply {
                 timeInMillis = alarmTime
             }
             timePicker.hour = calendar.get(Calendar.HOUR_OF_DAY)
             timePicker.minute = calendar.get(Calendar.MINUTE)
-            
-            // 更新标题
             supportActionBar?.title = "编辑闹钟"
         }
-
-        // 更新铃声名称显示
         updateRingtoneText()
     }
 
