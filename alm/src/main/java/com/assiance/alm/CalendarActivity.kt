@@ -67,7 +67,7 @@ class CalendarActivity : AppCompatActivity() {
             } else {
                  AlertDialog.Builder(this)
                      .setTitle("删除历史记录")
-                     .setMessage("确定删除该历史记录吗？")
+                     .setMessage("确定删除该历史记录吗？(对应存在的待办和闹钟也会删除)")
                      .setPositiveButton("删除") { dialog, _ ->
                          when (historyItem) {
                              is HistoryAdapter.HistoryItem.AlarmItem -> {
