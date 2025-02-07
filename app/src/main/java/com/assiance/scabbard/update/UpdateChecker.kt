@@ -16,7 +16,7 @@ class UpdateChecker {
         private const val GITHUB_API_URL = "https://api.github.com/repos/Assianc/Scabbard/releases/latest"
         const val LANZOU_DOWNLOAD_URL = "https://assiance.lanzoub.com/b00y9rfbud"
         const val LANZOU_PASSWORD = "7rwd"
-        const val LANZOU_VERSION = "4.2.1"
+        const val LANZOU_VERSION = "4.2.2"
     }
 
     data class UpdateInfo(
