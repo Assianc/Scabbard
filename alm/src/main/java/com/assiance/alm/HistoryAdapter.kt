@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.Date
 
 class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val items = mutableListOf<HistoryItem>()
@@ -32,6 +33,7 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         val todoDescription: TextView = view.findViewById(R.id.todoDescription)
         val todoStatus: TextView = view.findViewById(R.id.todoStatus)
         val timeText: TextView = view.findViewById(R.id.timeText)
+        val dueTimeText: TextView = view.findViewById(R.id.todoDueTime)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -81,6 +83,17 @@ class HistoryAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 }
                 holder.timeText.text = timeText
                 holder.timeText.visibility = if (timeText.isEmpty()) View.GONE else View.VISIBLE
+
+                // 新增：显示截止时间（dueTime）逻辑
+                if (todo.dueTime != null && todo.dueTime > 0) {
+                    // 如果存在截止时间，则显示并格式化展示
+                    holder.dueTimeText.visibility = View.VISIBLE
+                    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    holder.dueTimeText.text = "截止: " + sdf.format(Date(todo.dueTime))
+                } else {
+                    // 没有截止时间，则隐藏该控件
+                    holder.dueTimeText.visibility = View.GONE
+                }
             }
         }
     }
