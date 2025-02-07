@@ -6,6 +6,7 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- 对于 Android 13 及以上版本，需要添加照片选择权限 -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 

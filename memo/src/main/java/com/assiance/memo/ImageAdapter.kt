@@ -21,6 +21,7 @@ import java.io.File
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.media.MediaPlayer
 
 class ImageAdapter(
     private val context: Context,
@@ -48,19 +49,29 @@ class ImageAdapter(
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
         val path = imagePaths[position]
-        Log.d("ImageAdapter", "正在加载图片路径: $path")
-
-        loadImage(holder.imageView, path)
-
-        if (isEditMode) {
-            holder.imageView.setOnLongClickListener {
-                onLongClick(position)
-                true
+        
+        if (path.startsWith("audio:")) {
+            // 显示音频文件图标
+            holder.imageView.setImageResource(R.drawable.ic_audio_file)
+                
+            // 点击播放音频
+            holder.imageView.setOnClickListener {
+                playAudio(path.substring(6))
             }
-        }
+        } else {
+            // 原有的图片加载逻辑
+            loadImage(holder.imageView, path)
+            
+            if (isEditMode) {
+                holder.imageView.setOnLongClickListener {
+                    onLongClick(position)
+                    true
+                }
+            }
 
-        holder.imageView.setOnClickListener {
-            showFullImage(path)
+            holder.imageView.setOnClickListener {
+                showFullImage(path)
+            }
         }
     }
 
@@ -120,6 +131,25 @@ class ImageAdapter(
 
         val dialog = PhotoViewDialog(context, imagePath)
         dialog.show()
+    }
+
+    private fun playAudio(audioPath: String) {
+        try {
+            val mediaPlayer = MediaPlayer()
+            mediaPlayer.setDataSource(audioPath)
+            mediaPlayer.prepare()
+            mediaPlayer.start()
+            
+            // 播放完成后释放资源
+            mediaPlayer.setOnCompletionListener {
+                it.release()
+            }
+            
+            Toast.makeText(context, "正在播放录音...", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(context, "音频播放失败", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun getItemCount() = imagePaths.size

@@ -3,6 +3,7 @@ package com.assiance.memo
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -23,9 +24,15 @@ class AddMemoActivity : AppCompatActivity() {
     private val imagePaths = mutableListOf<String>()
     private lateinit var imageAdapter: ImageAdapter
     private lateinit var pickImageLauncher: ActivityResultLauncher<Intent>
+    private var isRecordingMode = false
+    private var mediaRecorder: MediaRecorder? = null
+    private var isRecording = false
+    private var audioFilePath: String? = null
+    private var recordingStartTime: Long = 0
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 100
+        private const val RECORD_AUDIO_PERMISSION_CODE = 101
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,11 +97,115 @@ class AddMemoActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         binding.addImageButton.setOnClickListener {
-            checkPermissionAndOpenPicker()
+            if (!isRecordingMode) {
+                checkPermissionAndOpenPicker()
+            } else {
+                startRecording()
+            }
+        }
+
+        binding.addImageButton.setOnLongClickListener {
+            toggleRecordingMode()
+            true
         }
 
         binding.buttonSave.setOnClickListener {
             saveMemo()
+        }
+    }
+
+    private fun toggleRecordingMode() {
+        isRecordingMode = !isRecordingMode
+        if (isRecordingMode) {
+            // 切换到录音模式: 设置录音图标，并检查录音权限
+            binding.addImageButton.setImageResource(android.R.drawable.ic_btn_speak_now)
+            checkRecordPermission()
+            Toast.makeText(this, "录音模式已启用", Toast.LENGTH_SHORT).show()
+        } else {
+            // 切换回照片模式: 设置相机图标
+            binding.addImageButton.setImageResource(android.R.drawable.ic_menu_camera)
+            if (isRecording) {
+                // 如果当前正在录音，则停止录音
+                stopRecording()
+            }
+            Toast.makeText(this, "照片模式已启用", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun checkRecordPermission() {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                RECORD_AUDIO_PERMISSION_CODE
+            )
+        }
+    }
+
+    private fun startRecording() {
+        if (isRecording) {
+            stopRecording()
+            return
+        }
+
+        try {
+            val fileName = "audio_${System.currentTimeMillis()}.mp3"
+            val audioFile = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
+            audioFilePath = audioFile.absolutePath
+
+            mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(this)
+            } else {
+                MediaRecorder()
+            }
+
+            mediaRecorder?.apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setOutputFile(audioFilePath)
+                prepare()
+                start()
+            }
+
+            isRecording = true
+            recordingStartTime = System.currentTimeMillis()
+            binding.addImageButton.setImageResource(android.R.drawable.ic_media_pause)
+            
+            // 显示录音提示
+            Toast.makeText(this, "开始录音...", Toast.LENGTH_SHORT).show()
+            
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "录音失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun stopRecording() {
+        if (!isRecording) return
+
+        try {
+            mediaRecorder?.apply {
+                stop()
+                release()
+            }
+            mediaRecorder = null
+            isRecording = false
+            
+            // 计算录音时长
+            val duration = (System.currentTimeMillis() - recordingStartTime) / 1000
+            Toast.makeText(this, "录音完成，时长: ${duration}秒", Toast.LENGTH_SHORT).show()
+            
+            // 将录音文件路径添加到列表
+            audioFilePath?.let { path ->
+                imagePaths.add("audio:$path")
+                imageAdapter.notifyItemInserted(imagePaths.size - 1)
+            }
+            
+            binding.addImageButton.setImageResource(android.R.drawable.ic_btn_speak_now)
+            
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "停止录音失败", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -144,11 +255,20 @@ class AddMemoActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                openImagePicker()
-            } else {
-                Toast.makeText(this, "需要存储权限才能选择图片", Toast.LENGTH_SHORT).show()
+        when (requestCode) {
+            PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    openImagePicker()
+                } else {
+                    Toast.makeText(this, "需要存储权限才能选择图片", Toast.LENGTH_SHORT).show()
+                }
+            }
+            RECORD_AUDIO_PERMISSION_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "需要录音权限才能录制音频", Toast.LENGTH_SHORT).show()
+                    isRecordingMode = false
+                    binding.addImageButton.setImageResource(android.R.drawable.ic_menu_camera)
+                }
             }
         }
     }
@@ -159,5 +279,10 @@ class AddMemoActivity : AppCompatActivity() {
 
         memoDAO.insertMemo(title, content, imagePaths)
         finish()
+    }
+
+    override fun onDestroy() {
+        stopRecording()
+        super.onDestroy()
     }
 }

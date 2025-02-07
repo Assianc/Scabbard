@@ -34,6 +34,10 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.view.animation.DecelerateInterpolator
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import android.media.MediaRecorder
+import android.os.Environment
+import java.io.File
+import java.io.FileOutputStream
 
 class MemoDetailActivity : AppCompatActivity() {
     private lateinit var titleEditText: EditText
@@ -70,6 +74,11 @@ class MemoDetailActivity : AppCompatActivity() {
     private lateinit var titleFontSizeInput: EditText
     private lateinit var contentFontSizeInput: EditText
     private lateinit var pickImageLauncher: ActivityResultLauncher<Intent>
+    private var isRecordingMode = false
+    private var mediaRecorder: MediaRecorder? = null
+    private var isRecording = false
+    private var audioFilePath: String? = null
+    private var recordingStartTime: Long = 0L
 
     companion object {
         private val FONTS = mutableListOf<Typeface>()
@@ -99,6 +108,7 @@ class MemoDetailActivity : AppCompatActivity() {
         )
 
         private const val HISTORY_REQUEST_CODE = 100
+        const val RECORD_AUDIO_PERMISSION_CODE = 101
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -129,16 +139,7 @@ class MemoDetailActivity : AppCompatActivity() {
         initializeViews()
 
         // 初始化 ActivityResultLauncher
-        pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val selectedImageUri = result.data?.data
-                selectedImageUri?.let { uri ->
-                    val path = getRealPathFromURI(uri)
-                    imagePaths.add(path)
-                    imageAdapter.notifyItemInserted(imagePaths.size - 1)
-                }
-            }
-        }
+        setupImagePicker()
 
         // 获取传递过来的数据
         memoId = intent.getIntExtra("memo_id", -1)
@@ -185,11 +186,20 @@ class MemoDetailActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                // 权限已授予，可以访问存储
-            } else {
-                Toast.makeText(this, "读取外部存储权限被拒绝，无法加载图片。", Toast.LENGTH_SHORT).show()
+        when (requestCode) {
+            PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    openImagePicker()
+                } else {
+                    Toast.makeText(this, "需要存储权限才能选择图片", Toast.LENGTH_SHORT).show()
+                }
+            }
+            RECORD_AUDIO_PERMISSION_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "需要录音权限才能录制音频", Toast.LENGTH_SHORT).show()
+                    isRecordingMode = false
+                    addImageButton.setImageResource(android.R.drawable.ic_menu_camera)
+                }
             }
         }
     }
@@ -256,7 +266,15 @@ class MemoDetailActivity : AppCompatActivity() {
 
         // 添加图片按钮点击事件
         addImageButton.setOnClickListener {
-            openImagePicker()
+            if (!isRecordingMode) {
+                checkPermissionAndOpenPicker()
+            } else {
+                startRecording()
+            }
+        }
+        addImageButton.setOnLongClickListener {
+            toggleRecordingMode()
+            true
         }
         // 初始化图片列表
         imageAdapter = ImageAdapter(
@@ -533,24 +551,140 @@ class MemoDetailActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun openImagePicker() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Android 13 及以上版本
-            if (checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES), PERMISSION_REQUEST_CODE)
-                return
-            }
-        } else {
-            // Android 13 以下版本
-            if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSION_REQUEST_CODE)
-                return
+    private fun setupImagePicker() {
+        pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val selectedImageUri = result.data?.data
+                if (selectedImageUri != null) {
+                    handleSelectedImage(selectedImageUri)
+                } else {
+                    Toast.makeText(this, "未能获取所选图片", Toast.LENGTH_SHORT).show()
+                }
             }
         }
+    }
 
-        // 如果已经有权限，打开图片选择器
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        pickImageLauncher.launch(intent)
+    private fun handleSelectedImage(uri: Uri) {
+        try {
+            val fileName = "image_${System.currentTimeMillis()}.jpg"
+            val destinationFile = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), fileName)
+            contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(destinationFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            val path = destinationFile.absolutePath
+            imagePaths.add(path)
+            imageAdapter.notifyItemInserted(imagePaths.size - 1)
+        } catch (e: Exception) {
+            Toast.makeText(this, "无法处理所选图片", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun toggleRecordingMode() {
+        isRecordingMode = !isRecordingMode
+        if (isRecordingMode) {
+            addImageButton.setImageResource(android.R.drawable.ic_btn_speak_now)
+            checkRecordPermission()
+            Toast.makeText(this, "录音模式已启用", Toast.LENGTH_SHORT).show()
+        } else {
+            addImageButton.setImageResource(android.R.drawable.ic_menu_camera)
+            if (isRecording) {
+                stopRecording()
+            }
+            Toast.makeText(this, "照片模式已启用", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun checkRecordPermission() {
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), RECORD_AUDIO_PERMISSION_CODE)
+        }
+    }
+
+    private fun startRecording() {
+        if (isRecording) {
+            stopRecording()
+            return
+        }
+        try {
+            val fileName = "audio_${System.currentTimeMillis()}.mp3"
+            val audioFile = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
+            audioFilePath = audioFile.absolutePath
+
+            mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(this)
+            } else {
+                MediaRecorder()
+            }
+            mediaRecorder?.apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setOutputFile(audioFilePath)
+                prepare()
+                start()
+            }
+            isRecording = true
+            recordingStartTime = System.currentTimeMillis()
+            addImageButton.setImageResource(android.R.drawable.ic_media_pause)
+            Toast.makeText(this, "开始录音...", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "录音失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun stopRecording() {
+        if (!isRecording) return
+        try {
+            mediaRecorder?.apply {
+                stop()
+                release()
+            }
+            mediaRecorder = null
+            isRecording = false
+            val duration = (System.currentTimeMillis() - recordingStartTime) / 1000
+            Toast.makeText(this, "录音完成，时长: ${duration}秒", Toast.LENGTH_SHORT).show()
+            audioFilePath?.let { path ->
+                imagePaths.add("audio:$path")
+                imageAdapter.notifyItemInserted(imagePaths.size - 1)
+            }
+            addImageButton.setImageResource(android.R.drawable.ic_btn_speak_now)
+        } catch (e: Exception) {
+            Toast.makeText(this, "停止录音失败", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun checkPermissionAndOpenPicker() {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            android.Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        when {
+            checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED -> {
+                openImagePicker()
+            }
+            shouldShowRequestPermissionRationale(permission) -> {
+                Toast.makeText(this, "需要存储权限才能选择图片", Toast.LENGTH_LONG).show()
+                requestPermissions(arrayOf(permission), PERMISSION_REQUEST_CODE)
+            }
+            else -> requestPermissions(arrayOf(permission), PERMISSION_REQUEST_CODE)
+        }
+    }
+
+    private fun openImagePicker() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "image/*"
+            addCategory(Intent.CATEGORY_OPENABLE)
+            putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+            putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*"))
+        }
+        try {
+            pickImageLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "无法启动图片选择器", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun getRealPathFromURI(uri: Uri): String {
@@ -817,5 +951,10 @@ class MemoDetailActivity : AppCompatActivity() {
                 // 更新其他UI元素...
             }
         }
+    }
+
+    override fun onDestroy() {
+        stopRecording()
+        super.onDestroy()
     }
 }
