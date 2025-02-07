@@ -210,11 +210,17 @@ class CalendarActivity : AppCompatActivity() {
         historyItems.addAll(todos.map { HistoryAdapter.HistoryItem.TodoItem(it) })
         
         // 修改排序逻辑，考虑完成时间
-        historyItems.sortBy { item ->
-            when (item) {
-                is HistoryAdapter.HistoryItem.AlarmItem -> item.alarm.timeInMillis
+        historyItems.sortWith(compareBy({ 
+            // 第一个排序键：待办为 0，闹铃为 1
+            when (it) {
+                is HistoryAdapter.HistoryItem.TodoItem -> 0
+                is HistoryAdapter.HistoryItem.AlarmItem -> 1
+            }
+        }, {
+            // 第二个排序键：各自的时间属性
+            when (it) {
                 is HistoryAdapter.HistoryItem.TodoItem -> {
-                    val todo = item.todo
+                    val todo = it.todo
                     when {
                         todo.isCompleted -> todo.completedTime ?: todo.dueTime ?: Long.MAX_VALUE
                         todo.startTime != null -> todo.startTime
@@ -222,8 +228,9 @@ class CalendarActivity : AppCompatActivity() {
                         else -> System.currentTimeMillis()
                     }
                 }
+                is HistoryAdapter.HistoryItem.AlarmItem -> it.alarm.timeInMillis
             }
-        }
+        }))
 
         // 更新适配器
         historyAdapter.updateItems(historyItems)
