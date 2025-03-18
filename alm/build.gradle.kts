@@ -9,7 +9,9 @@ android {
 
     defaultConfig {
         minSdk = 24
-        targetSdk = 34
+        lint {
+            targetSdk = 34
+        }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -34,9 +36,9 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
+    implementation(libs.core.ktx.v1101)
+    implementation(libs.appcompat.v161)
+    implementation(libs.material.v1110)
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     
     // 添加以下依赖以确保 Material Design 组件正常工作

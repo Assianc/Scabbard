@@ -1,21 +1,18 @@
 package com.assiance.alm
 
-import android.app.AlertDialog
-import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.Switch
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.google.android.material.materialswitch.MaterialSwitch
 
 class AlarmAdapter(
     private var alarms: List<AlarmData>,
@@ -27,7 +24,7 @@ class AlarmAdapter(
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val timeText: TextView = view.findViewById(R.id.alarmTimeText)
         val repeatText: TextView = view.findViewById(R.id.alarmRepeatText)
-        val enableSwitch: Switch = view.findViewById(R.id.alarmEnableSwitch)
+        val enableSwitch: MaterialSwitch = view.findViewById(R.id.alarmEnableSwitch)
         val cardView: View = view
     }
 
@@ -84,7 +81,7 @@ class AlarmAdapter(
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 // 不在这里处理删除，而是在 onChildDraw 中处理
                 // 重置 item 位置
-                notifyItemChanged(viewHolder.adapterPosition)
+                notifyItemChanged(viewHolder.bindingAdapterPosition)
             }
 
             override fun onChildDraw(
@@ -132,7 +129,7 @@ class AlarmAdapter(
                     // 当滑动超过阈值时触发删除
                     if (!swipeBack && Math.abs(limitedDX) >= maxSwipeDistance * 0.75f) {
                         swipeBack = true
-                        val position = viewHolder.adapterPosition
+                        val position = viewHolder.bindingAdapterPosition
                         val alarm = alarms[position]
                         onDeleteClick(alarm)
                     }

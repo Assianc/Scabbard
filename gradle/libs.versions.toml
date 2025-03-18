@@ -5,6 +5,7 @@ appcompatVersion = "1.7.0"
 coreKtxVersion = "1.15.0"
 fragmentKtx = "1.8.5"
 glide = "4.16.0"
+googleMaterial = "1.11.0"
 gson = "2.10.1"
 immersionbar = "3.2.2"
 immersionbarVersion = "3.2.2"
@@ -40,6 +41,7 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+material-v1110 = { module = "com.google.android.material:material", version.ref = "googleMaterial" }
 material-v190 = { module = "com.google.android.material:material", version.ref = "materialVersion" }
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 xxpermissions = { module = "com.hjq:xxpermissions", version.ref = "xxpermissions" }
