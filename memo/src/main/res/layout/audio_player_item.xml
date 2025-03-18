@@ -46,6 +46,10 @@
         android:layout_marginHorizontal="8dp"
         android:progressDrawable="@drawable/custom_seekbar"
         android:thumb="@drawable/custom_thumb"
+        android:paddingStart="0dp"
+        android:paddingEnd="0dp"
+        android:minHeight="4dp"
+        android:maxHeight="4dp"
         app:layout_constraintStart_toEndOf="@id/currentTimeText"
         app:layout_constraintEnd_toStartOf="@id/totalTimeText"
         app:layout_constraintTop_toTopOf="parent"/>
@@ -54,7 +58,7 @@
         android:id="@+id/waveformView"
         android:layout_width="0dp"
         android:layout_height="32dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="12dp"
         app:layout_constraintTop_toBottomOf="@id/seekBar"
         app:layout_constraintStart_toStartOf="@id/currentTimeText"
         app:layout_constraintEnd_toEndOf="parent"/>
