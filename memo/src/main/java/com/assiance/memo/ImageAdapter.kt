@@ -27,6 +27,7 @@ import android.widget.SeekBar
 import android.os.Handler
 import android.os.Looper
 import android.widget.TextView
+import android.animation.Animator
 
 class ImageAdapter(
     private val context: Context,
@@ -183,7 +184,7 @@ class ImageAdapter(
             
             currentPlayingPosition = holder.adapterPosition
             holder.playPauseButton.setImageResource(R.drawable.ic_pause)
-            holder.waveformView.startAnimation()
+            holder.waveformView.setPlaying(true)
             startSeekBarUpdate(holder)
             
         } catch (e: Exception) {
@@ -195,7 +196,7 @@ class ImageAdapter(
     private fun pausePlayback(holder: AudioViewHolder) {
         currentMediaPlayer?.pause()
         holder.playPauseButton.setImageResource(R.drawable.ic_play)
-        holder.waveformView.stopAnimation()
+        holder.waveformView.setPlaying(false)
         updateSeekBarRunnable?.let { updateSeekBarHandler.removeCallbacks(it) }
     }
 
@@ -224,6 +225,7 @@ class ImageAdapter(
                 currentMediaPlayer?.let { player ->
                     holder.seekBar.progress = player.currentPosition
                     holder.currentTimeText.text = formatTime(player.currentPosition)
+                    holder.waveformView.updateWaveform()
                     updateSeekBarHandler.postDelayed(this, 100)
                 }
             }

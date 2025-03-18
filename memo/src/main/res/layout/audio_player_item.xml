@@ -3,15 +3,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16dp"
-    android:background="@drawable/gradient_background_audio">
+    android:padding="12dp"
+    android:layout_marginVertical="8dp"
+    android:layout_marginHorizontal="16dp"
+    android:background="@drawable/gradient_background_audio"
+    android:elevation="4dp">
 
     <ImageButton
         android:id="@+id/playPauseButton"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_play"
+        android:contentDescription="播放/暂停"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
@@ -21,32 +25,35 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="00:00"
-        android:layout_marginStart="16dp"
+        android:textColor="#333333"
+        android:layout_marginStart="12dp"
         app:layout_constraintStart_toEndOf="@id/playPauseButton"
-        app:layout_constraintBottom_toBottomOf="parent"/>
-
-    <SeekBar
-        android:id="@+id/seekBar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="8dp"
-        app:layout_constraintStart_toEndOf="@id/currentTimeText"
-        app:layout_constraintEnd_toStartOf="@id/totalTimeText"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <TextView
         android:id="@+id/totalTimeText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="00:00"
+        android:textColor="#333333"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <SeekBar
+        android:id="@+id/seekBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
+        android:progressDrawable="@drawable/custom_seekbar"
+        android:thumb="@drawable/custom_thumb"
+        app:layout_constraintStart_toEndOf="@id/currentTimeText"
+        app:layout_constraintEnd_toStartOf="@id/totalTimeText"
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <com.assiance.memo.AudioWaveView
         android:id="@+id/waveformView"
         android:layout_width="0dp"
-        android:layout_height="40dp"
+        android:layout_height="32dp"
         android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@id/seekBar"
         app:layout_constraintStart_toStartOf="@id/currentTimeText"

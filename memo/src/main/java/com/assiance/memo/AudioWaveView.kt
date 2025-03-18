@@ -3,12 +3,14 @@ package com.assiance.memo
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
 import java.util.Random
-import android.animation.ValueAnimator
-import android.view.animation.LinearInterpolator
+import kotlin.math.min
 
 class AudioWaveView @JvmOverloads constructor(
     context: Context,
@@ -17,79 +19,102 @@ class AudioWaveView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private val paint = Paint().apply {
-        color = Color.BLUE
-        strokeWidth = 5f
         isAntiAlias = true
     }
-
+    
+    private val barWidth = 4f
+    private val barSpace = 2f
+    private var amplitudes = floatArrayOf()
     private val random = Random()
-    private var amplitudes = FloatArray(30) { 0f }
-    private var animator: ValueAnimator? = null
     private var isPlaying = false
+    private val rect = RectF()
+    
+    // 渐变颜色数组
+    private val startColor = Color.parseColor("#4CAF50")  // 绿色
+    private val midColor = Color.parseColor("#2196F3")    // 蓝色
+    private val endColor = Color.parseColor("#9C27B0")    // 紫色
 
     init {
-        // 初始化波形数据
-        updateAmplitudes()
+        // 初始化一些随机振幅值
+        generateRandomAmplitudes(50)
     }
 
-    private fun updateAmplitudes() {
-        for (i in amplitudes.indices) {
-            amplitudes[i] = random.nextFloat() * 0.8f + 0.2f // 生成0.2到1.0之间的随机数
+    fun setAmplitudes(newAmplitudes: FloatArray) {
+        amplitudes = newAmplitudes
+        invalidate()
+    }
+    
+    fun setPlaying(playing: Boolean) {
+        isPlaying = playing
+        if (playing) {
+            // 播放时实时更新波形
+            postInvalidateOnAnimation()
         }
+    }
+
+    private fun generateRandomAmplitudes(count: Int) {
+        amplitudes = FloatArray(count) { random.nextFloat() }
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         
-        val width = width.toFloat()
-        val height = height.toFloat()
-        val barWidth = width / (amplitudes.size * 2f)
+        if (amplitudes.isEmpty()) return
+        
+        val centerY = height / 2f
+        val maxBarHeight = height * 0.8f
+        
+        var startX = paddingLeft.toFloat()
         
         for (i in amplitudes.indices) {
-            val amplitude = amplitudes[i] * height / 2
-            val startX = width / 2 + (i * barWidth * 2)
-            val startY = height / 2 + amplitude
-            val stopY = height / 2 - amplitude
-            
-            // 绘制右侧
-            canvas.drawLine(startX, height / 2, startX, stopY, paint)
-            
-            // 绘制左侧对称部分
-            val leftX = width / 2 - (i * barWidth * 2)
-            canvas.drawLine(leftX, height / 2, leftX, stopY, paint)
-        }
-    }
-
-    fun startAnimation() {
-        stopAnimation()
-        isPlaying = true
-        animator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 200
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.REVERSE
-            interpolator = LinearInterpolator()
-            
-            addUpdateListener {
-                if (isPlaying) {
-                    updateAmplitudes()
-                    invalidate()
-                }
+            // 如果正在播放，为每个条形生成新的随机高度
+            val amplitude = if (isPlaying) {
+                0.2f + 0.8f * random.nextFloat() // 确保最小高度
+            } else {
+                amplitudes[i]
             }
-            start()
+            
+            val barHeight = maxBarHeight * amplitude
+            
+            // 为每个条创建垂直渐变
+            val shader = LinearGradient(
+                startX, 
+                centerY - barHeight / 2,
+                startX, 
+                centerY + barHeight / 2,
+                intArrayOf(startColor, midColor, endColor),
+                null,
+                Shader.TileMode.CLAMP
+            )
+            paint.shader = shader
+            
+            rect.set(
+                startX,
+                centerY - barHeight / 2,
+                startX + barWidth,
+                centerY + barHeight / 2
+            )
+            
+            // 绘制圆角矩形
+            canvas.drawRoundRect(rect, 2f, 2f, paint)
+            
+            startX += barWidth + barSpace
+            
+            // 如果超出视图宽度，停止绘制
+            if (startX > width - paddingRight) break
+        }
+        
+        // 如果正在播放，继续请求重绘以实现动画效果
+        if (isPlaying) {
+            postInvalidateDelayed(50) // 更快的刷新率，更流畅的动画
         }
     }
-
-    fun stopAnimation() {
-        isPlaying = false
-        animator?.cancel()
-        animator = null
-        // 重置波形
-        amplitudes.fill(0.2f)
-        invalidate()
-    }
-
-    override fun onDetachedFromWindow() {
-        stopAnimation()
-        super.onDetachedFromWindow()
+    
+    // 更新波形数据的方法
+    fun updateWaveform() {
+        if (isPlaying) {
+            generateRandomAmplitudes((width / (barWidth + barSpace)).toInt())
+            invalidate()
+        }
     }
 } 
