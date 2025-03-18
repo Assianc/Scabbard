@@ -34,7 +34,7 @@ class AudioPlayerAdapter(private val audioFiles: List<File>) :
                     val currentPosition = mediaPlayer!!.currentPosition
                     seekBar.progress = currentPosition
                     currentTimeText.text = formatTime(currentPosition.toLong())
-                    waveformView.updateWaveform()
+                    waveformView.updateWaveform(mediaPlayer)
                     handler.postDelayed(this, 50) // 更快的更新频率
                 }
             }
@@ -44,6 +44,9 @@ class AudioPlayerAdapter(private val audioFiles: List<File>) :
             try {
                 // 设置初始状态
                 playPauseButton.setImageResource(R.drawable.ic_play)
+                
+                // 设置音频文件路径到波形视图
+                waveformView.setAudioFilePath(audioFile.absolutePath)
                 
                 // 设置总时长（需要临时创建MediaPlayer来获取）
                 val tempPlayer = MediaPlayer().apply {
@@ -86,6 +89,7 @@ class AudioPlayerAdapter(private val audioFiles: List<File>) :
                         if (fromUser && mediaPlayer != null) {
                             mediaPlayer?.seekTo(progress)
                             currentTimeText.text = formatTime(progress.toLong())
+                            waveformView.updateWaveform(mediaPlayer)
                         }
                     }
                     
@@ -145,6 +149,11 @@ class AudioPlayerAdapter(private val audioFiles: List<File>) :
                 setDataSource(audioFile.absolutePath)
                 prepare()
                 start()
+                
+                // 设置波形可视化
+                val viewHolder = getViewHolderForPosition(currentPlayingPosition)
+                viewHolder?.waveformView?.setupWithMediaPlayer(this)
+                
                 setOnCompletionListener {
                     notifyItemChanged(currentPlayingPosition)
                     currentPlayingPosition = -1
@@ -156,6 +165,23 @@ class AudioPlayerAdapter(private val audioFiles: List<File>) :
             e.printStackTrace()
             // 处理播放错误
             currentPlayingPosition = -1
+        }
+    }
+    
+    private fun getViewHolderForPosition(position: Int): AudioViewHolder? {
+        return if (position != -1) {
+            val recyclerView = getRecyclerView()
+            recyclerView?.findViewHolderForAdapterPosition(position) as? AudioViewHolder
+        } else null
+    }
+    
+    private fun getRecyclerView(): RecyclerView? {
+        return try {
+            val field = RecyclerView.Adapter::class.java.getDeclaredField("mRecyclerView")
+            field.isAccessible = true
+            field.get(this) as? RecyclerView
+        } catch (e: Exception) {
+            null
         }
     }
     
