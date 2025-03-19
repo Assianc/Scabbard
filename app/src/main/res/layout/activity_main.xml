@@ -4,13 +4,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/gradient_background"
-    android:padding="16dp">
+    android:paddingTop="55dp">
 
     <!-- 现有的 Spinner -->
     <Spinner
         android:id="@+id/classificationSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"/>
 
     <!-- 添加渐变分隔线 -->
