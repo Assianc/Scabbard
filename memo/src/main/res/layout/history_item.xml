@@ -39,6 +39,17 @@
             android:maxLines="3"
             android:textColor="#333333"
             android:textSize="14sp" />
+            
+        <TextView
+            android:id="@+id/media_notice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="此处图文和音频不支持历史记录查阅"
+            android:textColor="#FF5722"
+            android:textStyle="italic"
+            android:visibility="gone"
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/restore_button"

@@ -41,8 +41,28 @@ class MemoAdapter(
         holder.titleTextView.text = memo.title
         holder.updateTimeTextView.text = "上次更新: ${memo.updateTime}"
 
-        holder.imageTextIndicator.visibility = 
-            if (memo.imagePaths.isNotEmpty()) View.VISIBLE else View.GONE
+        // 检查是否包含图片和音频
+        val hasImages = memo.imagePaths.any { !it.startsWith("audio:") }
+        val hasAudio = memo.imagePaths.any { it.startsWith("audio:") }
+        
+        // 设置指示器文本和可见性
+        when {
+            hasImages && hasAudio -> {
+                holder.imageTextIndicator.text = "（图文音频）"
+                holder.imageTextIndicator.visibility = View.VISIBLE
+            }
+            hasImages -> {
+                holder.imageTextIndicator.text = "（图文）"
+                holder.imageTextIndicator.visibility = View.VISIBLE
+            }
+            hasAudio -> {
+                holder.imageTextIndicator.text = "（音频）"
+                holder.imageTextIndicator.visibility = View.VISIBLE
+            }
+            else -> {
+                holder.imageTextIndicator.visibility = View.GONE
+            }
+        }
 
         val content = memo.content
         val displayContent = if (content.length > MAX_CONTENT_LENGTH) {
