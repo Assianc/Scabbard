@@ -18,6 +18,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.view.MotionEvent
+import android.view.View
 import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.ImageView
@@ -198,6 +200,9 @@ open class StartActivity : AppCompatActivity() {
 
         // 在应用启动时检查并请求权限
         checkAndRequestPermissions()
+
+        // 设置侧滑手势
+        setupSwipeGesture()
     }
 
     private fun setupGradientEffect(navTitle: TextView) {
@@ -510,6 +515,47 @@ open class StartActivity : AppCompatActivity() {
         
         // 设置菜单项的图标颜色为黑色
         navView.itemIconTintList = ColorStateList.valueOf(Color.BLACK)
+    }
+
+    // 添加侧滑手势支持
+    private fun setupSwipeGesture() {
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+        
+        // 创建触摸监听器
+        val touchListener = object : View.OnTouchListener {
+            private var startX = 0f
+            private val SWIPE_THRESHOLD = 100
+            private val SWIPE_VELOCITY_THRESHOLD = 100
+            
+            @SuppressLint("ClickableViewAccessibility")
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                when (event?.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        startX = event.x
+                        return true
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        val endX = event.x
+                        val distanceX = endX - startX
+                        
+                        // 如果是从左向右滑动，且距离足够大
+                        if (distanceX > SWIPE_THRESHOLD && Math.abs(distanceX) > SWIPE_VELOCITY_THRESHOLD) {
+                            // 打开侧边栏
+                            if (!drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                                drawerLayout.openDrawer(GravityCompat.START)
+                                return true
+                            }
+                        }
+                        return false
+                    }
+                }
+                return false
+            }
+        }
+        
+        // 将触摸监听器应用到主内容视图，而不是整个布局
+        val mainContent = findViewById<View>(R.id.main_content) // 确保你的布局中有这个ID
+        mainContent?.setOnTouchListener(touchListener)
     }
 }
 
