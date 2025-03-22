@@ -3,8 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:layout_height="match_parent">
 
     <!-- 主布局内容 -->
     <RelativeLayout
@@ -45,52 +44,52 @@
             android:id="@+id/start_button"
             android:layout_width="300dp"
             android:layout_height="wrap_content"
-            android:text="分 道"
-            android:textSize="18sp"
-            android:padding="16dp"
-            android:layout_margin="40dp"
-            android:textColor="@android:color/black"
             android:layout_centerInParent="true"
+            android:layout_margin="40dp"
             android:background="@drawable/transparent_button_with_black_border"
-            android:backgroundTint="@null" />
+            android:backgroundTint="@null"
+            android:padding="16dp"
+            android:text="分 道"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
 
         <!-- 使用渐变效果的分界线 -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1.5dp"
+            android:layout_below="@id/memo_button"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:layout_marginBottom="30dp"
-            android:layout_below="@id/memo_button"
             android:background="@drawable/line_divider_allocator" />
 
         <Button
             android:id="@+id/memo_button"
             android:layout_width="300dp"
             android:layout_height="wrap_content"
-            android:text="云端事"
             android:layout_above="@id/start_button"
-            android:textSize="18sp"
-            android:padding="16dp"
-            android:layout_margin="40dp"
-            android:textColor="@android:color/black"
             android:layout_centerInParent="true"
+            android:layout_margin="40dp"
             android:background="@drawable/transparent_button_with_black_border"
-            android:backgroundTint="@null" />
+            android:backgroundTint="@null"
+            android:padding="16dp"
+            android:text="云端事"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
 
         <Button
             android:id="@+id/alm_button"
             android:layout_width="300dp"
             android:layout_height="wrap_content"
-            android:text="冬去鸟鸣时"
             android:layout_below="@id/start_button"
-            android:textSize="18sp"
-            android:padding="16dp"
-            android:layout_margin="40dp"
-            android:textColor="@android:color/black"
             android:layout_centerInParent="true"
+            android:layout_margin="40dp"
             android:background="@drawable/transparent_button_with_black_border"
-            android:backgroundTint="@null" />
+            android:backgroundTint="@null"
+            android:padding="16dp"
+            android:text="冬去鸟鸣时"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
 
     </RelativeLayout>
 

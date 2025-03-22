@@ -38,17 +38,22 @@ class AlarmAdapter(
         val alarm = alarms[position]
         val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         holder.timeText.text = timeFormat.format(alarm.timeInMillis)
-        
+
         // 添加重复日期显示
         val repeatText = buildRepeatText(alarm.repeatDays)
         holder.repeatText.text = repeatText
-        
+
         holder.enableSwitch.setOnCheckedChangeListener(null)
+        // 设置默认文本
+        holder.enableSwitch.textOn = holder.enableSwitch.textOn ?: "开"
+        holder.enableSwitch.textOff = holder.enableSwitch.textOff ?: "关"
+        holder.enableSwitch.text = holder.enableSwitch.text ?: ""
+
         holder.enableSwitch.isChecked = alarm.isEnabled
         holder.enableSwitch.setOnCheckedChangeListener { _, isChecked ->
             onToggleClick(alarm, isChecked)
         }
-        
+
         holder.cardView.setOnLongClickListener {
             onDeleteClick(alarm)
             true
@@ -71,7 +76,7 @@ class AlarmAdapter(
             0, ItemTouchHelper.LEFT
         ) {
             private var swipeBack = false
-            
+
             override fun onMove(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder,
@@ -96,12 +101,12 @@ class AlarmAdapter(
                 val itemView = viewHolder.itemView
                 val deleteIcon = ContextCompat.getDrawable(itemView.context, R.drawable.ic_delete)
                 val background = ColorDrawable(Color.RED)
-                
+
                 if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
                     // 限制最大滑动距离为宽度的三分之一
                     val maxSwipeDistance = itemView.width / 3f
                     val limitedDX = dX.coerceIn(-maxSwipeDistance, 0f)
-                    
+
                     val alpha = 1.0f - Math.abs(limitedDX) / maxSwipeDistance
                     itemView.alpha = alpha
                     itemView.translationX = limitedDX
@@ -140,7 +145,10 @@ class AlarmAdapter(
                 // 不调用父类的 onChildDraw，完全自己控制绘制
             }
 
-            override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+            override fun clearView(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ) {
                 super.clearView(recyclerView, viewHolder)
                 viewHolder.itemView.alpha = 1.0f
                 swipeBack = false
@@ -152,8 +160,8 @@ class AlarmAdapter(
 
     private fun buildRepeatText(repeatDays: BooleanArray): String {
         val days = arrayOf("一", "二", "三", "四", "五", "六", "日")
-        val selectedDays = repeatDays.mapIndexed { index, selected -> 
-            if (selected) days[index] else null 
+        val selectedDays = repeatDays.mapIndexed { index, selected ->
+            if (selected) days[index] else null
         }.filterNotNull()
 
         return when {
