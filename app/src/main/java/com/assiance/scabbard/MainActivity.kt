@@ -15,19 +15,20 @@ import java.util.*
 
 class MainActivity : StartActivity() {
     private lateinit var binding: ActivityMainBinding
-    private var players: MutableList<String> = mutableListOf("示例元素1", "示例元素2", "示例元素3", "示例元素4")
+    private var players: MutableList<String> =
+        mutableListOf("示例元素1", "示例元素2", "示例元素3", "示例元素4")
     private var classificationType = 2 // 默认二分类
     private var selectedPlayers: MutableList<String> = mutableListOf()
     private var isTeamsAllocated = false // 标志是否已经进行过分类
     private lateinit var selectedPlayersText: TextView
     private lateinit var addPlayerLauncher: ActivityResultLauncher<Intent>
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        
+
         selectedPlayersText = findViewById(R.id.selectedPlayersText)
 
         // 初始化 ActivityResultLauncher
@@ -60,22 +61,28 @@ class MainActivity : StartActivity() {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.classificationSpinner.adapter = adapter
         // 设置Spinner的OnItemSelectedListener
-        binding.classificationSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                classificationType = when (parent.getItemAtPosition(position).toString()) {
-                    "二分类" -> 2
-                    "三分类" -> 3
-                    "四分类" -> 4
-                    else -> 2
+        binding.classificationSpinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    classificationType = when (parent.getItemAtPosition(position).toString()) {
+                        "二分类" -> 2
+                        "三分类" -> 3
+                        "四分类" -> 4
+                        else -> 2
+                    }
+                    // 更新分类视图
+                    updateClassificationViews()
                 }
-                // 更新分类视图
-                updateClassificationViews()
-            }
 
-            override fun onNothingSelected(parent: AdapterView<*>) {
-                classificationType = 2
+                override fun onNothingSelected(parent: AdapterView<*>) {
+                    classificationType = 2
+                }
             }
-        }
     }
 
     private fun setupButtons() {
@@ -108,6 +115,7 @@ class MainActivity : StartActivity() {
                 binding.teamAText.text = "区域 A: ${formatPlayerList(teamA)}"
                 binding.teamBText.text = "区域 B: ${formatPlayerList(teamB)}"
             }
+
             3 -> {
                 val (teamA, teamB, teamC) = shuffledPlayers.partitionToThree()
                 binding.teamAText.text = "区域 A: ${formatPlayerList(teamA)}"
@@ -115,6 +123,7 @@ class MainActivity : StartActivity() {
                 binding.teamCText.text = "区域 C: ${formatPlayerList(teamC)}"
                 binding.teamCText.visibility = View.VISIBLE
             }
+
             4 -> {
                 val (teamA, teamB, teamC, teamD) = shuffledPlayers.partitionToFour()
                 binding.teamAText.text = "区域 A: ${formatPlayerList(teamA)}"
@@ -158,7 +167,8 @@ class MainActivity : StartActivity() {
         val sizeFourth = size / 4
         val teamA = take(sizeFourth + if (size % 4 > 0) 1 else 0)
         val teamB = drop(teamA.size).take(sizeFourth + if ((size - teamA.size) % 3 > 0) 1 else 0)
-        val teamC = drop(teamA.size + teamB.size).take(sizeFourth + if ((size - teamA.size - teamB.size) % 2 > 0) 1 else 0)
+        val teamC =
+            drop(teamA.size + teamB.size).take(sizeFourth + if ((size - teamA.size - teamB.size) % 2 > 0) 1 else 0)
         val teamD = drop(teamA.size + teamB.size + teamC.size)
         return Quadruple(teamA, teamB, teamC, teamD)
     }

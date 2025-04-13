@@ -1,18 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.assiance.scabbard">
+    package="com.assiance.scabbard"
+    tools:ignore="SelectedPhotoAccess">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-    <uses-permission
-        android:name="android.permission.READ_MEDIA_IMAGES"
-        tools:ignore="SelectedPhotoAccess" />
-    <uses-permission
-        android:name="android.permission.READ_MEDIA_VIDEO"
-        tools:ignore="SelectedPhotoAccess" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -28,21 +25,21 @@
         android:name=".ScabbardApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/jianqiao14"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/scabbard14"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/jianqiao14"
+        android:largeHeap="true"
+        android:roundIcon="@mipmap/scabbard14"
         android:supportsRtl="true"
         android:theme="@style/Theme.Scabbard"
-        android:hardwareAccelerated="true"
-        android:largeHeap="true"
-        android:enableOnBackInvokedCallback="true"
-        tools:targetApi="31">
+        tools:targetApi="33">
 
         <!-- StartSplashActivity 作为主入口 -->
         <activity
             android:name=".StartSplashActivity"
-            android:exported="true"></activity>
+            android:exported="true" />
 
         <!-- Main Activities -->
         <activity
@@ -77,7 +74,7 @@
             android:name=".MainActivity.Default"
             android:enabled="true"
             android:exported="true"
-            android:icon="@mipmap/jianqiao14"
+            android:icon="@mipmap/scabbard14"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -90,7 +87,7 @@
             android:name=".MainActivity.IconAlternative1"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao11"
+            android:icon="@mipmap/scabbard11"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -103,7 +100,7 @@
             android:name=".MainActivity.IconAlternative2"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao12"
+            android:icon="@mipmap/scabbard12"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -116,7 +113,7 @@
             android:name=".MainActivity.IconAlternative3"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao13"
+            android:icon="@mipmap/scabbard13"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -129,7 +126,7 @@
             android:name=".MainActivity.IconAlternative4"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao14"
+            android:icon="@mipmap/scabbard14"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -142,7 +139,7 @@
             android:name=".MainActivity.IconAlternative5"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao15"
+            android:icon="@mipmap/scabbard15"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -155,7 +152,7 @@
             android:name=".MainActivity.IconAlternative6"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao16"
+            android:icon="@mipmap/scabbard16"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -168,7 +165,7 @@
             android:name=".MainActivity.IconAlternative7"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao17"
+            android:icon="@mipmap/scabbard17"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -181,7 +178,7 @@
             android:name=".MainActivity.IconAlternative8"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao21"
+            android:icon="@mipmap/scabbard21"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -194,7 +191,7 @@
             android:name=".MainActivity.IconAlternative9"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao22"
+            android:icon="@mipmap/scabbard22"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -207,7 +204,7 @@
             android:name=".MainActivity.IconAlternative10"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao23"
+            android:icon="@mipmap/scabbard23"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -220,7 +217,7 @@
             android:name=".MainActivity.IconAlternative11"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao24"
+            android:icon="@mipmap/scabbard24"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -233,7 +230,7 @@
             android:name=".MainActivity.IconAlternative12"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao25"
+            android:icon="@mipmap/scabbard25"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -246,7 +243,7 @@
             android:name=".MainActivity.IconAlternative13"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao26"
+            android:icon="@mipmap/scabbard26"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>
@@ -259,7 +256,7 @@
             android:name=".MainActivity.IconAlternative14"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/jianqiao27"
+            android:icon="@mipmap/scabbard27"
             android:label="@string/app_name"
             android:targetActivity=".StartSplashActivity">
             <intent-filter>

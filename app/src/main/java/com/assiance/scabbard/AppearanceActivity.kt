@@ -15,7 +15,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import com.assiance.scabbard.utils.GradientAnimManager
 import com.assiance.scabbard.utils.IconManager
-import android.app.Application
 import com.google.android.material.navigation.NavigationView
 import androidx.drawerlayout.widget.DrawerLayout
 

@@ -3,7 +3,6 @@ package com.assiance.scabbard
 import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -31,6 +30,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
 
 @SuppressLint("CustomSplashScreen")
 class StartSplashActivity : AppCompatActivity(), Animation.AnimationListener {
@@ -67,11 +67,11 @@ class StartSplashActivity : AppCompatActivity(), Animation.AnimationListener {
                 mIconView = iconView
                 mNameView = nameView
                 mDebugView = debugView
-                
+
                 // 初始化视图和数据
                 initView()
                 initData()
-                
+
                 mIconView.setImageResource(IconManager.getSplashIconResourceId(this@StartSplashActivity))
             }
         }
@@ -79,14 +79,14 @@ class StartSplashActivity : AppCompatActivity(), Animation.AnimationListener {
 
     private fun initView() {
         // 预先创建动画对象
-        val animations = lifecycleScope.launch(Dispatchers.Default) {
+        lifecycleScope.launch(Dispatchers.Default) {
             // 在后台线程准备所有动画
             val animations = prepareAnimations()
-            
+
             withContext(Dispatchers.Main) {
                 // 在主线程中应用动画
                 applyAnimations(animations)
-                
+
                 // 设置状态栏
                 setupStatusBar()
             }
@@ -112,8 +112,8 @@ class StartSplashActivity : AppCompatActivity(), Animation.AnimationListener {
             180f, 360f,
             Animation.RELATIVE_TO_SELF, 0.5f,
             Animation.RELATIVE_TO_SELF, 0.5f
-        ).apply { 
-            duration = ANIM_TIME 
+        ).apply {
+            duration = ANIM_TIME
         }
 
         return Triple(alphaAnimation, scaleAnimation, rotateAnimation)
@@ -168,7 +168,7 @@ class StartSplashActivity : AppCompatActivity(), Animation.AnimationListener {
                                                 // 蓝奏云链接使用浏览器打开
                                                 val intent = Intent(
                                                     Intent.ACTION_VIEW,
-                                                    Uri.parse(info.updateUrl)
+                                                    info.updateUrl.toUri()
                                                 )
                                                 startActivity(intent)
                                             } else {
@@ -218,7 +218,7 @@ class StartSplashActivity : AppCompatActivity(), Animation.AnimationListener {
     private fun startDownload(downloadUrl: String, version: String) {
         try {
             val fileName = "Scabbard-${version}.apk"
-            val request = DownloadManager.Request(Uri.parse(downloadUrl))
+            val request = DownloadManager.Request(downloadUrl.toUri())
                 .setTitle("下载更新")
                 .setDescription("正在下载 Scabbard $version")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)

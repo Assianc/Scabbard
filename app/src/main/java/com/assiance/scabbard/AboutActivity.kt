@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.net.Uri
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -19,6 +18,7 @@ import android.os.Build
 import android.view.animation.LinearInterpolator
 import androidx.annotation.RequiresApi
 import com.assiance.scabbard.utils.GradientAnimManager
+import androidx.core.net.toUri
 
 class AboutActivity : AppCompatActivity() {
     private lateinit var appIcon: ImageView
@@ -36,7 +36,7 @@ class AboutActivity : AppCompatActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.assiance.scabbard.ACTION_GRADIENT_CHANGED") {
                 val scabbardText = findViewById<TextView>(R.id.scabbard_title) ?: return
-                
+
                 // 更新主标题渐变
                 val paint = scabbardText.paint
                 val width = paint.measureText(scabbardText.text.toString())
@@ -145,7 +145,7 @@ class AboutActivity : AppCompatActivity() {
     }
 
     private fun openGitHub(username: String) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/$username"))
+        val intent = Intent(Intent.ACTION_VIEW, "https://github.com/$username".toUri())
         startActivity(intent)
     }
 

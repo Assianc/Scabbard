@@ -39,7 +39,7 @@
                     android:id="@+id/icon_1"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao11" />
+                    android:src="@mipmap/scabbard11" />
             </FrameLayout>
 
             <FrameLayout
@@ -51,7 +51,7 @@
                     android:id="@+id/icon_2"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao12" />
+                    android:src="@mipmap/scabbard12" />
             </FrameLayout>
 
             <FrameLayout
@@ -63,7 +63,7 @@
                     android:id="@+id/icon_3"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao13" />
+                    android:src="@mipmap/scabbard13" />
             </FrameLayout>
 
             <FrameLayout
@@ -75,7 +75,7 @@
                     android:id="@+id/icon_4"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao14" />
+                    android:src="@mipmap/scabbard14" />
             </FrameLayout>
 
             <FrameLayout
@@ -87,7 +87,7 @@
                     android:id="@+id/icon_5"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao15" />
+                    android:src="@mipmap/scabbard15" />
             </FrameLayout>
 
             <FrameLayout
@@ -99,7 +99,7 @@
                     android:id="@+id/icon_6"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao16" />
+                    android:src="@mipmap/scabbard16" />
             </FrameLayout>
 
             <FrameLayout
@@ -111,7 +111,7 @@
                     android:id="@+id/icon_7"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao17" />
+                    android:src="@mipmap/scabbard17" />
             </FrameLayout>
 
             <FrameLayout
@@ -123,7 +123,7 @@
                     android:id="@+id/icon_8"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao21" />
+                    android:src="@mipmap/scabbard21" />
             </FrameLayout>
 
             <FrameLayout
@@ -135,7 +135,7 @@
                     android:id="@+id/icon_9"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao22" />
+                    android:src="@mipmap/scabbard22" />
             </FrameLayout>
 
             <FrameLayout
@@ -147,7 +147,7 @@
                     android:id="@+id/icon_10"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao23" />
+                    android:src="@mipmap/scabbard23" />
             </FrameLayout>
 
             <FrameLayout
@@ -159,7 +159,7 @@
                     android:id="@+id/icon_11"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao24" />
+                    android:src="@mipmap/scabbard24" />
             </FrameLayout>
 
             <FrameLayout
@@ -171,7 +171,7 @@
                     android:id="@+id/icon_12"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao25" />
+                    android:src="@mipmap/scabbard25" />
             </FrameLayout>
 
             <FrameLayout
@@ -183,7 +183,7 @@
                     android:id="@+id/icon_13"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao26" />
+                    android:src="@mipmap/scabbard26" />
             </FrameLayout>
 
             <FrameLayout
@@ -195,7 +195,7 @@
                     android:id="@+id/icon_14"
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:src="@mipmap/jianqiao27" />
+                    android:src="@mipmap/scabbard27" />
             </FrameLayout>
 
         </LinearLayout>

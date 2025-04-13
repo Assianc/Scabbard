@@ -198,11 +198,8 @@ class UpdateChecker {
             return null
         }
 
-        val dialogContext = if (context is Activity) {
-            context
-        } else {
-            ContextThemeWrapper(context, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
-        }
+        val dialogContext = context as? Activity
+            ?: ContextThemeWrapper(context, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
 
         return try {
             val dialog = AlertDialog.Builder(dialogContext)

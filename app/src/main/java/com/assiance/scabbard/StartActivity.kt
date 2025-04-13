@@ -40,6 +40,8 @@ import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
+import androidx.core.graphics.drawable.toDrawable
 
 open class StartActivity : AppCompatActivity() {
 
@@ -397,7 +399,7 @@ open class StartActivity : AppCompatActivity() {
                 try {
                     if (isLanzou) {
                         // 蓝奏云链接使用浏览器打开
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.updateUrl))
+                        val intent = Intent(Intent.ACTION_VIEW, updateInfo.updateUrl.toUri())
                         startActivity(intent)
                     } else {
                         // GitHub 更新直接下载
@@ -415,7 +417,7 @@ open class StartActivity : AppCompatActivity() {
     private fun startDownload(downloadUrl: String, version: String) {
         try {
             val fileName = "Scabbard-${version}.apk"
-            val request = DownloadManager.Request(Uri.parse(downloadUrl))
+            val request = DownloadManager.Request(downloadUrl.toUri())
                 .setTitle("下载更新")
                 .setDescription("正在下载 Scabbard $version")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -508,7 +510,7 @@ open class StartActivity : AppCompatActivity() {
         headerLayout.background = gradientDrawable
         
         // 设置菜单项的背景色为透明
-        navView.itemBackground = ColorDrawable(Color.TRANSPARENT)
+        navView.itemBackground = Color.TRANSPARENT.toDrawable()
         
         // 设置菜单项的文字颜色为黑色
         navView.itemTextColor = ColorStateList.valueOf(Color.BLACK)

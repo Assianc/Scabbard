@@ -47,23 +47,25 @@ class AddMemoActivity : AppCompatActivity() {
     }
 
     private fun setupImagePicker() {
-        pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK) {
-                val selectedImageUri = result.data?.data
-                if (selectedImageUri != null) {
-                    handleSelectedImage(selectedImageUri)
-                } else {
-                    Toast.makeText(this, "未能获取所选图片", Toast.LENGTH_SHORT).show()
+        pickImageLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == RESULT_OK) {
+                    val selectedImageUri = result.data?.data
+                    if (selectedImageUri != null) {
+                        handleSelectedImage(selectedImageUri)
+                    } else {
+                        Toast.makeText(this, "未能获取所选图片", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
-        }
     }
 
     private fun handleSelectedImage(uri: Uri) {
         try {
             // 将图片复制到应用私有目录
             val fileName = "image_${System.currentTimeMillis()}.jpg"
-            val destinationFile = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), fileName)
+            val destinationFile =
+                File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), fileName)
 
             contentResolver.openInputStream(uri)?.use { input ->
                 FileOutputStream(destinationFile).use { output ->
@@ -152,10 +154,16 @@ class AddMemoActivity : AppCompatActivity() {
             val audioFile = File(getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
             audioFilePath = audioFile.absolutePath
 
-            mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                MediaRecorder(this)
-            } else {
-                MediaRecorder()
+            // 修复 MediaRecorder 构造函数的弃用警告
+            mediaRecorder = when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                    MediaRecorder(this)
+                }
+
+                else -> {
+                    @Suppress("DEPRECATION")
+                    MediaRecorder()
+                }
             }
 
             mediaRecorder?.apply {
@@ -170,10 +178,10 @@ class AddMemoActivity : AppCompatActivity() {
             isRecording = true
             recordingStartTime = System.currentTimeMillis()
             binding.addImageButton.setImageResource(android.R.drawable.ic_media_pause)
-            
+
             // 显示录音提示
             Toast.makeText(this, "开始录音...", Toast.LENGTH_SHORT).show()
-            
+
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "录音失败", Toast.LENGTH_SHORT).show()
@@ -190,19 +198,19 @@ class AddMemoActivity : AppCompatActivity() {
             }
             mediaRecorder = null
             isRecording = false
-            
+
             // 计算录音时长
             val duration = (System.currentTimeMillis() - recordingStartTime) / 1000
             Toast.makeText(this, "录音完成，时长: ${duration}秒", Toast.LENGTH_SHORT).show()
-            
+
             // 将录音文件路径添加到列表
             audioFilePath?.let { path ->
                 imagePaths.add("audio:$path")
                 imageAdapter.notifyItemInserted(imagePaths.size - 1)
             }
-            
+
             binding.addImageButton.setImageResource(android.R.drawable.ic_btn_speak_now)
-            
+
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "停止录音失败", Toast.LENGTH_SHORT).show()
@@ -220,10 +228,12 @@ class AddMemoActivity : AppCompatActivity() {
             checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED -> {
                 openImagePicker()
             }
+
             shouldShowRequestPermissionRationale(permission) -> {
                 Toast.makeText(this, "需要存储权限才能选择图片", Toast.LENGTH_LONG).show()
                 requestPermissions(arrayOf(permission), PERMISSION_REQUEST_CODE)
             }
+
             else -> {
                 requestPermissions(arrayOf(permission), PERMISSION_REQUEST_CODE)
             }
@@ -263,6 +273,7 @@ class AddMemoActivity : AppCompatActivity() {
                     Toast.makeText(this, "需要存储权限才能选择图片", Toast.LENGTH_SHORT).show()
                 }
             }
+
             RECORD_AUDIO_PERMISSION_CODE -> {
                 if (grantResults.isNotEmpty() && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(this, "需要录音权限才能录制音频", Toast.LENGTH_SHORT).show()
