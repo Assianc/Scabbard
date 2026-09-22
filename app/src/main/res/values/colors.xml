@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- res/values/colors.xml -->
 <resources>
-    <color name="colorPrimary">#6200EE</color>
+    <!--
+        曾经这里还有 colorPrimary / colorPrimaryDark / colorAccent / background / textColor /
+        AllSelectColor / InputTextColor，都是改造前那些 XML 界面留下的。界面整体搬到 Compose 之后，
+        配色由 app 的 ScabbardTheme（MaterialTheme，支持动态取色）统一决定，这些颜色在 app 模块里
+        已经没有任何引用了（主题基座也不再引用它们，改用 ?attr/colorSurface 这类 M3 属性）。
+
+        ★ colorPrimaryabout 暂时留着：alm 模块的 activity_about.xml 直接引用了主模块这个颜色
+          （library 的布局允许引用宿主模块的资源，链接期才解析）。等 alm 那边的 XML 界面也搬完
+          Compose，这条一并删掉。
+    -->
     <color name="colorPrimaryabout">#7334C5</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#00C0FF</color>
-    <color name="background">#FFFFFF</color>
-    <color name="textColor">#000000</color>
-    <color name="AllSelectColor">#000000</color>
-    <color name="InputTextColor">#808080</color>
-    <!-- 添加更多颜色 -->
 </resources>

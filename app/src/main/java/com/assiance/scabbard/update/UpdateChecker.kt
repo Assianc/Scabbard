@@ -1,11 +1,8 @@
 package com.assiance.scabbard.update
 
-import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
-import android.view.ContextThemeWrapper
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -187,42 +184,4 @@ class UpdateChecker {
         }
     }
 
-    fun showUpdateDialog(
-        context: Context,
-        updateInfo: UpdateInfo,
-        onConfirm: () -> Unit,
-        onCancel: () -> Unit
-    ): AlertDialog? {
-        if (context is Activity && context.isFinishing) {
-            onCancel()
-            return null
-        }
-
-        val dialogContext = context as? Activity
-            ?: ContextThemeWrapper(context, android.R.style.Theme_DeviceDefault_Light_Dialog_Alert)
-
-        return try {
-            val dialog = AlertDialog.Builder(dialogContext)
-                .setTitle("发现新版本 ${updateInfo.latestVersion}")
-                .setMessage(updateInfo.updateDescription)
-                .setPositiveButton("确定") { dialog, _ ->
-                    dialog.dismiss()
-                    onConfirm()
-                }
-                .setNegativeButton("取消") { dialog, _ ->
-                    dialog.dismiss()
-                    onCancel()
-                }
-                .create()
-
-            if (context is Activity && !context.isFinishing) {
-                dialog.show()
-            }
-            dialog
-        } catch (e: Exception) {
-            e.printStackTrace()
-            onCancel()
-            null
-        }
-    }
 } 

@@ -1,8 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Scabbard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- 浅色模式 -->
-        <item name="android:colorBackground">@color/background</item>
-        <item name="android:textColor">@color/textColor</item>
-        <!-- 添加更多主题属性 -->
+    <!--
+        主题基座换成 Material 3。界面本体已经全部是 Compose，Compose 那边由
+        ScabbardTheme 用 MaterialTheme（支持动态取色）自己管配色，这里只剩下
+        "Compose 还没画出来之前那一帧" 需要管：窗口底色和默认文字色。
+
+        所以这里不再写死颜色，改用 M3 的属性引用 —— 深浅色各自解析到对应的
+        surface / onSurface，不会出现深色模式下先闪一下白底的情况。
+        （改造前 values-night/themes.xml 里写的还是白色底 + 黑字，夜间模式一样闪白，
+        这次顺手一并修掉了。）
+    -->
+    <style name="Theme.Scabbard" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:colorBackground">?attr/colorSurface</item>
+        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 </resources>

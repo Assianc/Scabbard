@@ -19,7 +19,7 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
+        // viewBinding 已关掉：app 模块的 XML 布局随界面迁移全部删除了，没有可生成的绑定类。
         compose = true
     }
 
@@ -73,36 +73,24 @@ android {
 }
 
 dependencies {
+    // 界面全部搬到 Compose 之后，app 模块自己的代码里已经没有任何 AppCompat / Fragment /
+    // ConstraintLayout / Navigation-fragment / ImmersionBar 的引用了（逐个 grep 核过），
+    // 这些依赖连同它们的重复声明一并删掉。
+    // material 保留：XML 主题 Theme.Scabbard 继承的 Theme.Material3.* 由它提供，
+    // 那一帧"Compose 还没画出来时的窗口底色"要靠它。appcompat 由 material 传递进来。
     implementation(libs.core.ktx.v1150)
-    implementation(libs.appcompat)
-    implementation(libs.material)
-    implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
-    implementation(libs.constraintlayout)
-    implementation(libs.navigation.fragment)
     implementation(libs.getactivity.xxpermissions)
+    implementation(libs.lifecycle.runtime.ktx)
 
-    // 基础依赖包，必须要依赖
-    implementation(libs.geyifeng.immersionbar)
-
-    // AndroidX 基础库
-    implementation(libs.fragment.ktx)
-
-    // ImmersionBar（状态栏管理）
-    implementation(libs.geyifeng.immersionbar)
-
-    // 本地模块依赖
+    // 本地模块依赖 —— 主模块 → 辅助模块，方向不变
     implementation(project(":memo"))
     implementation(project(":alm"))
 
-    implementation(libs.core.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-
-    // 添加以下依赖
-    implementation(libs.lifecycle.runtime.ktx)
 
     // ---- Jetpack Compose ----
     val composeBom = platform(libs.compose.bom)

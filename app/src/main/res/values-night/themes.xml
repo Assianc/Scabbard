@@ -1,8 +1,0 @@
-<resources>
-    <style name="Theme.Scabbard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- 深色模式 -->
-        <item name="android:colorBackground">@color/background</item>
-        <item name="android:textColor">@color/textColor</item>
-        <!-- 添加更多主题属性 -->
-    </style>
-</resources>
