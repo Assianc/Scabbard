@@ -38,10 +38,10 @@ class AlarmReceiver : BroadcastReceiver() {
         if (context == null || intent == null) return
         
         when (intent.action) {
-            MainActivityAlm.ALARM_STOP_ACTION -> {
+            AlmContract.ALARM_STOP_ACTION -> {
                 stopAlarm()
             }
-            MainActivityAlm.ALARM_ACTION -> {
+            AlmContract.ALARM_ACTION -> {
                 val ringtoneUri = intent.getStringExtra("ringtone_uri")
                 val isRepeating = intent.getBooleanExtra("is_repeating", true)
                 
@@ -53,8 +53,8 @@ class AlarmReceiver : BroadcastReceiver() {
                     // 从 Intent 传入 alarm_id
                     val alarmId = intent.getIntExtra("alarm_id", -1)
                     if (alarmId != -1) {
-                        val prefs = context.getSharedPreferences(MainActivityAlm.ALARM_PREFS, Context.MODE_PRIVATE)
-                        val alarmsJson = prefs.getString(MainActivityAlm.ALARM_LIST_KEY, "[]")
+                        val prefs = context.getSharedPreferences(AlmContract.ALARM_PREFS, Context.MODE_PRIVATE)
+                        val alarmsJson = prefs.getString(AlmContract.ALARM_LIST_KEY, "[]")
                         try {
                             val jsonArray = org.json.JSONArray(alarmsJson)
                             for (i in 0 until jsonArray.length()) {
@@ -66,10 +66,10 @@ class AlarmReceiver : BroadcastReceiver() {
                                 }
                             }
                             prefs.edit()
-                                .putString(MainActivityAlm.ALARM_LIST_KEY, jsonArray.toString())
+                                .putString(AlmContract.ALARM_LIST_KEY, jsonArray.toString())
                                 .apply()
                             // 发送广播通知界面更新状态
-                            context.sendBroadcast(Intent(MainActivityAlm.ALARM_STATUS_CHANGED_ACTION))
+                            context.sendBroadcast(Intent(AlmContract.ALARM_STATUS_CHANGED_ACTION))
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }

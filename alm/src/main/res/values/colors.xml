@@ -1,28 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
+    <!-- 只剩 Theme.Alm（悬浮窗的 ContextThemeWrapper 在用）与 styles.xml 需要的颜色。
+         原来给 4 个 Activity 用的 tab_* / gradient_* 等颜色已随 Activity 一起删除。 -->
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#00C0FF</color>
-    <color name="background">#FFFFFF</color>
-    <color name="textColor">#000000</color>
-    <color name="AllSelectColor">#000000</color>
-    <color name="InputTextColor">#808080</color>
-    <color name="tab_selected">#FFFFFF</color>
-    <color name="tab_unselected">#80FFFFFF</color>
-    <color name="tab_background_selected">#4DFFFFFF</color>
-    <color name="tab_background_unselected">#1AFFFFFF</color>
-    <color name="tab_indicator_color">#A6852CDE</color>
-    <color name="tab_ripple_color">#33FFFFFF</color>
-
-    <color name="gradient_start">#FF0000</color>
-    <color name="gradient_end">#00FF00</color>
-
-    <!-- res/values/colors.xml -->
-</resources> 
+</resources>

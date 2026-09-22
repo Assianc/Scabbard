@@ -13,12 +13,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application>
-        <activity
-            android:name=".MainActivityAlm"
-            android:exported="false">
-        </activity>
-
-        <receiver 
+        <receiver
             android:name=".AlarmReceiver"
             android:exported="false">
             <intent-filter>
@@ -28,17 +23,7 @@
             </intent-filter>
         </receiver>
 
-        <activity
-            android:name=".AlarmSettingActivity"
-            android:exported="false"
-            android:label="设置闹钟" />
-
-        <activity
-            android:name=".TodoSettingActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize"/>
-
-        <receiver 
+        <receiver
             android:name=".TodoReminderReceiver"
             android:enabled="true"
             android:exported="false">
@@ -57,10 +42,5 @@
             android:name=".TodoFloatingService"
             android:enabled="true"
             android:exported="false" />
-
-        <activity
-            android:name=".CalendarActivity"
-            android:exported="false"
-            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"/>
     </application>
 </manifest>
