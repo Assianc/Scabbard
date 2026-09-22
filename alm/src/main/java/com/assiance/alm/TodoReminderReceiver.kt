@@ -28,7 +28,7 @@ class TodoReminderReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
         when (intent?.action) {
-            MainActivityAlm.TODO_REMINDER_ACTION -> {
+            AlmContract.TODO_REMINDER_ACTION -> {
                 val ringtoneUri = intent.getStringExtra("ringtone_uri")
                 // 只调用一次启动悬浮窗服务
                 val serviceIntent = Intent(context, TodoFloatingService::class.java).apply {
@@ -43,15 +43,15 @@ class TodoReminderReceiver : BroadcastReceiver() {
                 // 播放铃声
                 playRingtone(context!!, ringtoneUri)
             }
-            MainActivityAlm.TODO_REMINDER_STOP_ACTION -> {
+            AlmContract.TODO_REMINDER_STOP_ACTION -> {
                 Log.d("TodoReminder", "收到停止提醒广播")
                 // 立即停止铃声和振动
                 stopRingtone()
                 // 取消通知
                 val notificationManager = context?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                notificationManager?.cancel(MainActivityAlm.TODO_NOTIFICATION_ID)
-                notificationManager?.cancel(MainActivityAlm.TODO_NOTIFICATION_ID + 1)
-                notificationManager?.cancel(MainActivityAlm.TODO_NOTIFICATION_ID + 2)
+                notificationManager?.cancel(AlmContract.TODO_NOTIFICATION_ID)
+                notificationManager?.cancel(AlmContract.TODO_NOTIFICATION_ID + 1)
+                notificationManager?.cancel(AlmContract.TODO_NOTIFICATION_ID + 2)
             }
         }
     }
