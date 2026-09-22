@@ -11,20 +11,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application android:requestLegacyExternalStorage="true">
-        <activity
-            android:name=".MemoDetailActivity"
-            android:exported="false"
-            android:theme="@style/TransparentTheme" />
-        <activity
-            android:name=".AddMemoActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MainActivityMemo"
-            android:exported="false" />
-        <activity
-            android:name=".MemoHistoryActivity"
-            android:exported="false"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <!-- 4 个 Activity 已改造为 Compose 屏幕，由宿主 NavHost 通过 MemoRoutes 注册，这里不再声明 -->
 
         <provider
             android:name="androidx.core.content.FileProvider"

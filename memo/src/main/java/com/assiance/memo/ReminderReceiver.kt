@@ -32,12 +32,19 @@ class ReminderReceiver : BroadcastReceiver() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // 创建点击通知时打开备忘录详情的Intent
-        val detailIntent = Intent(context, MemoDetailActivity::class.java).apply {
+        // 详情页已并入宿主的单 Activity NavHost，memo 模块内不再有自己的 Activity，
+        // 因此这里退化为“打开应用自身”的启动 Intent（仍带上 memo_id，供宿主后续做深链）。
+        val detailIntent = (
+            context.packageManager.getLaunchIntentForPackage(context.packageName)
+                ?: Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_LAUNCHER)
+                    setPackage(context.packageName)
+                }
+            ).apply {
             putExtra("memo_id", memoId)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
-        
+
         val pendingIntent = PendingIntent.getActivity(
             context, 
             memoId.toInt(), 
