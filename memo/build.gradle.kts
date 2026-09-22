@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")  // 如果 memo 是一个库模块
     kotlin("android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -36,6 +37,7 @@ android {
     // 启用 ViewBinding
     buildFeatures {
         viewBinding = true
+        compose = true
     }
 
     // 正确配置 assets 和 res 目录
@@ -76,4 +78,18 @@ dependencies {
 
     // 添加 AndroidX interpolator 依赖
     implementation("androidx.interpolator:interpolator:1.0.0")
+
+    // ---- Jetpack Compose ----
+    val composeBom = platform(libs.compose.bom)
+    implementation(composeBom)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.activity.compose)
+    implementation(libs.navigation.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.runtime.compose)
+    debugImplementation(libs.compose.ui.tooling)
 }
