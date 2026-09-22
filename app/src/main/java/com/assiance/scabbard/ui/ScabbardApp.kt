@@ -41,20 +41,16 @@ fun ScabbardApp(deepLinkRoute: String? = null) {
     var allPlayers by remember { mutableStateOf(DEFAULT_PLAYERS) }
     var selectedPlayers by remember { mutableStateOf(emptyList<String>()) }
 
-    // 通知点击等外部入口带进来的路由。只认白名单里的，避免路由名拼错导致建图直接崩。
-    val startDestination = remember {
-        when {
-            deepLinkRoute != null && deepLinkRoute in DEEP_LINK_ROUTES -> deepLinkRoute
-            else -> AppRoutes.SPLASH
-        }
-    }
+    // 通知点击等外部入口带进来的路由。解析不出来的话退回启动页。
+    val resolvedDeepLink = remember { resolveDeepLinkRoute(deepLinkRoute) }
+    val startDestination = resolvedDeepLink ?: AppRoutes.SPLASH
 
     // 热启动：Activity 还在（singleTop + onNewIntent），图早就建好了，
     // 这时候只能往现有返回栈上 push，不能改 startDestination。
-    // 冷启动时 deepLinkRoute 已经等于 startDestination，这里自然什么都不做。
+    // 冷启动时解析结果已经等于 startDestination，这里自然什么都不做。
     LaunchedEffect(deepLinkRoute) {
-        val route = deepLinkRoute
-        if (route != null && route in DEEP_LINK_ROUTES && route != startDestination) {
+        val route = resolveDeepLinkRoute(deepLinkRoute)
+        if (route != null && route != startDestination) {
             navController.navigate(route)
         }
     }
@@ -123,12 +119,26 @@ fun ScabbardApp(deepLinkRoute: String? = null) {
 private val DEFAULT_PLAYERS = listOf("示例元素1", "示例元素2", "示例元素3", "示例元素4")
 
 /**
- * 允许作为起始页的「外部直达路由」白名单。
+ * 把模块打过来的深链路由解析成一条**确定注册得上**的路由，认不出来就返回 null（退回启动页）。
  *
- * 目前只有 alm 的闹钟通知会这么做（见 `AlmHostNavigation`）：改造前点通知是直接拉起
- * `MainActivityAlm`，用户不会看到开场动画，所以这里也不该先闪一下启动页。
+ * 目前有两个来源，都是改造前就存在的直达行为，不能丢：
+ * - alm 的闹钟通知：原来直接拉起 `MainActivityAlm`；
+ * - memo 的备忘提醒：原来直接拉起 `MemoDetailActivity` 并带上 `memo_id`。
+ * 两者现在都改成"打开宿主 + 带一个路由 extra"，宿主在这里落地。
  *
- * 新增直达路由时记得往这里加 —— 刻意做成白名单而不是"有 extra 就 startDestination = extra"：
- * 路由名写错时 Navigation 是在建图阶段抛异常崩掉的，白名单能让它退回启动页。
+ * 做成显式解析而不是"有 extra 就拿去 startDestination"：路由名或参数非法时，
+ * Navigation 会在建图 / 解析参数阶段直接抛异常崩掉，这里挡一道能让它安静地退回启动页。
  */
-private val DEEP_LINK_ROUTES = setOf(AlmRoutes.HOME)
+private fun resolveDeepLinkRoute(route: String?): String? = when {
+    route == null -> null
+    route == AlmRoutes.HOME -> AlmRoutes.HOME
+    route.startsWith(MEMO_DETAIL_PREFIX) ->
+        route.removePrefix(MEMO_DETAIL_PREFIX)
+            .toIntOrNull()
+            ?.let { MemoRoutes.detail(it) }
+
+    else -> null
+}
+
+/** `memo/detail/{memoId}` → 前缀 `memo/detail/`，用来从直达路由里剥出 memoId。 */
+private val MEMO_DETAIL_PREFIX = MemoRoutes.DETAIL.substringBefore("{")
