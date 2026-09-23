@@ -28,6 +28,7 @@ import io.github.nadeemiqbal.liquidglass.LiquidGlassState
 import io.github.nadeemiqbal.liquidglass.liquidGlassSource
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.sin
 
 /**
@@ -60,9 +61,9 @@ val LocalLiquidGlassState = staticCompositionLocalOf<LiquidGlassState?> { null }
  *
  * 画什么由当前主题色板决定：
  * - [ThemePalette.AURORA] → 全屏炫彩流光 shader（[AuroraBackground]）；
- * - 其余（含默认的 DYNAMIC）→ 双色游移光斑（[AuroraGlowBackground]）。
+ * - 其余（含默认的 DYNAMIC）→ 双色旋转背景（[AuroraGlowBackground]）。
  *
- * 两条路的分工是刻意的：色板决定"控件配色 + 背景形态"，而双色光斑自己的**颜色**另有
+ * 两条路的分工是刻意的：色板决定"控件配色 + 背景形态"，而双色渐变自己的**颜色**另有
  * 一套预设（[com.assiance.scabbard.ui.theme.AuroraPreset]），两者解耦 —— 用户完全可能
  * 想要「薄荷绿的控件 + 暖色背景」。炫彩那套没有这个自由度，它的颜色就写在 shader 预设里。
  */
@@ -90,19 +91,13 @@ fun AppBackground(modifier: Modifier = Modifier) {
 }
 
 /**
- * 双色游移光斑背景。
+ * 双色旋转背景。
  *
- * 底色是一条纵向渐变，上面叠两颗缓慢画圆游移、各自呼吸的径向光斑：
- * 主光斑取 [primaryGlow]（null 时取当前色板的 `primaryContainer`），
- * 副光斑取 [secondaryGlow]（null 时取 `tertiaryContainer`）。
+ * 底色是一条纵向渐变，其上压一道**两端分别是 [primaryGlow] 与 [secondaryGlow] 的线性渐变**，
+ * 这道渐变的**方向**绕屏幕中心匀速旋转 —— 观感是"两种色彩在转"，而不是两颗光在游移。
+ * 端点传 null 时分别回落到当前色板的 `primaryContainer` / `tertiaryContainer`。
  *
  * 动效是一个 [drawBehind]，没有子节点、不触发重组 —— 每帧只重绘这一层。
- *
- * 光斑半径必须收在屏幕短边的一小段里（见 [GLOW_RADIUS_FRACTION]），否则动效等于没有。
- * 曾经写的是 `size.maxDimension`：1080×2400 的屏上渐变跨度 2400px，而圆心只在 ±0.32 屏内
- * 游移几百像素，整屏被匀匀染上一层淡色、游移落在这个大缓坡上完全看不出来。半径收到短边
- * 量级后峰值集中，游移才读得出是"光在动"；同时远离光斑处更接近干净底色，压在背景上的
- * 正文反而更清楚 —— 比调高透明度划算。
  */
 @Composable
 private fun AuroraGlowBackground(
@@ -116,8 +111,9 @@ private fun AuroraGlowBackground(
     val primary = primaryGlow ?: scheme.primaryContainer
     val secondary = secondaryGlow ?: scheme.tertiaryContainer
 
-    // 缓慢游移：约 12s 一圈，径向光斑的圆心在背景上画圆，制造"光在流动"的观感。
-    val transition = rememberInfiniteTransition(label = "bg-flow")
+    // 12s 转一圈。线性渐变的方向转过 180° 时两端色就已经换过位（视觉上等价于整圈），
+    // 但仍按 0~360 写整圈：量纲直白，读代码时不用在脑子里把"半圈"再翻回去。
+    val transition = rememberInfiniteTransition(label = "bg-rotate")
     val angle by transition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
@@ -125,70 +121,36 @@ private fun AuroraGlowBackground(
             animation = tween(durationMillis = 12_000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
-        label = "bg-flow-angle",
+        label = "bg-rotate-angle",
     )
-    // 光斑透明度轻微呼吸（0.35 ~ 0.55），避免恒定高光显得死板。
-    val breathe by transition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.55f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 6_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "bg-flow-breathe",
-    )
-    // 副光斑自己的呼吸（0.16 ~ 0.30）。周期取 8s 而不是跟主光斑一样的 6s：
-    // 两者周期相同会同步明暗，看上去还是一颗光斑在忽大忽小；错开才像两层极光各自流动。
-    val breatheSecond by transition.animateFloat(
-        initialValue = SECOND_BREATHE_MIN,
-        targetValue = SECOND_BREATHE_MAX,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "bg-flow-breathe-second",
-    )
-
-    val rad = angle * (PI / 180.0)
-    // 副光斑与主光斑反相（差 180°）：两颗光斑沿对角线此消彼长地游移，
-    // 屏幕上任何时刻都有一明一暗两处色相，而不是两颗一起漂。
-    val radSecond = rad + PI
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .drawBehind {
-                // 用 DrawScope 的实际宽高把归一化游移坐标换算成真实 px 中心，
-                // 避免 fraction 被当成 px 用导致光斑偏到左上角。
-                val cx = size.width * (0.5f + ORBIT_RADIUS_FRACTION * cos(rad).toFloat())
-                val cy = size.height * (0.5f + ORBIT_RADIUS_FRACTION * sin(rad).toFloat())
-                // 副光斑的游移半径略大于主光斑，两颗圆心不会长期重合
-                val cxSecond =
-                    size.width * (0.5f + SECOND_ORBIT_RADIUS_FRACTION * cos(radSecond).toFloat())
-                val cySecond =
-                    size.height * (0.5f + SECOND_ORBIT_RADIUS_FRACTION * sin(radSecond).toFloat())
                 // 底色：surfaceContainer → surface 纵向渐变。
                 drawRect(
                     brush = Brush.verticalGradient(
                         colors = listOf(scheme.surfaceContainer, scheme.surface),
                     )
                 )
-                // 主光斑：径向渐变，圆心游移、浓度呼吸。半径按短边取，见 GLOW_RADIUS_FRACTION。
+                val rad = angle * (PI / 180.0)
+                val cx = size.width / 2f
+                val cy = size.height / 2f
+                // 半长取对角线的一半：线性渐变按"每个点在渐变线上的投影"取色，跨度只有盖住
+                // 整条对角线，转到任意角度才不会在四角露出没上色的底色。
+                val half = hypot(size.width, size.height) / 2f
+                val dx = (half * cos(rad)).toFloat()
+                val dy = (half * sin(rad)).toFloat()
+                // alpha 施加在 drawRect 上、而不是先写进两个颜色里：这样插值发生在**不透明色**
+                // 之间，色相不被透明度稀释，混出来的中间色更干净。
                 drawRect(
-                    brush = Brush.radialGradient(
-                        colors = listOf(primary.copy(alpha = breathe), Color.Transparent),
-                        radius = size.minDimension * GLOW_RADIUS_FRACTION,
-                        center = Offset(cx, cy),
-                    )
-                )
-                // 副光斑：比主光斑更大更淡，拉开色相层次。
-                // 盖在主光斑之上：两者在圆心附近叠出第三种过渡色，边缘各自淡出。
-                drawRect(
-                    brush = Brush.radialGradient(
-                        colors = listOf(secondary.copy(alpha = breatheSecond), Color.Transparent),
-                        radius = size.minDimension * SECOND_GLOW_RADIUS_FRACTION,
-                        center = Offset(cxSecond, cySecond),
-                    )
+                    brush = Brush.linearGradient(
+                        colors = listOf(primary, secondary),
+                        start = Offset(cx - dx, cy - dy),
+                        end = Offset(cx + dx, cy + dy),
+                    ),
+                    alpha = ROTATE_ALPHA,
                 )
             }
     )
@@ -206,7 +168,7 @@ private fun AuroraGlowBackground(
  * [veilEnabled] 是给「觉得炫彩太跳、正文压不住」的用户留的退路：打开就在炫彩之上再补
  * 一层主题 surface，把对比收回去。默认关闭，即默认给原版浓度。
  *
- * shader 不可用（Android 12 及以下 / AGSL 编译失败）时，静默退回双色游移光斑 ——
+ * shader 不可用（Android 12 及以下 / AGSL 编译失败）时，静默退回双色旋转背景 ——
  * 背景永远不该是空白或崩溃。
  */
 @Composable
@@ -253,37 +215,11 @@ private fun AuroraBackground(
 }
 
 /**
- * 光斑半径占屏幕短边的比例。
+ * 双色渐变压在底色上的整体不透明度 —— 这里是唯一的浓度旋钮。
  *
- * 取 0.6 的用意：光斑直径略大于屏宽，边缘自然淡出、不切出硬边；而圆心游移幅度
- * （[ORBIT_RADIUS_FRACTION]）与半径同量级，光斑能明显地在屏幕上挪动。
- * 调大 → 越来越像均匀铺色，动效随之消失；调小 → 变成一颗清晰的光球，离"低调背景"的定位就远了。
- */
-private const val GLOW_RADIUS_FRACTION = 0.6f
-
-/**
- * 光斑圆心的游移半径，占屏幕宽/高的比例（±0.32 屏）。
- * 与 [GLOW_RADIUS_FRACTION] 同量级时光斑挪动最明显。
- */
-private const val ORBIT_RADIUS_FRACTION = 0.32f
-
-/**
- * 副光斑半径占屏幕短边的比例。
+ * 施加在 `drawRect` 的 `alpha` 参数上，而不是先写进两个颜色里：见 [AuroraGlowBackground] 内的说明。
  *
- * 比主光斑的 [GLOW_RADIUS_FRACTION] 大得多，是刻意的：副光斑的作用是拉开**色相**层次，
- * 不是再点一颗亮斑。铺得越大、越淡，越像一层漫开的色雾；若跟主光斑同尺寸同浓度，
- * 两颗光斑只会互相抵消成一块更亮的大斑，色相层反而不见了。
+ * 调高更醒目、更像"主题色在流动"；调低则一点点退回纯粹的 surface 底色。
+ * 取 0.5 是"看得出来是双色、又仍然读作背景"的中间值。
  */
-private const val SECOND_GLOW_RADIUS_FRACTION = 0.85f
-
-/**
- * 副光斑圆心的游移半径。比主光斑略大（0.38 vs 0.32），保证两颗圆心不会长期重合 ——
- * 重合时两个径向渐变叠在一起，双色的效果就没了。
- */
-private const val SECOND_ORBIT_RADIUS_FRACTION = 0.38f
-
-/** 副光斑呼吸区间的下沿。比主光斑更低，避免两层色雾把背景提得过亮。 */
-private const val SECOND_BREATHE_MIN = 0.16f
-
-/** 副光斑呼吸区间的上沿。 */
-private const val SECOND_BREATHE_MAX = 0.30f
+private const val ROTATE_ALPHA = 0.5f
