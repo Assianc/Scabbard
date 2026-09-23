@@ -15,9 +15,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -242,7 +242,9 @@ internal fun AlmHomeScreen(navController: NavController) {
                     )
                 }
 
-                TabRow(selectedTabIndex = currentTab) {
+                // PrimaryTabRow 是 material3 1.4.0 里 TabRow 的替代：指示器由「通栏细下划线」
+                // 变成「贴合文字宽度的圆角粗条」，这是本次升级引入的唯一视觉变化，属有意为之。
+                PrimaryTabRow(selectedTabIndex = currentTab) {
                     Tab(
                         selected = currentTab == TAB_ALARM,
                         onClick = { currentTab = TAB_ALARM },

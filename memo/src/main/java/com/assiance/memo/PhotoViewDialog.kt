@@ -7,12 +7,22 @@ import android.os.Bundle
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
+import android.view.Window
 import android.view.WindowManager
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.bumptech.glide.Glide
 import kotlin.math.max
 import kotlin.math.min
+
+// statusBarColor / navigationBarColor 自 API 35 起废弃：应用被强制 edge-to-edge 后系统会忽略这两个值。
+// 但 minSdk 24~34 的设备仍需要它们（看大图时把状态栏/导航栏压黑），直接删掉会让老设备观感回退，
+// 因此保留调用并在此处抑制废弃告警，而不是做成"消除告警"的样子。
+@Suppress("DEPRECATION")
+private fun Window.applyPhotoViewerBarColors() {
+    statusBarColor = Color.BLACK
+    navigationBarColor = Color.BLACK
+}
 
 class PhotoViewDialog(context: Context, private val imagePath: String) : Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen) {
     private lateinit var photoView: ImageView
@@ -40,8 +50,7 @@ class PhotoViewDialog(context: Context, private val imagePath: String) : Dialog(
         // 设置窗口全屏和背景半透明
         window?.apply {
             setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
-            statusBarColor = Color.BLACK
-            navigationBarColor = Color.BLACK
+            applyPhotoViewerBarColors()
         }
 
         photoView = findViewById(R.id.photo_view)
