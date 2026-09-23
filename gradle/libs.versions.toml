@@ -1,5 +1,5 @@
 [versions]
-agp = "8.7.1"
+agp = "8.13.2"
 androidxCoreKtx = "1.15.0"
 appcompatVersion = "1.7.0"
 coreKtxVersion = "1.15.0"
@@ -19,11 +19,15 @@ constraintlayout = "2.2.0"
 materialVersion = "1.12.0"
 navigationFragment = "2.8.5"
 xxpermissions = "20.0"
-kotlin = "2.0.21"
+kotlin = "2.3.21"
 coreKtx = "1.15.0"
 xxpermissionsVersion = "20.0"
 lifecycle = "2.8.7"
-composeBom = "2024.12.01"
+# 液态玻璃（iOS 26 风格毛玻璃）。要求 Kotlin ≥ 2.3.21 + Compose Multiplatform 1.10.3
+# （Android 侧映射到 androidx compose 1.10.x），因此本项目的 Kotlin/AGP/compileSdk/BOM 四条轴
+# 是按它反推上来的，不要单独回退其中任意一条。
+liquidGlass = "0.2.3"
+composeBom = "2026.02.01"
 activityCompose = "1.9.3"
 navigationCompose = "2.8.5"
 
@@ -61,6 +65,7 @@ compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+liquid-glass = { module = "io.github.nadeemiqbal:liquid-glass", version.ref = "liquidGlass" }
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }

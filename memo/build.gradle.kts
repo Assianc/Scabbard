@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.library")  // 如果 memo 是一个库模块
     kotlin("android")
@@ -6,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.assiance.memo"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
@@ -30,10 +32,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     // 启用 ViewBinding
     buildFeatures {
         viewBinding = true
@@ -50,6 +48,12 @@ android {
                 srcDirs("src/main/res")
             }
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 

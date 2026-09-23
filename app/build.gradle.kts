@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.assiance.scabbard"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.assiance.scabbard"
@@ -50,15 +52,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-        freeCompilerArgs = listOf(
-            "-Xopt-in=kotlin.RequiresOptIn",
-            "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-Xopt-in=kotlinx.coroutines.FlowPreview"
-        )
-    }
-
     applicationVariants.all {
         val variant = this
         variant.outputs
@@ -69,6 +62,19 @@ android {
                 // 设置输出APK文件名
                 output.outputFileName = "Scabbard-${versionName}.apk"
             }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+        // 迁移自 android.kotlinOptions.freeCompilerArgs 里那三条 "-Xopt-in="：
+        // 该 flag 在 Kotlin 2.x 已更名为 -opt-in，这里直接用类型化的 optIn 列表表达。
+        optIn.addAll(
+            "kotlin.RequiresOptIn",
+            "kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "kotlinx.coroutines.FlowPreview",
+        )
     }
 }
 
@@ -106,6 +112,9 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
+
+    // 液态玻璃（iOS 26 风格毛玻璃）。本次只做"可解析 + 可编译"验证，尚无任何界面调用它。
+    implementation(libs.liquid.glass)
 
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
