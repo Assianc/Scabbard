@@ -27,8 +27,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,6 +83,11 @@ internal fun CalendarScreen(navController: NavController) {
     val calendarView = remember {
         LayoutInflater.from(context).inflate(R.layout.view_calendar, null) as CalendarView
     }
+
+    // CalendarView 是 framework View，它的「当前选中日期」不在 Compose 的状态里；
+    // 旋转 / 进程重建后这里会重新 inflate 出一个 CalendarView（默认是今天），
+    // 所以把选中日期显式存成毫秒值，再在恢复时写回给 View。
+    var calendarDateMillis by rememberSaveable { mutableLongStateOf(calendarView.date) }
 
     // ---- 原 updateHistoryForDate()：过滤 + 更新列表 + 更新标题
     fun updateHistoryForDate(date: Long) {
@@ -201,10 +208,13 @@ internal fun CalendarScreen(navController: NavController) {
     // ---- 原 loadData()：读全量数据 → 过滤当前日期
     fun loadData() {
         allHistoryItems = AlmRepository.loadHistoryItems(context)
-        updateHistoryForDate(calendarView.date)
+        updateHistoryForDate(calendarDateMillis)
     }
 
     DisposableEffect(calendarView) {
+        // 把保存下来的选中日期写回给 CalendarView（首次组合时两者相同，等于没做事）
+        calendarView.date = calendarDateMillis
+
         // 原实现的 setOnDateChangeListener
         calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
             val calendar = Calendar.getInstance().apply {
@@ -212,14 +222,15 @@ internal fun CalendarScreen(navController: NavController) {
             }
             // 更新当前选中的日期
             currentDate = calendar.timeInMillis
+            calendarDateMillis = calendar.timeInMillis
             updateHistoryForDate(currentDate)
         }
         onDispose { calendarView.setOnDateChangeListener(null) }
     }
 
     LaunchedEffect(Unit) {
-        // 初始化当前选中日期（默认为日历的当前日期）
-        currentDate = calendarView.date
+        // 初始化当前选中日期（默认为日历的当前日期；旋转 / 进程重建后是恢复出来的日期）
+        currentDate = calendarDateMillis
         loadData()
     }
 
@@ -309,6 +320,7 @@ internal fun CalendarScreen(navController: NavController) {
                         set(Calendar.DAY_OF_MONTH, 1)
                     }
                     calendarView.date = calendar.timeInMillis
+                    calendarDateMillis = calendar.timeInMillis
                     updateHistoryForDate(calendar.timeInMillis)
                 }) { Text("确定") }
             },
