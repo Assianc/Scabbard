@@ -3,9 +3,10 @@ package com.assiance.alm.ui
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.CalendarView
-import android.widget.NumberPicker
 import android.widget.Toast
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -44,6 +45,9 @@ import androidx.navigation.NavController
 import com.assiance.alm.AlmRepository
 import com.assiance.alm.HistoryAdapter
 import com.assiance.alm.R
+import com.assiance.alm.ui.ds.AlmWheelPicker
+import com.assiance.alm.ui.ds.rememberWheelYearRange
+import com.assiance.alm.ui.ds.wheelSelectionBand
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -282,35 +286,35 @@ internal fun CalendarScreen(navController: NavController) {
             onDismissRequest = { showJumpDialog = false },
             title = { Text("跳转到指定日期") },
             text = {
-                Column {
-                    AndroidView(
-                        factory = { ctx ->
-                            NumberPicker(ctx).apply {
-                                minValue = currentYear - 10
-                                maxValue = currentYear + 10
-                                value = currentYear
-                                setOnValueChangedListener { _, _, newValue ->
-                                    yearValue = newValue
-                                }
-                            }
-                        },
-                        update = { picker ->
-                            if (picker.value != yearValue) picker.value = yearValue
-                        },
-                    )
-                    AndroidView(
-                        factory = { ctx ->
-                            NumberPicker(ctx).apply {
-                                minValue = 1
-                                maxValue = 12
-                                displayedValues = MONTH_DISPLAY_VALUES
-                                setOnValueChangedListener { _, _, newValue ->
-                                    monthValue = newValue
-                                }
-                            }
-                        },
-                        update = { picker -> if (picker.value != monthValue) picker.value = monthValue },
-                    )
+                // 原来是两个 AndroidView 包裹的 NumberPicker，换成与待办设置页同一套的滚轮。
+                // 年月是同一次选择的两个字段，共用一条指示带，所以两列都要 showSelectionBand = false。
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wheelSelectionBand(JUMP_WHEEL_VISIBLE_ITEMS),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        AlmWheelPicker(
+                            value = yearValue,
+                            onValueChange = { yearValue = it },
+                            range = rememberWheelYearRange(),
+                            visibleItemCount = JUMP_WHEEL_VISIBLE_ITEMS,
+                            modifier = Modifier.weight(1f),
+                            showSelectionBand = false,
+                        )
+                        AlmWheelPicker(
+                            value = monthValue,
+                            onValueChange = { monthValue = it },
+                            range = 1..12,
+                            visibleItemCount = JUMP_WHEEL_VISIBLE_ITEMS,
+                            label = { MONTH_DISPLAY_VALUES[it - 1] },
+                            modifier = Modifier.weight(1f),
+                            showSelectionBand = false,
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -401,6 +405,9 @@ internal fun CalendarScreen(navController: NavController) {
         }
     }
 }
+
+/** 跳转对话框里年月两列同时可见的行数（取奇数，正中间那行即选中行）。 */
+private const val JUMP_WHEEL_VISIBLE_ITEMS = 5
 
 /** 原 `CalendarActivity.showDateJumpDialog()` 的月份显示值。 */
 private val MONTH_DISPLAY_VALUES = arrayOf(

@@ -30,13 +30,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.listSaver
@@ -51,6 +50,7 @@ import androidx.navigation.NavController
 import com.assiance.alm.AlarmData
 import com.assiance.alm.AlmContract
 import com.assiance.alm.AlmRepository
+import com.assiance.alm.ui.ds.AlmTimeWheel
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -66,9 +66,11 @@ import java.util.Locale
  * - 保存：算出时间 → 写 SharedPreferences（编辑时先删旧记录）→ 设置下一次精确闹钟 →
  *   发 `ALARM_STATUS_CHANGED` 广播 → 提示 → 返回上一页。提示文案、Toast 时长都不变。
  *
- * 界面用 M3 组件：原有 `TimePicker` 换成 M3 的 [TimePicker]（同样是 24 小时制表盘，
- * 可切换为键盘输入），Toolbar 换成 [TopAppBar]，CheckBox 保留（只是排布方式改成
+ * 界面用 M3 组件：Toolbar 换成 [TopAppBar]，CheckBox 保留（只是排布方式改成
  * 7 等分 + 下方文字，仍然是同样的 `周一`…`周日` 与默认全选）。
+ *
+ * 时间选择在 2026-09-23 从 M3 的 `TimePicker` 表盘换成了 [AlmTimeWheel] 滚轮
+ * （24 小时制，时:分两列），与待办设置页的时间选择是同一套控件。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,11 +90,10 @@ internal fun AlarmSettingScreen(
             Calendar.getInstance()
         }
     }
-    val timePickerState = rememberTimePickerState(
-        initialHour = initialTime.get(Calendar.HOUR_OF_DAY),
-        initialMinute = initialTime.get(Calendar.MINUTE),
-        is24Hour = true,
-    )
+    // 时 / 分各存一个 Int（原来是 M3 的 TimePickerState）。两者都要 rememberSaveable：
+    // 滚轮停在哪儿是"用户转了但还没保存"的输入，旋转后得原样留着。
+    var hour by rememberSaveable { mutableIntStateOf(initialTime.get(Calendar.HOUR_OF_DAY)) }
+    var minute by rememberSaveable { mutableIntStateOf(initialTime.get(Calendar.MINUTE)) }
 
     // 重复日期：默认每天；编辑模式读回。
     // 用 rememberSaveable 保住「用户勾了但还没保存」的选择（BooleanArray 存不进 Bundle，
@@ -169,7 +170,13 @@ internal fun AlarmSettingScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            TimePicker(state = timePickerState)
+            AlmTimeWheel(
+                hour = hour,
+                minute = minute,
+                onHourChange = { hour = it },
+                onMinuteChange = { minute = it },
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -239,8 +246,8 @@ internal fun AlarmSettingScreen(
                 onClick = {
                     // ---- 原 AlarmSettingActivity.setAlarm() ----
                     val calendar = Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, timePickerState.hour)
-                        set(Calendar.MINUTE, timePickerState.minute)
+                        set(Calendar.HOUR_OF_DAY, hour)
+                        set(Calendar.MINUTE, minute)
                         set(Calendar.SECOND, 0)
 
                         // 如果时间已过，且没有设置重复，则设置为明天
