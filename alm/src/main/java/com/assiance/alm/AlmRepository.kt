@@ -42,6 +42,34 @@ object AlmRepository {
         }
     }
 
+    /**
+     * 待办提醒通知的渠道。
+     *
+     * 原实现里**只有常量** `AlmContract.TODO_CHANNEL_ID`，渠道从来没有被创建过——也就是说
+     * 就算当时有代码往 `TodoChannel` 发通知，在 Android 8+ 上也会被系统静默丢弃。
+     * 本次接通待办通知时必须补上。形态与 [createAlarmNotificationChannel] 保持一致。
+     *
+     * 与闹钟渠道的创建时机**故意不同**：闹钟渠道在 `AlmHomeScreen` 组合时创建，而这里由
+     * [TodoReminderReceiver] 在发通知之前调用。原因是待办提醒的触发点在广播接收器里、不在
+     * 任何界面上，渠道缺失的后果是"通知悄悄不出现"这种最难排查的失败，所以放在发通知的
+     * 同一处、紧贴调用点，不依赖"用户一定先打开过某个界面"这个前提。
+     * `createNotificationChannel()` 本身幂等，重复调用无副作用。
+     */
+    fun createTodoNotificationChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "待办提醒"
+            val descriptionText = "冬去鸟鸣时待办提醒"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(AlmContract.TODO_CHANNEL_ID, name, importance).apply {
+                description = descriptionText
+            }
+
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
     // ================================================================ 闹钟：读写
 
     /**
