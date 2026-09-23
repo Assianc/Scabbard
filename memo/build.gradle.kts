@@ -96,4 +96,8 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
     debugImplementation(libs.compose.ui.tooling)
+
+    // 液态玻璃（iOS 26 风格毛玻璃）。memo 的备忘录记录卡要用，且玻璃的跨模块契约
+    // （ui/LiquidGlassContract.kt）声明在这里，其类型来自本库。宿主 app 自己也声明了同一份。
+    implementation(libs.liquid.glass)
 }

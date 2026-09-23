@@ -16,11 +16,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.assiance.alm.ui.AlmRoutes
 import com.assiance.alm.ui.almGraph
+import com.assiance.memo.ui.LocalLiquidGlassState
 import com.assiance.memo.ui.MemoRoutes
 import com.assiance.memo.ui.memoGraph
 import com.assiance.scabbard.data.AppSettings
 import com.assiance.scabbard.ui.component.AppBackground
-import com.assiance.scabbard.ui.component.LocalLiquidGlassState
 import com.assiance.scabbard.ui.screen.AboutScreen
 import com.assiance.scabbard.ui.screen.AllocateScreen
 import com.assiance.scabbard.ui.screen.AppearanceScreen

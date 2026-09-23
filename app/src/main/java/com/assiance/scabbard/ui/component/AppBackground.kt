@@ -13,38 +13,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import com.assiance.memo.ui.LocalLiquidGlassState
 import com.assiance.scabbard.data.AppSettings
 import com.assiance.scabbard.ui.effect.bgEffectShader
 import com.assiance.scabbard.ui.effect.rememberBgEffectState
 import com.assiance.scabbard.ui.theme.ThemePalette
-import io.github.nadeemiqbal.liquidglass.LiquidGlassState
 import io.github.nadeemiqbal.liquidglass.liquidGlassSource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
-
-/**
- * 供玻璃面采样背板用的共享 [LiquidGlassState]，由 [com.assiance.scabbard.ui.ScabbardApp]
- * 在 App 根 provide。
- *
- * **为什么必须是同一个实例**：liquid-glass 的模糊、饱和提升、折射全部挂在 `state.backdrop`
- * 这个 `GraphicsLayer` 上，而那个 layer 只由 `Modifier.liquidGlassSource(state)` 录制
- * （库的 `drawBackdrop` 开头是 `if (!recorded) return`）。传进来的 state 和录制用的 state
- * 不是同一个实例，layer 就永远是空的 —— 玻璃静默退化成"纯 tint + 描边"，不报错、不崩，
- * 只是不模糊。本项目此前正是这个状态。
- *
- * `null` 表示没有背板可采（预览、单测、脱离 App 根复用某个组件），消费方自行
- * `rememberLiquidGlassState()` 兜底即可，不必判空到处传。
- */
-val LocalLiquidGlassState = staticCompositionLocalOf<LiquidGlassState?> { null }
 
 /**
  * 全 App 背景层：跟着当前主题走的一层缓动背景。

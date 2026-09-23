@@ -17,7 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -49,6 +50,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.assiance.memo.Memo
 import com.assiance.memo.MemoDAO
+import io.github.nadeemiqbal.liquidglass.liquidGlass
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -192,68 +194,89 @@ private fun MemoListItem(
         memo.content
     }
 
-    Card(
+    // 材质由 Material3 Card 换成液态玻璃，与首页入口卡同一套（参数取自同包的
+    // LiquidGlassContract，不在这里另定一份）。布局、内边距 26dp、圆角都保持原样：
+    // 圆角仍取 CardDefaults.shape，也就是被替换掉的那张 Card 的默认圆角。
+    //
+    // 不能再包一层 Card —— Card 内部的 Surface 会画自己的底色，那层底色压在玻璃之上，
+    // 玻璃就白做了。原来的 `Card { Column(padding) }` 里 Card 没有额外内边距，
+    // 所以直接把内容挂到 Column 上、padding 不变，结构等价。
+    val shape = CardDefaults.shape
+    // 玻璃面必须与背板（宿主 App 背景层）共用同一个 state，否则 backdrop 那个 GraphicsLayer
+    // 永远是空的、玻璃不会模糊 —— 原因见 [LocalLiquidGlassState]。
+    val glassState = rememberSharedGlassState()
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
-    ) {
-        Column(modifier = Modifier.padding(26.dp)) {
-            Row(verticalAlignment = Alignment.Top) {
-                Text(
-                    text = memo.title,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontFamily = memoFontFamily(memo.titleFontName),
-                        fontWeight = memoFontWeight(memo.titleStyle),
-                        fontStyle = memoFontStyle(memo.titleStyle),
-                        textDecoration = memoTextDecoration(memo.titleUnderline),
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f),
-                )
-                if (multiSelectMode) {
-                    Checkbox(checked = selected, onCheckedChange = { onToggleSelect() })
-                }
-            }
-
-            if (indicatorText != null) {
-                Text(
-                    text = indicatorText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-
-            HorizontalDivider(
-                modifier = Modifier.padding(top = 8.dp),
-                color = MaterialTheme.colorScheme.outlineVariant,
+            // 先把命中区裁进圆角内，否则圆角外的"空矩形"会吞掉列表的滑动手势。
+            .clip(shape)
+            .liquidGlass(
+                state = glassState,
+                shape = shape,
+                tint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = GLASS_TINT_ALPHA),
+                grain = glassGrainFor(glassState.quality),
             )
-
+            // liquidGlass 只裁渲染，触摸命中仍由整条 modifier 链决定，所以这里再裁一次。
+            .clip(shape)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(26.dp),
+    ) {
+        Row(verticalAlignment = Alignment.Top) {
             Text(
-                text = if (expanded) memo.content else displayContent,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontFamily = memoFontFamily(memo.fontName),
-                    fontWeight = memoFontWeight(memo.contentStyle),
-                    fontStyle = memoFontStyle(memo.contentStyle),
-                    textDecoration = memoTextDecoration(memo.contentUnderline),
+                text = memo.title,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = memoFontFamily(memo.titleFontName),
+                    fontWeight = memoFontWeight(memo.titleStyle),
+                    fontStyle = memoFontStyle(memo.titleStyle),
+                    textDecoration = memoTextDecoration(memo.titleUnderline),
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
-                maxLines = if (expanded) Int.MAX_VALUE else 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .clickable { expanded = !expanded },
+                modifier = Modifier.weight(1f),
             )
+            if (multiSelectMode) {
+                Checkbox(checked = selected, onCheckedChange = { onToggleSelect() })
+            }
+        }
 
+        if (indicatorText != null) {
             Text(
-                text = "上次更新: ${memo.updateTime}",
-                style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
+                text = indicatorText,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(top = 8.dp),
+                modifier = Modifier.padding(top = 4.dp),
             )
         }
+
+        HorizontalDivider(
+            modifier = Modifier.padding(top = 8.dp),
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
+
+        Text(
+            text = if (expanded) memo.content else displayContent,
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontFamily = memoFontFamily(memo.fontName),
+                fontWeight = memoFontWeight(memo.contentStyle),
+                fontStyle = memoFontStyle(memo.contentStyle),
+                textDecoration = memoTextDecoration(memo.contentUnderline),
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = if (expanded) Int.MAX_VALUE else 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .clickable { expanded = !expanded },
+        )
+
+        Text(
+            text = "上次更新: ${memo.updateTime}",
+            style = MaterialTheme.typography.bodySmall.copy(fontStyle = FontStyle.Italic),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(top = 8.dp),
+        )
     }
 }
 

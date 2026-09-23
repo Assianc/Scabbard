@@ -73,15 +73,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.assiance.memo.ui.GLASS_TINT_ALPHA
+import com.assiance.memo.ui.LocalLiquidGlassState
+import com.assiance.memo.ui.glassGrainFor
+import com.assiance.memo.ui.rememberSharedGlassState
 import com.assiance.scabbard.R
 import com.assiance.scabbard.data.AppSettings
 import com.assiance.scabbard.ui.component.GradientTitle
-import com.assiance.scabbard.ui.component.LocalLiquidGlassState
 import com.assiance.scabbard.ui.util.findActivity
 import com.assiance.scabbard.update.UpdateChecker
-import io.github.nadeemiqbal.liquidglass.LiquidGlassQuality
 import io.github.nadeemiqbal.liquidglass.liquidGlass
-import io.github.nadeemiqbal.liquidglass.rememberLiquidGlassState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -390,44 +391,6 @@ fun HomeScreen(
 }
 
 /**
- * 首页入口卡玻璃 tint 的不透明度 —— 唯一需要调的观感旋钮。
- * 调低更透、玻璃感更强；调高更接近原来那张实底 Card。
- *
- * 2026-09-23 从 0.6 收到 0.3：0.6 时背板只剩四成参与、且 tint 取的是很暗的
- * `surfaceContainerDark`，卡片与旁边背景明暗分层明显，读作一块实心板。
- * 背景本身是平滑渐变、模糊不产生视觉信息，所以让背景直接透出来就是想要的效果。
- */
-private const val HOME_ENTRY_GLASS_TINT_ALPHA = 0.3f
-
-/**
- * 首页入口卡玻璃**面上**的颗粒强度 —— 毛玻璃那层"沙粒感"。
- *
- * 用库自带的 `grain` 参数（`Modifier.liquidGlass`），颗粒画在 tint 与描边之后、内容之前，
- * 是玻璃**材质自身**的纹理，不随背板移动。（加在背板上是另一回事 —— 那是"一块带噪点的
- * 背景透过来"，噪点跟着背景转，不是毛玻璃。）
- *
- * 库把颗粒铺成 1:1 的 64×64 像素 tile（`drawNoiseTile` 不缩放），每个颗粒就是 1 物理像素，
- * 在高密度屏上细得只有"质感"、看不出"块"。
- *
- * 取 0.04 是库自己标定的值（`grain` 参数 KDoc：「A subtle 0.04 matches the iOS-26
- * frosted-glass feel」），不自己拍。**但只在非 Fallback 档画**，见 [glassGrainFor]。
- */
-private const val HOME_ENTRY_GLASS_GRAIN = 0.04f
-
-/**
- * 按当前档位决定颗粒强度：[LiquidGlassQuality.Fallback] 档一颗不画。
- *
- * 颗粒是"毛玻璃"这个材质的一部分，跟模糊同进退 —— 模糊关掉后玻璃退回一块干净的半透明色板，
- * 再留一层沙粒就成了"没有磨砂的磨砂玻璃"，说不通。库自己也是这个口径：Fallback 的定位写的是
- * "a translucent tint with an edge sheen"，颗粒不在其中。
- *
- * 判据取**实际档位**而不是那个开关的设置值：开关关掉、设备内存不足被自动降级、系统版本
- * 低于 31 —— 三种情况在这里是同一个值，不用判三遍。
- */
-private fun glassGrainFor(quality: LiquidGlassQuality): Float =
-    if (quality == LiquidGlassQuality.Fallback) 0f else HOME_ENTRY_GLASS_GRAIN
-
-/**
  * 首页入口卡：材质由 Material3 [Card] 换成液态玻璃。
  *
  * 布局、内边距、圆角、点击范围都保持原样，只换材质 —— 圆角仍取 [CardDefaults.shape]，
@@ -439,10 +402,13 @@ private fun glassGrainFor(quality: LiquidGlassQuality): Float =
  * （原因见 [LocalLiquidGlassState]）。
  *
  * 只切 quality、不动 tint：那条开关的字面语义就是"模糊"这一个维度，卡片的底色
- * （[HOME_ENTRY_GLASS_TINT_ALPHA]）不归它管。玻璃面的颗粒（[HOME_ENTRY_GLASS_GRAIN]）
- * 则**跟着档位走** —— Fallback 时一并收掉，见 [glassGrainFor]。
+ * （[GLASS_TINT_ALPHA]）不归它管。玻璃面的颗粒（[GLASS_GRAIN]）则**跟着档位走** ——
+ * Fallback 时一并收掉，见 [glassGrainFor]。
  * （移植来源 LoveScore 在关掉模糊时还会把 tint 一起清成全透明、改画一圈极淡描边，
  * 那是它的观感选择，本项目不跟。）
+ *
+ * tint / 颗粒这两个观感参数**不在本文件定义**，和另外两处玻璃面（备忘录记录卡、关于页
+ * 作者行）共用 [com.assiance.memo.ui.LiquidGlassContract] 里那一份 —— 调参只改一个地方。
  */
 @Composable
 private fun HomeEntryCard(
@@ -456,10 +422,9 @@ private fun HomeEntryCard(
     // `Modifier.liquidGlassSource(state)` 录制 —— 卡片自己 new 一个 state 就采不到任何像素，
     // 不报错、不崩，只是不模糊。（本项目此前正是各自持一份，所以玻璃从来没模糊过。）
     //
-    // 取不到时（预览、单测里脱离 App 根复用本组件）退回一份自持的 state：此时没有背板，
-    // 渲染成纯 tint + 边缘高光，观感与 Fallback 档一致，不拖性能。
-    val sharedGlassState = LocalLiquidGlassState.current
-    val glassState = sharedGlassState ?: rememberLiquidGlassState()
+    // 取不到时（预览、单测里脱离 App 根复用本组件）的兜底收在 [rememberSharedGlassState] 里：
+    // 退回一份自持的 Fallback state，此时没有背板，渲染成纯 tint + 边缘高光。
+    val glassState = rememberSharedGlassState()
 
     Row(
         modifier = Modifier
@@ -470,7 +435,7 @@ private fun HomeEntryCard(
                 state = glassState,
                 shape = shape,
                 tint = MaterialTheme.colorScheme.surfaceContainer
-                    .copy(alpha = HOME_ENTRY_GLASS_TINT_ALPHA),
+                    .copy(alpha = GLASS_TINT_ALPHA),
                 grain = glassGrainFor(glassState.quality),
             )
             // liquidGlass 只裁渲染，触摸命中仍由整条 modifier 链决定，所以这里再裁一次。

@@ -1,7 +1,6 @@
 package com.assiance.scabbard.ui.screen
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,9 +41,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.assiance.memo.ui.GLASS_TINT_ALPHA
+import com.assiance.memo.ui.glassGrainFor
+import com.assiance.memo.ui.rememberSharedGlassState
 import com.assiance.scabbard.R
 import com.assiance.scabbard.data.AppSettings
 import com.assiance.scabbard.ui.component.GradientTitle
+import io.github.nadeemiqbal.liquidglass.liquidGlass
 
 /**
  * 关于页。对应改造前的 `AboutActivity`。
@@ -188,6 +191,12 @@ private fun SectionLabel(text: String) {
     )
 }
 
+/**
+ * 一行作者信息。材质与首页入口卡一致 —— 液态玻璃，参数取自跨模块共享的
+ * [com.assiance.memo.ui.LiquidGlassContract]。
+ *
+ * 形状仍是原来的 [RoundedCornerShape] 12dp，不趁换材质顺手改成 [CardDefaults.shape]。
+ */
 @Composable
 private fun DeveloperRow(
     avatarRes: Int,
@@ -195,12 +204,25 @@ private fun DeveloperRow(
     role: String,
     onClick: (() -> Unit)?,
 ) {
+    val shape = RoundedCornerShape(12.dp)
+    // 玻璃面必须与背板（AppBackground）共用同一个 state，否则 backdrop 那个 GraphicsLayer
+    // 永远是空的、玻璃不会模糊 —— 原因见 [com.assiance.memo.ui.LocalLiquidGlassState]。
+    val glassState = rememberSharedGlassState()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            // 原布局里三行都是白底，这里换成主题容器色，深色模式下才不刺眼
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            // 先把命中区裁进圆角内，否则圆角外的"空矩形"会吞掉列表的滑动手势。
+            .clip(shape)
+            .liquidGlass(
+                state = glassState,
+                shape = shape,
+                tint = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = GLASS_TINT_ALPHA),
+                grain = glassGrainFor(glassState.quality),
+            )
+            // liquidGlass 只裁渲染，触摸命中仍由整条 modifier 链决定，所以这里再裁一次。
+            .clip(shape)
+            // sy 那一行 onClick 为 null，保持不可点（原来就没有点击事件，不顺手补）
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
