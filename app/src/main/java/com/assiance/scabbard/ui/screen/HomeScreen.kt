@@ -391,8 +391,12 @@ fun HomeScreen(
 /**
  * 首页入口卡玻璃 tint 的不透明度 —— 唯一需要调的观感旋钮。
  * 调低更透、玻璃感更强；调高更接近原来那张实底 Card。
+ *
+ * 2026-09-23 从 0.6 收到 0.3：0.6 时背板只剩四成参与、且 tint 取的是很暗的
+ * `surfaceContainerDark`，卡片与旁边背景明暗分层明显，读作一块实心板。
+ * 背景本身是平滑渐变、模糊不产生视觉信息，所以让背景直接透出来就是想要的效果。
  */
-private const val HOME_ENTRY_GLASS_TINT_ALPHA = 0.6f
+private const val HOME_ENTRY_GLASS_TINT_ALPHA = 0.3f
 
 /**
  * 首页入口卡：材质由 Material3 [Card] 换成液态玻璃。

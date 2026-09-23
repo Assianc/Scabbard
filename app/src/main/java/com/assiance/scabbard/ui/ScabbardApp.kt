@@ -75,12 +75,13 @@ fun ScabbardApp(deepLinkRoute: String? = null) {
     // 库的 Fallback 档不分配 GraphicsLayer（`rememberLiquidGlassState` 里 `layer = null`），
     // 于是背板录制与模糊一起消失，玻璃退回纯 tint + 描边。
     val glassBlurEnabled by AppSettings.glassBlurEnabled.collectAsStateWithLifecycle()
+    // 平台档位**无条件**求值，再交给 if 去选：@Composable 调用不能放进 if 分支 —— 分支
+    // 切换会让 Compose 的 slot table 错位（冷启动只走一条路径时看不出来，在设置里热切换
+    // 开关时才踩得到）。rememberPlatformLiquidGlassQuality 内部是 `remember(context)` 缓存
+    // 的一次 ActivityManager 查询，无条件调用没有额外代价，拿到的值不用也不亏。
+    val platformQuality = rememberPlatformLiquidGlassQuality()
     val glassState = rememberLiquidGlassState(
-        quality = if (glassBlurEnabled) {
-            rememberPlatformLiquidGlassQuality()
-        } else {
-            LiquidGlassQuality.Fallback
-        },
+        quality = if (glassBlurEnabled) platformQuality else LiquidGlassQuality.Fallback,
     )
 
     CompositionLocalProvider(LocalLiquidGlassState provides glassState) {
