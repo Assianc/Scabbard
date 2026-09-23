@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.assiance.alm"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -67,6 +67,12 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
+    // 液态玻璃（iOS 26 风格毛玻璃）。宿主把共享 state 经 almGraph 传进来，
+    // 跨模块契约见 ui/AlmGlassContract.kt。
+    implementation(libs.liquid.glass)
+
+    // miuix 只为它的 NumberPicker，封装在 ui/ds/DsWheelPicker.kt（移植自 LoveScore）。
+    implementation(libs.miuix.ui)
     debugImplementation(libs.compose.ui.tooling)
 
     testImplementation("junit:junit:4.13.2")

@@ -145,9 +145,14 @@ fun ScabbardApp(deepLinkRoute: String? = null) {
                     AboutScreen(onBack = { navController.popBackStack() })
                 }
 
-                // 辅助模块自带的导航图
+                // 辅助模块自带的导航图。
+                //
+                // memo 的玻璃面不用额外传：它自己的 LocalLiquidGlassState 就是上面那个
+                // CompositionLocalProvider 提供的，模块内天然可见。
+                // alm 与 memo 平级、看不到 memo 的符号，所以要把**同一个** state 实例显式交给它 ——
+                // 玻璃的 backdrop 录在这个实例上，给成另一个实例就永远不模糊（见 AlmGlassContract）。
                 memoGraph(navController)
-                almGraph(navController)
+                almGraph(navController, glassState)
             }
         }
     }
