@@ -1,14 +1,22 @@
+import org.gradle.api.DefaultTask
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    // kotlin.android 不能再显式声明：AGP 9.0 起 Kotlin 支持已内置，再声明会直接报
+    // "The 'org.jetbrains.kotlin.android' plugin is no longer required for Kotlin
+    // support since AGP 9.0"。compose 插件不属于内置范围，仍要显式加。
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.assiance.scabbard"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.assiance.scabbard"
@@ -52,17 +60,58 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    applicationVariants.all {
-        val variant = this
-        variant.outputs
-            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
-            .forEach { output ->
-                // 获取版本名
-                val versionName = variant.versionName
-                // 设置输出APK文件名
-                output.outputFileName = "Scabbard-${versionName}.apk"
+}
+
+// 输出 APK 改名。
+//
+// AGP 9 把旧的 Variant API 整个移除了：`applicationVariants` 连同它的实现类
+// `BaseVariantOutputImpl` 一起没了；而新的公开 API（`VariantOutput`）**没有**
+// `outputFileName` —— 也就是说"在配置阶段直接指定产物文件名"这条路已经封死。
+//
+// 所以改成产物生成之后统一改名，做法与 LoveScore（同样跑在 AGP 9.0.1 上）一致：
+// 独立 Task 类 + `finalizedBy`，两者都是为了配置缓存能正确命中。
+//
+// 与改造前对齐的点：debug / release **两个产物都改**（原来的 `applicationVariants.all`
+// 也是两个都覆盖），名字仍是 `Scabbard-<版本名>.apk`。
+// Android Studio 的 Run 走的是 `packageDebug` 的输出路径而不是文件名，不受影响。
+abstract class RenameApkTask : DefaultTask() {
+
+    @get:Input
+    abstract val versionName: Property<String>
+
+    @get:Input
+    abstract val apkDirs: ListProperty<String>
+
+    @TaskAction
+    fun rename() {
+        val target = "Scabbard-${versionName.get()}.apk"
+        for (path in apkDirs.get()) {
+            val dir = File(path)
+            if (!dir.isDirectory) continue
+            dir.listFiles()?.forEach { apk ->
+                if (apk.isFile && apk.name.endsWith(".apk") && apk.name != target) {
+                    val renamed = File(dir, target)
+                    if (renamed.exists()) renamed.delete()
+                    apk.renameTo(renamed)
+                }
             }
+        }
     }
+}
+
+val renameApks = tasks.register<RenameApkTask>("renameApks") {
+    versionName.set(android.defaultConfig.versionName ?: "unknown")
+    apkDirs.set(
+        listOf("debug", "release").map { variant ->
+            layout.buildDirectory.dir("outputs/apk/$variant").get().asFile.path
+        },
+    )
+}
+
+// AGP 注册好 assemble* 之后再挂 —— 直接在 androidComponents 里写会在任务图还没建好时求值。
+afterEvaluate {
+    tasks.matching { it.name == "assembleDebug" || it.name == "assembleRelease" }
+        .configureEach { finalizedBy(renameApks) }
 }
 
 kotlin {

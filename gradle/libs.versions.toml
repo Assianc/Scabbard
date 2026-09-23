@@ -1,5 +1,15 @@
 [versions]
-agp = "8.13.2"
+# AGP 9.0.1 + Gradle 9.6.1（wrapper 里那个），配套 compileSdk 37。
+#
+# 为什么非要 compileSdk 37：alm 的滚轮选择器要用 miuix 的 NumberPicker，而 miuix 传递
+# 依赖 miuix-shader，其 AAR 元数据写着 minCompileSdk=37；它被 squircle 硬引用，排不掉。
+# 而 AGP 8.13.2 官方只支持到 compileSdk 36.1 —— 升 AGP 9 是为了踩在官方支持范围内，
+# 而不是挂着 suppressUnsupportedCompileSdk 硬上。版本与 LoveScore 对齐。
+#
+# AGP 9 的迁移点（都已处理，别再踩一遍）：`org.jetbrains.kotlin.android` 插件不再允许
+# 显式声明（Kotlin 支持已内置，compose 插件仍要显式加）；旧 Variant API
+# `applicationVariants` 及其实现类被移除，APK 改名改走独立 Task + finalizedBy。
+agp = "9.0.1"
 androidxCoreKtx = "1.15.0"
 appcompatVersion = "1.7.0"
 coreKtxVersion = "1.15.0"
