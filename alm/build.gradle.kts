@@ -71,7 +71,7 @@ dependencies {
     // 跨模块契约见 ui/AlmGlassContract.kt。
     implementation(libs.liquid.glass)
 
-    // miuix 只为它的 NumberPicker，封装在 ui/ds/DsWheelPicker.kt（移植自 LoveScore）。
+    // miuix 只为它的 NumberPicker，封装在 ui/ds/AlmWheelPicker.kt（移植自 LoveScore 的同名封装）。
     implementation(libs.miuix.ui)
     debugImplementation(libs.compose.ui.tooling)
 
