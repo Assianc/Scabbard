@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")  // 如果 memo 是一个库模块
-    kotlin("android")
+    // kotlin("android") 已移除：AGP 9.0 起 Kotlin 支持内置，显式声明会直接报错。
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
