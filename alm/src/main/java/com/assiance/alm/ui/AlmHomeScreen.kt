@@ -29,12 +29,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavController
 import com.assiance.alm.AlarmData
@@ -258,8 +260,21 @@ internal fun AlmHomeScreen(navController: NavController) {
                         .fillMaxWidth()
                         .weight(1f),
                 ) {
-                    when (currentTab) {
-                        TAB_TODO -> TodoListView(
+                    // 原实现是两个列表都装在 ViewFlipper 里同时保活、切标签只切显示，
+                    // 所以各自的滚动位置都在。这里等价处理：两个列表都常驻组合树，只切可见性。
+                    //
+                    // 必须「常驻」的原因：AndroidView 一旦离开组合，承载的 View 会被从视图树
+                    // 摘掉（compose-ui 的 AndroidViewHolder.onDetach → removeAllViewsInLayout），
+                    // 再次进入时 factory 会重新造一个 RecyclerView，LinearLayoutManager 的
+                    // 滚动位置随之丢失。
+                    // 隐藏用 alpha 而不是 size(0)/GONE：alpha 只落在绘制层，完全不碰 View 的
+                    // measure/layout，RecyclerView 不受任何打扰（且 alpha == 1f 时 Compose
+                    // 直接返回原 Modifier，可见的那份连图层都不会多出来）。
+                    // zIndex 让可见的那份压在上层：两层都会进命中路径，但上层转发给自己那个
+                    // Android View 后会把指针事件整个消费掉，隐藏那份在 PointerInteropFilter
+                    // 里检测到已消费就停止转发，所以不会出现「滑到看不见的列表上」。
+                    KeepAlivePane(visible = currentTab == TAB_TODO) {
+                        TodoListView(
                             todos = todos,
                             onDeleteClick = { pendingDeleteTodo = it },
                             onToggleClick = { todo, isCompleted ->
@@ -302,8 +317,10 @@ internal fun AlmHomeScreen(navController: NavController) {
                             },
                             modifier = Modifier.fillMaxSize(),
                         )
+                    }
 
-                        else -> AlarmListView(
+                    KeepAlivePane(visible = currentTab == TAB_ALARM) {
+                        AlarmListView(
                             alarms = alarms,
                             onDeleteClick = { pendingDeleteAlarm = it },
                             onToggleClick = { alarm, isEnabled ->
@@ -349,6 +366,30 @@ internal fun AlmHomeScreen(navController: NavController) {
                 modifier = Modifier.align(Alignment.TopStart),
             )
         }
+    }
+}
+
+/**
+ * 常驻组合树、只切可见性的容器 —— 对应原 `ViewFlipper` 的语义。
+ *
+ * 与 `when (tab) { ... }` 的区别：内容始终留在组合里，`AndroidView` 不会走到 onDetach，
+ * 承载的 `RecyclerView` 因此不离开视图树，`layoutManager` 的滚动位置不会被重建丢掉。
+ *
+ * 隐藏用 `alpha` 而不是 `size(0.dp)`/`GONE`：后者会改变 View 的测量结果，RecyclerView 会被
+ * 以 0 尺寸重新布局，滚动位置反而保不住。
+ */
+@Composable
+private fun KeepAlivePane(
+    visible: Boolean,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .zIndex(if (visible) 1f else 0f)
+            .alpha(if (visible) 1f else 0f),
+    ) {
+        content()
     }
 }
 

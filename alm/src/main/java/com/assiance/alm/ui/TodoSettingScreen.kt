@@ -97,12 +97,14 @@ internal fun TodoSettingScreen(
     var description by rememberSaveable { mutableStateOf(initialDescription) }
     var descriptionError by remember { mutableStateOf<String?>(null) }
 
-    var startTime by remember { mutableStateOf(initialStartTime.takeIf { it != -1L }) }
-    var dueTime by remember { mutableStateOf(initialDueTime.takeIf { it != -1L }) }
-    var startAdvanceMinutes by remember { mutableIntStateOf(0) }
-    var dueAdvanceMinutes by remember { mutableIntStateOf(0) }
-    var startRingtoneUri by remember { mutableStateOf(initialStartRingtoneUri) }
-    var dueRingtoneUri by remember { mutableStateOf(initialDueRingtoneUri) }
+    // 下面这些都是「用户填了但还没保存」的输入，旋转 / 进程重建后要原样留着。
+    // 日期用的是 DatePickerDialog + TimePickerDialog（系统弹窗本身不跨重建），值只能自己存。
+    var startTime by rememberSaveable { mutableStateOf(initialStartTime.takeIf { it != -1L }) }
+    var dueTime by rememberSaveable { mutableStateOf(initialDueTime.takeIf { it != -1L }) }
+    var startAdvanceMinutes by rememberSaveable { mutableIntStateOf(0) }
+    var dueAdvanceMinutes by rememberSaveable { mutableIntStateOf(0) }
+    var startRingtoneUri by rememberSaveable { mutableStateOf(initialStartRingtoneUri) }
+    var dueRingtoneUri by rememberSaveable { mutableStateOf(initialDueRingtoneUri) }
 
     val dateTimeFormatter = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
 

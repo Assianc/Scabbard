@@ -38,6 +38,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,16 +92,23 @@ internal fun AlarmSettingScreen(
         is24Hour = true,
     )
 
-    // 重复日期：默认每天；编辑模式读回
-    var repeatDays by remember { mutableStateOf(BooleanArray(7) { true }) }
+    // 重复日期：默认每天；编辑模式读回。
+    // 用 rememberSaveable 保住「用户勾了但还没保存」的选择（BooleanArray 存不进 Bundle，
+    // 所以要给 stateSaver）；repeatDaysLoaded 用来避免旋转后重新组合时被 SharedPreferences
+    // 的值再覆盖一次。
+    var repeatDays by rememberSaveable(stateSaver = REPEAT_DAYS_SAVER) {
+        mutableStateOf(BooleanArray(7) { true })
+    }
+    var repeatDaysLoaded by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(alarmId) {
-        if (alarmId != -1) {
+        if (alarmId != -1 && !repeatDaysLoaded) {
             AlmRepository.loadRepeatDays(context, alarmId)?.let { repeatDays = it }
+            repeatDaysLoaded = true
         }
     }
 
-    // 铃声
-    var selectedRingtoneUri by remember { mutableStateOf(ringtoneUri) }
+    // 铃声（名字由 URI 推导，旋转后 LaunchedEffect 会重新算，所以只存 URI）
+    var selectedRingtoneUri by rememberSaveable { mutableStateOf(ringtoneUri) }
     var ringtoneName by remember { mutableStateOf("默认铃声") }
 
     fun updateRingtoneText() {
@@ -270,3 +279,9 @@ internal fun AlarmSettingScreen(
 }
 
 private val DAY_NAMES = arrayOf("周一", "周二", "周三", "周四", "周五", "周六", "周日")
+
+/** `BooleanArray` 存不进 Bundle（既不是 Parcelable 也不是 Serializable），转成 List 存。 */
+private val REPEAT_DAYS_SAVER = listSaver<BooleanArray, Boolean>(
+    save = { it.toList() },
+    restore = { it.toBooleanArray() },
+)
