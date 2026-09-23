@@ -11,36 +11,81 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import com.assiance.scabbard.data.AppSettings
+import com.assiance.scabbard.ui.effect.bgEffectShader
+import com.assiance.scabbard.ui.effect.rememberBgEffectState
+import com.assiance.scabbard.ui.theme.ThemePalette
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * 全 App 背景层：跟随当前主题的柔和渐变 + 两颗反向游移的径向光斑（双色极光）。
+ * 全 App 背景层：跟着当前主题走的一层缓动背景。
  *
  * 位置：铺在 [com.assiance.scabbard.ui.ScabbardApp] 的 NavHost **之下**，z-order 最底层。
  * 因此各页面的 Scaffold 必须用 `containerColor = Color.Transparent`、TopAppBar 必须用
  * `topAppBarColors(containerColor = Color.Transparent)`，背景才透得出来 —— 漏掉任何一处
  * 都会在该页留下一条实色横带。
  *
- * **为什么需要它**：首页入口卡用的是液态玻璃，而玻璃是真去采样背板做模糊（Android 侧走
- * `RenderEffect`）再叠折射（`RuntimeShader`）的。背板若是纯色，模糊与折射都是恒等变换，
- * 玻璃看起来就只是一张半透明卡片。给背景加上空间层次，玻璃才成立。
+ * 画什么由当前主题色板决定：
+ * - [ThemePalette.AURORA] → 全屏炫彩流光 shader（[AuroraBackground]）；
+ * - 其余（含默认的 DYNAMIC）→ 双色游移光斑（[AuroraGlowBackground]）。
  *
- * 配色全部取自 [MaterialTheme.colorScheme]，不硬编码：本 App 开着 Material You 动态取色
- * （API 31+ 跟随壁纸），从主题 token 派生才能跟着壁纸走，不会和控件配色打架。
- *
- * 动效是一个 [drawBehind]，没有子节点、不触发重组 —— 每帧只重绘这一层。
+ * 两条路的分工是刻意的：色板决定"控件配色 + 背景形态"，而双色光斑自己的**颜色**另有
+ * 一套预设（[com.assiance.scabbard.ui.theme.AuroraPreset]），两者解耦 —— 用户完全可能
+ * 想要「薄荷绿的控件 + 暖色背景」。炫彩那套没有这个自由度，它的颜色就写在 shader 预设里。
  */
 @Composable
 fun AppBackground(modifier: Modifier = Modifier) {
+    val palette by AppSettings.themePalette.collectAsState()
+    val preset by AppSettings.auroraPreset.collectAsState()
+    val veilEnabled by AppSettings.auroraVeilEnabled.collectAsState()
+
+    if (palette == ThemePalette.AURORA) {
+        AuroraBackground(veilEnabled = veilEnabled, modifier = modifier)
+    } else {
+        AuroraGlowBackground(
+            primaryGlow = preset.primaryGlow,
+            secondaryGlow = preset.secondaryGlow,
+            modifier = modifier,
+        )
+    }
+}
+
+/**
+ * 双色游移光斑背景。
+ *
+ * 底色是一条纵向渐变，上面叠两颗缓慢画圆游移、各自呼吸的径向光斑：
+ * 主光斑取 [primaryGlow]（null 时取当前色板的 `primaryContainer`），
+ * 副光斑取 [secondaryGlow]（null 时取 `tertiaryContainer`）。
+ *
+ * 动效是一个 [drawBehind]，没有子节点、不触发重组 —— 每帧只重绘这一层。
+ *
+ * 光斑半径必须收在屏幕短边的一小段里（见 [GLOW_RADIUS_FRACTION]），否则动效等于没有。
+ * 曾经写的是 `size.maxDimension`：1080×2400 的屏上渐变跨度 2400px，而圆心只在 ±0.32 屏内
+ * 游移几百像素，整屏被匀匀染上一层淡色、游移落在这个大缓坡上完全看不出来。半径收到短边
+ * 量级后峰值集中，游移才读得出是"光在动"；同时远离光斑处更接近干净底色，压在背景上的
+ * 正文反而更清楚 —— 比调高透明度划算。
+ */
+@Composable
+private fun AuroraGlowBackground(
+    primaryGlow: Color?,
+    secondaryGlow: Color?,
+    modifier: Modifier = Modifier,
+) {
     val scheme = MaterialTheme.colorScheme
+    // 预设给的是写死色，null 才回落到色板 —— 这样「跟随主题」是默认行为，而选了具体预设
+    // 的人会看到背景与控件脱钩，正是他要的。
+    val primary = primaryGlow ?: scheme.primaryContainer
+    val secondary = secondaryGlow ?: scheme.tertiaryContainer
 
     // 缓慢游移：约 12s 一圈，径向光斑的圆心在背景上画圆，制造"光在流动"的观感。
     val transition = rememberInfiniteTransition(label = "bg-flow")
@@ -99,32 +144,83 @@ fun AppBackground(modifier: Modifier = Modifier) {
                         colors = listOf(scheme.surfaceContainer, scheme.surface),
                     )
                 )
-                // 主光斑：primaryContainer 径向渐变，圆心游移、浓度呼吸。
-                // 半径按短边取，见 GLOW_RADIUS_FRACTION 的说明。
+                // 主光斑：径向渐变，圆心游移、浓度呼吸。半径按短边取，见 GLOW_RADIUS_FRACTION。
                 drawRect(
                     brush = Brush.radialGradient(
-                        colors = listOf(
-                            scheme.primaryContainer.copy(alpha = breathe),
-                            Color.Transparent,
-                        ),
+                        colors = listOf(primary.copy(alpha = breathe), Color.Transparent),
                         radius = size.minDimension * GLOW_RADIUS_FRACTION,
                         center = Offset(cx, cy),
                     )
                 )
-                // 副光斑：tertiaryContainer，比主光斑更大更淡，拉开色相层次。
+                // 副光斑：比主光斑更大更淡，拉开色相层次。
                 // 盖在主光斑之上：两者在圆心附近叠出第三种过渡色，边缘各自淡出。
                 drawRect(
                     brush = Brush.radialGradient(
-                        colors = listOf(
-                            scheme.tertiaryContainer.copy(alpha = breatheSecond),
-                            Color.Transparent,
-                        ),
+                        colors = listOf(secondary.copy(alpha = breatheSecond), Color.Transparent),
                         radius = size.minDimension * SECOND_GLOW_RADIUS_FRACTION,
                         center = Offset(cxSecond, cySecond),
                     )
                 )
             }
     )
+}
+
+/**
+ * 「炫彩流光」主题的全屏背景：主题 surface 铺底 + 全屏炫彩 shader。
+ *
+ * **层序与移植来源一致：surface 在下、炫彩在上，不能反过来。**
+ * 这不是随手定的 —— 深色预设每组色份的第 4 位就是 alpha（`OS3_PHONE_DARK` 是 0.4~0.6），
+ * shader 输出的正是预乘 alpha 的 vec4，本来就该和底下的实色混出层次，所以下面必须先有
+ * 一层可混的实色。反过来「炫彩打底 + surface 压在上面」等于把炫彩整体乘掉一大半，
+ * 颜色被洗得发灰 —— 那正是它看着不如原版显眼的原因。
+ *
+ * [veilEnabled] 是给「觉得炫彩太跳、正文压不住」的用户留的退路：打开就在炫彩之上再补
+ * 一层主题 surface，把对比收回去。默认关闭，即默认给原版浓度。
+ *
+ * shader 不可用（Android 12 及以下 / AGSL 编译失败）时，静默退回双色游移光斑 ——
+ * 背景永远不该是空白或崩溃。
+ */
+@Composable
+private fun AuroraBackground(
+    veilEnabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val state = rememberBgEffectState()
+
+    if (!state.supported) {
+        AuroraGlowBackground(primaryGlow = null, secondaryGlow = null, modifier = modifier)
+        return
+    }
+
+    val scheme = MaterialTheme.colorScheme
+    // 遮罩浓度的两档是分开定的。
+    //
+    // 深色那档一开始定成 0.62，实测**把炫彩抹没了**：深色预设的色份 alpha 本就只有 0.4~0.6，
+    // 再压 62% 的 surface 上去，剩下的 38% 在暗底上已经低到看不出色相，整屏退化成一片死灰紫。
+    // 遮罩的语义是"收浓度让正文好读"，不是"关掉背景"，所以收到 0.45 —— 色相还在，浓度下来了。
+    val isDark = scheme.surface.luminance() < 0.5f
+
+    Box(modifier = modifier.fillMaxSize()) {
+        // 底色：给炫彩的预乘 alpha 一个可混的实色面，深色预设尤其依赖它。
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(scheme.surface)
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .bgEffectShader(state)
+        )
+        // 可选遮罩：收住炫彩的浓度，让压在它上面的玻璃卡片和正文更好读。
+        if (veilEnabled) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(scheme.surface.copy(alpha = if (isDark) 0.45f else 0.55f))
+            )
+        }
+    }
 }
 
 /**
