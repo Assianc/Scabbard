@@ -17,9 +17,13 @@ import com.assiance.alm.ui.AlmRoutes
  * 路由为 [AlmRoutes.HOME]。
  *
  * 说明：原实现里这段代码是**不可达的死代码**（它挂在一个从未 registerReceiver 的
- * Activity 内部 receiver 上，所以这条通知实际上从来没有弹出过）。搬运时我保持了同样的
- * 可达性——**没有新增任何调用点**。如果确实需要弹这条通知，请在 app 侧或
- * [AlarmReceiver] 里显式调用本方法（那属于新增行为，我没有擅自加）。
+ * Activity 内部 receiver 上，所以这条通知实际上从来没有弹出过）。
+ *
+ * 迁移时先保持了同样的可达性；**2026-09-23 用户明确要求接通到点通知**，于是在
+ * [AlarmReceiver] 的 `ALARM_ACTION` 分支（真实触发点）显式调用本方法，并在
+ * `ALARM_STOP_ACTION` 分支撤销这条通知（原实现没有撤销代码，因为通知从没弹出过）。
+ * 除这两个调用点外，本方法的内容仍是原 `MainActivityAlm.showNotification()` 的原样搬运，
+ * 文案一个字都没有新增。
  */
 object AlmNotifications {
 
