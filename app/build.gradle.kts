@@ -13,7 +13,7 @@ android {
     defaultConfig {
         applicationId = "com.assiance.scabbard"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 4
         versionName = "4.2.4"
 
