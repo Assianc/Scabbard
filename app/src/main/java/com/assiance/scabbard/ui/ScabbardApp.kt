@@ -3,12 +3,14 @@ package com.assiance.scabbard.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -16,13 +18,18 @@ import com.assiance.alm.ui.AlmRoutes
 import com.assiance.alm.ui.almGraph
 import com.assiance.memo.ui.MemoRoutes
 import com.assiance.memo.ui.memoGraph
+import com.assiance.scabbard.data.AppSettings
 import com.assiance.scabbard.ui.component.AppBackground
+import com.assiance.scabbard.ui.component.LocalLiquidGlassState
 import com.assiance.scabbard.ui.screen.AboutScreen
 import com.assiance.scabbard.ui.screen.AllocateScreen
 import com.assiance.scabbard.ui.screen.AppearanceScreen
 import com.assiance.scabbard.ui.screen.HomeScreen
 import com.assiance.scabbard.ui.screen.PlayerSelectionScreen
 import com.assiance.scabbard.ui.screen.SplashScreen
+import io.github.nadeemiqbal.liquidglass.LiquidGlassQuality
+import io.github.nadeemiqbal.liquidglass.rememberLiquidGlassState
+import io.github.nadeemiqbal.liquidglass.rememberPlatformLiquidGlassQuality
 
 /**
  * 全 App 的导航图。改造前是 3 个模块共十几个 Activity 互相 startActivity，
@@ -59,69 +66,88 @@ fun ScabbardApp(deepLinkRoute: String? = null) {
         }
     }
 
-    // 背景层铺在 NavHost 之下。它是全 App 唯一的背景来源，各页面靠把 Scaffold 与
-    // TopAppBar 的 containerColor 设成 Transparent 把底透出来 —— 漏改一处就会在该页
-    // 留下一条实色横带。首页入口卡的液态玻璃要靠这层背景的空间层次才看得出来。
-    Box(modifier = Modifier.fillMaxSize()) {
-        AppBackground()
+    // 玻璃的共享 state：背板（AppBackground）与玻璃面（首页入口卡）必须拿到**同一个实例**，
+    // 否则 backdrop 那个 GraphicsLayer 永远是空的、玻璃不会模糊（原因见
+    // [LocalLiquidGlassState]）。创建在这里而不是首页：背板的生命周期是全 App 的，跟着
+    // 首页走会让每次进出首页都重建离屏层。
+    //
+    // 外观设置里的「液态玻璃模糊」开关即在这里落地 —— 关掉就是把档位强制成 Fallback，
+    // 库的 Fallback 档不分配 GraphicsLayer（`rememberLiquidGlassState` 里 `layer = null`），
+    // 于是背板录制与模糊一起消失，玻璃退回纯 tint + 描边。
+    val glassBlurEnabled by AppSettings.glassBlurEnabled.collectAsStateWithLifecycle()
+    val glassState = rememberLiquidGlassState(
+        quality = if (glassBlurEnabled) {
+            rememberPlatformLiquidGlassQuality()
+        } else {
+            LiquidGlassQuality.Fallback
+        },
+    )
 
-        NavHost(navController = navController, startDestination = startDestination) {
-            composable(AppRoutes.SPLASH) {
-                SplashScreen(
-                    onFinished = {
-                        navController.navigate(AppRoutes.HOME) {
-                            popUpTo(AppRoutes.SPLASH) { inclusive = true }
-                        }
-                    },
-                )
+    CompositionLocalProvider(LocalLiquidGlassState provides glassState) {
+        // 背景层铺在 NavHost 之下。它是全 App 唯一的背景来源，各页面靠把 Scaffold 与
+        // TopAppBar 的 containerColor 设成 Transparent 把底透出来 —— 漏改一处就会在该页
+        // 留下一条实色横带。首页入口卡的液态玻璃要靠这层背景的空间层次才看得出来。
+        Box(modifier = Modifier.fillMaxSize()) {
+            AppBackground()
+
+            NavHost(navController = navController, startDestination = startDestination) {
+                composable(AppRoutes.SPLASH) {
+                    SplashScreen(
+                        onFinished = {
+                            navController.navigate(AppRoutes.HOME) {
+                                popUpTo(AppRoutes.SPLASH) { inclusive = true }
+                            }
+                        },
+                    )
+                }
+
+                composable(AppRoutes.HOME) {
+                    HomeScreen(
+                        onOpenAllocate = {
+                            // 对应原 MainActivity 新建实例时的字段初始化：每次从首页进去都是这四个
+                            allPlayers = DEFAULT_PLAYERS
+                            selectedPlayers = emptyList()
+                            navController.navigate(AppRoutes.ALLOCATE)
+                        },
+                        onOpenMemo = { navController.navigate(MemoRoutes.LIST) },
+                        onOpenAlm = { navController.navigate(AlmRoutes.HOME) },
+                        onOpenAppearance = { navController.navigate(AppRoutes.APPEARANCE) },
+                        onOpenAbout = { navController.navigate(AppRoutes.ABOUT) },
+                    )
+                }
+
+                composable(AppRoutes.ALLOCATE) {
+                    AllocateScreen(
+                        selectedPlayers = selectedPlayers,
+                        onBack = { navController.popBackStack() },
+                        onPickPlayers = { navController.navigate(AppRoutes.PLAYER_SELECT) },
+                    )
+                }
+
+                composable(AppRoutes.PLAYER_SELECT) {
+                    PlayerSelectionScreen(
+                        initialPlayers = allPlayers,
+                        onBack = { navController.popBackStack() },
+                        onDone = { all, selected ->
+                            allPlayers = all
+                            selectedPlayers = selected
+                            navController.popBackStack()
+                        },
+                    )
+                }
+
+                composable(AppRoutes.APPEARANCE) {
+                    AppearanceScreen(onBack = { navController.popBackStack() })
+                }
+
+                composable(AppRoutes.ABOUT) {
+                    AboutScreen(onBack = { navController.popBackStack() })
+                }
+
+                // 辅助模块自带的导航图
+                memoGraph(navController)
+                almGraph(navController)
             }
-
-            composable(AppRoutes.HOME) {
-                HomeScreen(
-                    onOpenAllocate = {
-                        // 对应原 MainActivity 新建实例时的字段初始化：每次从首页进去都是这四个
-                        allPlayers = DEFAULT_PLAYERS
-                        selectedPlayers = emptyList()
-                        navController.navigate(AppRoutes.ALLOCATE)
-                    },
-                    onOpenMemo = { navController.navigate(MemoRoutes.LIST) },
-                    onOpenAlm = { navController.navigate(AlmRoutes.HOME) },
-                    onOpenAppearance = { navController.navigate(AppRoutes.APPEARANCE) },
-                    onOpenAbout = { navController.navigate(AppRoutes.ABOUT) },
-                )
-            }
-
-            composable(AppRoutes.ALLOCATE) {
-                AllocateScreen(
-                    selectedPlayers = selectedPlayers,
-                    onBack = { navController.popBackStack() },
-                    onPickPlayers = { navController.navigate(AppRoutes.PLAYER_SELECT) },
-                )
-            }
-
-            composable(AppRoutes.PLAYER_SELECT) {
-                PlayerSelectionScreen(
-                    initialPlayers = allPlayers,
-                    onBack = { navController.popBackStack() },
-                    onDone = { all, selected ->
-                        allPlayers = all
-                        selectedPlayers = selected
-                        navController.popBackStack()
-                    },
-                )
-            }
-
-            composable(AppRoutes.APPEARANCE) {
-                AppearanceScreen(onBack = { navController.popBackStack() })
-            }
-
-            composable(AppRoutes.ABOUT) {
-                AboutScreen(onBack = { navController.popBackStack() })
-            }
-
-            // 辅助模块自带的导航图
-            memoGraph(navController)
-            almGraph(navController)
         }
     }
 }

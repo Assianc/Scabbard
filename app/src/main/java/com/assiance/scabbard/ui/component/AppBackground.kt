@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -23,9 +24,26 @@ import com.assiance.scabbard.data.AppSettings
 import com.assiance.scabbard.ui.effect.bgEffectShader
 import com.assiance.scabbard.ui.effect.rememberBgEffectState
 import com.assiance.scabbard.ui.theme.ThemePalette
+import io.github.nadeemiqbal.liquidglass.LiquidGlassState
+import io.github.nadeemiqbal.liquidglass.liquidGlassSource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+
+/**
+ * 供玻璃面采样背板用的共享 [LiquidGlassState]，由 [com.assiance.scabbard.ui.ScabbardApp]
+ * 在 App 根 provide。
+ *
+ * **为什么必须是同一个实例**：liquid-glass 的模糊、饱和提升、折射全部挂在 `state.backdrop`
+ * 这个 `GraphicsLayer` 上，而那个 layer 只由 `Modifier.liquidGlassSource(state)` 录制
+ * （库的 `drawBackdrop` 开头是 `if (!recorded) return`）。传进来的 state 和录制用的 state
+ * 不是同一个实例，layer 就永远是空的 —— 玻璃静默退化成"纯 tint + 描边"，不报错、不崩，
+ * 只是不模糊。本项目此前正是这个状态。
+ *
+ * `null` 表示没有背板可采（预览、单测、脱离 App 根复用某个组件），消费方自行
+ * `rememberLiquidGlassState()` 兜底即可，不必判空到处传。
+ */
+val LocalLiquidGlassState = staticCompositionLocalOf<LiquidGlassState?> { null }
 
 /**
  * 全 App 背景层：跟着当前主题走的一层缓动背景。
@@ -34,6 +52,11 @@ import kotlin.math.sin
  * 因此各页面的 Scaffold 必须用 `containerColor = Color.Transparent`、TopAppBar 必须用
  * `topAppBarColors(containerColor = Color.Transparent)`，背景才透得出来 —— 漏掉任何一处
  * 都会在该页留下一条实色横带。
+ *
+ * **它同时是玻璃的背板来源**：本函数内部挂 [liquidGlassSource]，把这一层画出来的像素录进
+ * [LocalLiquidGlassState] 的 `backdrop`。所以背板的登记是**跟着背景层走的、不靠调用方记得**
+ * —— 这正是此前漏掉的那一步（见 [LocalLiquidGlassState] 的说明）。state 为 null（没有
+ * provide）或处于 `Fallback` 档时，[liquidGlassSource] 是恒等变换、不分配任何离屏层。
  *
  * 画什么由当前主题色板决定：
  * - [ThemePalette.AURORA] → 全屏炫彩流光 shader（[AuroraBackground]）；
@@ -49,13 +72,19 @@ fun AppBackground(modifier: Modifier = Modifier) {
     val preset by AppSettings.auroraPreset.collectAsState()
     val veilEnabled by AppSettings.auroraVeilEnabled.collectAsState()
 
+    // 把自己登记成玻璃的背板。挂在这一层而不是让调用方传 modifier：背景层就是背板本身，
+    // 由它自己认领这件事，才不会有"忘了挂"的形态 —— 忘了不会报错，只会悄悄不模糊。
+    val glassState = LocalLiquidGlassState.current
+    val backdropModifier =
+        if (glassState != null) modifier.liquidGlassSource(glassState) else modifier
+
     if (palette == ThemePalette.AURORA) {
-        AuroraBackground(veilEnabled = veilEnabled, modifier = modifier)
+        AuroraBackground(veilEnabled = veilEnabled, modifier = backdropModifier)
     } else {
         AuroraGlowBackground(
             primaryGlow = preset.primaryGlow,
             secondaryGlow = preset.secondaryGlow,
-            modifier = modifier,
+            modifier = backdropModifier,
         )
     }
 }
