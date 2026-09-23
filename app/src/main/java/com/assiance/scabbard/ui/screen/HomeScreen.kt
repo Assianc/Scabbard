@@ -250,11 +250,11 @@ fun HomeScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = Color.Transparent,
                     ),
                 )
             },
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = Color.Transparent,
         ) { innerPadding ->
             Column(
                 modifier = Modifier

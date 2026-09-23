@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -200,7 +201,10 @@ internal fun AlmHomeScreen(navController: NavController) {
     // ---------------------------------------------------------------- 界面
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -244,7 +248,13 @@ internal fun AlmHomeScreen(navController: NavController) {
 
                 // PrimaryTabRow 是 material3 1.4.0 里 TabRow 的替代：指示器由「通栏细下划线」
                 // 变成「贴合文字宽度的圆角粗条」，这是本次升级引入的唯一视觉变化，属有意为之。
-                PrimaryTabRow(selectedTabIndex = currentTab) {
+                //
+                // containerColor 必须显式置透明：它的默认值是 TabRowDefaults.primaryContainerColor
+                // （不透明的 surface），会在全 App 的渐变背景上留下一条实色横带。
+                PrimaryTabRow(
+                    selectedTabIndex = currentTab,
+                    containerColor = Color.Transparent,
+                ) {
                     Tab(
                         selected = currentTab == TAB_ALARM,
                         onClick = { currentTab = TAB_ALARM },

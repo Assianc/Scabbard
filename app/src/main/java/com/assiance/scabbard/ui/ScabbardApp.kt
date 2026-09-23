@@ -1,11 +1,14 @@
 package com.assiance.scabbard.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -13,6 +16,7 @@ import com.assiance.alm.ui.AlmRoutes
 import com.assiance.alm.ui.almGraph
 import com.assiance.memo.ui.MemoRoutes
 import com.assiance.memo.ui.memoGraph
+import com.assiance.scabbard.ui.component.AppBackground
 import com.assiance.scabbard.ui.screen.AboutScreen
 import com.assiance.scabbard.ui.screen.AllocateScreen
 import com.assiance.scabbard.ui.screen.AppearanceScreen
@@ -55,63 +59,70 @@ fun ScabbardApp(deepLinkRoute: String? = null) {
         }
     }
 
-    NavHost(navController = navController, startDestination = startDestination) {
-        composable(AppRoutes.SPLASH) {
-            SplashScreen(
-                onFinished = {
-                    navController.navigate(AppRoutes.HOME) {
-                        popUpTo(AppRoutes.SPLASH) { inclusive = true }
-                    }
-                },
-            )
-        }
+    // 背景层铺在 NavHost 之下。它是全 App 唯一的背景来源，各页面靠把 Scaffold 与
+    // TopAppBar 的 containerColor 设成 Transparent 把底透出来 —— 漏改一处就会在该页
+    // 留下一条实色横带。首页入口卡的液态玻璃要靠这层背景的空间层次才看得出来。
+    Box(modifier = Modifier.fillMaxSize()) {
+        AppBackground()
 
-        composable(AppRoutes.HOME) {
-            HomeScreen(
-                onOpenAllocate = {
-                    // 对应原 MainActivity 新建实例时的字段初始化：每次从首页进去都是这四个
-                    allPlayers = DEFAULT_PLAYERS
-                    selectedPlayers = emptyList()
-                    navController.navigate(AppRoutes.ALLOCATE)
-                },
-                onOpenMemo = { navController.navigate(MemoRoutes.LIST) },
-                onOpenAlm = { navController.navigate(AlmRoutes.HOME) },
-                onOpenAppearance = { navController.navigate(AppRoutes.APPEARANCE) },
-                onOpenAbout = { navController.navigate(AppRoutes.ABOUT) },
-            )
-        }
+        NavHost(navController = navController, startDestination = startDestination) {
+            composable(AppRoutes.SPLASH) {
+                SplashScreen(
+                    onFinished = {
+                        navController.navigate(AppRoutes.HOME) {
+                            popUpTo(AppRoutes.SPLASH) { inclusive = true }
+                        }
+                    },
+                )
+            }
 
-        composable(AppRoutes.ALLOCATE) {
-            AllocateScreen(
-                selectedPlayers = selectedPlayers,
-                onBack = { navController.popBackStack() },
-                onPickPlayers = { navController.navigate(AppRoutes.PLAYER_SELECT) },
-            )
-        }
+            composable(AppRoutes.HOME) {
+                HomeScreen(
+                    onOpenAllocate = {
+                        // 对应原 MainActivity 新建实例时的字段初始化：每次从首页进去都是这四个
+                        allPlayers = DEFAULT_PLAYERS
+                        selectedPlayers = emptyList()
+                        navController.navigate(AppRoutes.ALLOCATE)
+                    },
+                    onOpenMemo = { navController.navigate(MemoRoutes.LIST) },
+                    onOpenAlm = { navController.navigate(AlmRoutes.HOME) },
+                    onOpenAppearance = { navController.navigate(AppRoutes.APPEARANCE) },
+                    onOpenAbout = { navController.navigate(AppRoutes.ABOUT) },
+                )
+            }
 
-        composable(AppRoutes.PLAYER_SELECT) {
-            PlayerSelectionScreen(
-                initialPlayers = allPlayers,
-                onBack = { navController.popBackStack() },
-                onDone = { all, selected ->
-                    allPlayers = all
-                    selectedPlayers = selected
-                    navController.popBackStack()
-                },
-            )
-        }
+            composable(AppRoutes.ALLOCATE) {
+                AllocateScreen(
+                    selectedPlayers = selectedPlayers,
+                    onBack = { navController.popBackStack() },
+                    onPickPlayers = { navController.navigate(AppRoutes.PLAYER_SELECT) },
+                )
+            }
 
-        composable(AppRoutes.APPEARANCE) {
-            AppearanceScreen(onBack = { navController.popBackStack() })
-        }
+            composable(AppRoutes.PLAYER_SELECT) {
+                PlayerSelectionScreen(
+                    initialPlayers = allPlayers,
+                    onBack = { navController.popBackStack() },
+                    onDone = { all, selected ->
+                        allPlayers = all
+                        selectedPlayers = selected
+                        navController.popBackStack()
+                    },
+                )
+            }
 
-        composable(AppRoutes.ABOUT) {
-            AboutScreen(onBack = { navController.popBackStack() })
-        }
+            composable(AppRoutes.APPEARANCE) {
+                AppearanceScreen(onBack = { navController.popBackStack() })
+            }
 
-        // 辅助模块自带的导航图
-        memoGraph(navController)
-        almGraph(navController)
+            composable(AppRoutes.ABOUT) {
+                AboutScreen(onBack = { navController.popBackStack() })
+            }
+
+            // 辅助模块自带的导航图
+            memoGraph(navController)
+            almGraph(navController)
+        }
     }
 }
 
