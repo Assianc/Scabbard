@@ -73,6 +73,9 @@ dependencies {
 
     // miuix 只为它的 NumberPicker，封装在 ui/ds/AlmWheelPicker.kt（移植自 LoveScore 的同名封装）。
     implementation(libs.miuix.ui)
+
+    // 农历转换，日历页的格子与日期标题要用（与 LoveScore 同库同版本）。
+    implementation(libs.tyme4kt)
     debugImplementation(libs.compose.ui.tooling)
 
     testImplementation("junit:junit:4.13.2")
