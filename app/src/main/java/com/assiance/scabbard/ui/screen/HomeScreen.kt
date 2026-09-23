@@ -12,6 +12,7 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -182,7 +183,10 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.Bottom,
                 ) {
                     if (appIconRes != 0) {
-                        Icon(
+                        // 这里必须是 Image 而不是 Icon：Icon 会按 LocalContentColor 把整张
+                        // painter 染成单色，彩色应用图标就糊成一个纯色块（抽屉里原先的毛病）。
+                        // Image 不做染色，与 AboutScreen 顶部应用图标一致。
+                        Image(
                             painter = painterResource(appIconRes),
                             contentDescription = stringResource(R.string.app_name),
                             modifier = Modifier.size(72.dp),
