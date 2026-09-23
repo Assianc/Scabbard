@@ -680,9 +680,12 @@ private fun reminderLabel(minutes: Int): String = when (minutes) {
  * 三列**共用一条**选中指示带（[wheelSelectionBand]）：年月日是同一次选择的三个字段，
  * 一条带子横贯三列才读得出「这是一个日期」，三条窄带并排会读成三个互不相干的开关。
  * 带子由 [Box] 统一画在滚轮下面，因此三列都要 `showSelectionBand = false`。
+ *
+ * 2026-09-23 起由日历页的「点年月跳转」一并复用，所以是 `internal` 而不是 `private` ——
+ * 两处都需要「选一个日期」的同一个滚轮，各写一份的话手感会分叉。
  */
 @Composable
-private fun WheelDatePicker(
+internal fun WheelDatePicker(
     year: Int,
     month: Int,
     day: Int,
@@ -735,10 +738,10 @@ private fun WheelDatePicker(
 }
 
 /** 日期滚轮同时可见的行数（取奇数，正中间那行即选中行）。 */
-private const val WHEEL_DATE_VISIBLE_ITEMS = 5
+internal const val WHEEL_DATE_VISIBLE_ITEMS = 5
 
 /** 某年某月的天数。用 `getActualMaximum` 而不是查表：闰年自动正确。 */
-private fun daysInMonth(year: Int, month: Int): Int =
+internal fun daysInMonth(year: Int, month: Int): Int =
     Calendar.getInstance().apply { set(year, month - 1, 1) }
         .getActualMaximum(Calendar.DAY_OF_MONTH)
 

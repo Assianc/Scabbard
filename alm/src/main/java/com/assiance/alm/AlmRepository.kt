@@ -636,7 +636,7 @@ object AlmRepository {
     // ================================================================ 历史记录数据
 
     /** 原 `CalendarActivity.loadData()` 中「收集闹钟 + 待办、合并排序」的那一段。 */
-    fun loadHistoryItems(context: Context): List<HistoryAdapter.HistoryItem> {
+    fun loadHistoryItems(context: Context): List<HistoryItem> {
         // 加载闹钟数据
         val prefs = context.getSharedPreferences(AlmContract.ALARM_PREFS, Context.MODE_PRIVATE)
         val alarmsJson = prefs.getString(AlmContract.ALARM_LIST_KEY, "[]")
@@ -678,7 +678,7 @@ object AlmRepository {
             set(Calendar.MILLISECOND, 999)
         }
 
-        val alarmTimes = mutableListOf<HistoryAdapter.HistoryItem>()
+        val alarmTimes = mutableListOf<HistoryItem>()
 
         // 遍历每个闹钟
         alarms.forEach { alarm ->
@@ -707,7 +707,7 @@ object AlmRepository {
                         // 添加在 [startDate, endDate] 范围内的闹钟
                         if (alarmTime.timeInMillis in startDate.timeInMillis..endDate.timeInMillis) {
                             alarmTimes.add(
-                                HistoryAdapter.HistoryItem.AlarmItem(
+                                HistoryItem.AlarmItem(
                                     AlarmData(
                                         id = alarm.id,
                                         timeInMillis = alarmTime.timeInMillis,
@@ -723,7 +723,7 @@ object AlmRepository {
                 }
             } else if (alarm.timeInMillis in startDate.timeInMillis until endDate.timeInMillis) {
                 // 非重复闹钟：添加在 [startDate, endDate) 内的闹钟，无论是否已过
-                alarmTimes.add(HistoryAdapter.HistoryItem.AlarmItem(alarm))
+                alarmTimes.add(HistoryItem.AlarmItem(alarm))
             }
         }
 
@@ -789,22 +789,22 @@ object AlmRepository {
         }
 
         // 合并所有数据并按时间排序
-        val historyItems = mutableListOf<HistoryAdapter.HistoryItem>()
+        val historyItems = mutableListOf<HistoryItem>()
         historyItems.addAll(alarmTimes)
-        historyItems.addAll(todos.map { HistoryAdapter.HistoryItem.TodoItem(it) })
+        historyItems.addAll(todos.map { HistoryItem.TodoItem(it) })
 
         // 修改排序逻辑，考虑完成时间
         historyItems.sortWith(
             compareBy({
                 // 第一个排序键：待办为 0，闹铃为 1
                 when (it) {
-                    is HistoryAdapter.HistoryItem.TodoItem -> 0
-                    is HistoryAdapter.HistoryItem.AlarmItem -> 1
+                    is HistoryItem.TodoItem -> 0
+                    is HistoryItem.AlarmItem -> 1
                 }
             }, {
                 // 第二个排序键：各自的时间属性
                 when (it) {
-                    is HistoryAdapter.HistoryItem.TodoItem -> {
+                    is HistoryItem.TodoItem -> {
                         val todo = it.todo
                         when {
                             todo.isCompleted -> todo.completedTime ?: todo.dueTime ?: Long.MAX_VALUE
@@ -814,7 +814,7 @@ object AlmRepository {
                         }
                     }
 
-                    is HistoryAdapter.HistoryItem.AlarmItem -> it.alarm.timeInMillis
+                    is HistoryItem.AlarmItem -> it.alarm.timeInMillis
                 }
             })
         )

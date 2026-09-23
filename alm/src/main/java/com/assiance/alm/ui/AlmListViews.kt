@@ -41,7 +41,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -49,11 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.assiance.alm.AlarmData
-import com.assiance.alm.HistoryAdapter
 import com.assiance.alm.R
 import com.assiance.alm.TodoData
 import io.github.nadeemiqbal.liquidglass.liquidGlass
@@ -77,7 +72,9 @@ import kotlin.math.roundToInt
  * `Color.BLACK` / `Color.GRAY`（XML 里还各写了一套 `#333333` 之类），压在半透明的玻璃面上
  * 深色主题下根本读不出来。
  *
- * 历史记录列表（[HistoryListView]）仍走原来的 `HistoryAdapter` —— 它不在本次范围内。
+ * 原先这里还有第三个列表「历史记录」([HistoryListView]，走 `HistoryAdapter` 的
+ * RecyclerView)。2026-09-23 日历页照约定页重做时，它被替换成了 Compose 渲染的
+ * 「当日面板」，`HistoryAdapter` 与它的三个 item 布局一并删除，见 [CalendarScreen]。
  */
 
 /** 首页「闹钟」列表。原 `activity_main_alm.xml` 里的 `alarmListView`。 */
@@ -384,40 +381,6 @@ private fun AlmGlassListItem(
             content()
         }
     }
-}
-
-/**
- * 历史记录列表。
- *
- * 与原实现一样，**数据由 `HistoryAdapter` 自己持有**（`updateItems` / `removeItemAt` 都由
- * 屏幕侧的过滤函数直接调用），所以这里只负责把 Adapter 绑到 RecyclerView 上，
- * 不在 `update` 里喂数据——这样「删除后 `removeItemAt` 的即时生效、以及源数据未变导致
- * 切换日期后可能复现」这两个原有行为都能原封不动保留。
- */
-@Composable
-internal fun HistoryListView(
-    adapter: HistoryAdapter,
-    modifier: Modifier = Modifier,
-) {
-    val verticalPadding = with(LocalDensity.current) { LIST_VERTICAL_PADDING_DP.dp.roundToPx() }
-
-    AndroidView(
-        modifier = modifier,
-        factory = { context ->
-            RecyclerView(context).apply {
-                layoutManager = LinearLayoutManager(context)
-                setPadding(verticalPadding, verticalPadding, verticalPadding, verticalPadding)
-                clipToPadding = false
-                isVerticalScrollBarEnabled = true
-                this.adapter = adapter
-            }
-        },
-        update = { recyclerView ->
-            if (recyclerView.adapter !== adapter) {
-                recyclerView.adapter = adapter
-            }
-        },
-    )
 }
 
 private val alarmTimeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
