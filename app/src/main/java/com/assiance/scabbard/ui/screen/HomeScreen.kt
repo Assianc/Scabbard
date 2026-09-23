@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CallSplit
+import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
@@ -34,7 +35,6 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,12 +60,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -76,6 +78,8 @@ import com.assiance.scabbard.data.AppSettings
 import com.assiance.scabbard.ui.component.GradientTitle
 import com.assiance.scabbard.ui.util.findActivity
 import com.assiance.scabbard.update.UpdateChecker
+import io.github.nadeemiqbal.liquidglass.liquidGlass
+import io.github.nadeemiqbal.liquidglass.rememberLiquidGlassState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -261,7 +265,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 HomeEntryCard(
-                    icon = Icons.Default.CallSplit,
+                    icon = Icons.AutoMirrored.Filled.CallSplit,
                     title = "分 道",
                     onClick = onOpenAllocate,
                 )
@@ -383,43 +387,68 @@ fun HomeScreen(
     }
 }
 
+/**
+ * 首页入口卡玻璃 tint 的不透明度 —— 唯一需要调的观感旋钮。
+ * 调低更透、玻璃感更强；调高更接近原来那张实底 Card。
+ */
+private const val HOME_ENTRY_GLASS_TINT_ALPHA = 0.6f
+
+/**
+ * 首页入口卡：材质由 Material3 [Card] 换成液态玻璃。
+ *
+ * 布局、内边距、圆角、点击范围都保持原样，只换材质 —— 圆角仍取 [CardDefaults.shape]，
+ * 也就是被替换掉的那张 Card 的默认圆角，不趁换材质顺手改形状。
+ *
+ * 降级交给库自己判断：[rememberLiquidGlassState] 在 API < 31 或低内存设备上返回
+ * Fallback 档，此时不分配离屏图层、不做背板模糊，只保留 tint 与边缘高光，
+ * 观感与高档位一致且不拖性能。
+ */
 @Composable
 private fun HomeEntryCard(
     icon: ImageVector,
     title: String,
     onClick: () -> Unit,
 ) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+    val shape = CardDefaults.shape
+    // 每张卡各持一份 state：库靠它缓存 RenderEffect / 离屏图层，跨重组保持稳定。
+    val glassState = rememberLiquidGlassState()
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            // 先把命中区裁进圆角内，否则圆角外的"空矩形"会吞掉抽屉 / 列表的滑动手势。
+            .clip(shape)
+            .liquidGlass(
+                state = glassState,
+                shape = shape,
+                tint = MaterialTheme.colorScheme.surfaceContainer
+                    .copy(alpha = HOME_ENTRY_GLASS_TINT_ALPHA),
+            )
+            // liquidGlass 只裁渲染，触摸命中仍由整条 modifier 链决定，所以这里再裁一次。
+            .clip(shape)
+            // clickable 放在 padding 之前，保持"整张卡含内边距都可点"（与原 Card 一致）；
+            // role = Button 是补回 Card(onClick) 自带的语义，避免无障碍回退。
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        Box(
+            modifier = Modifier.size(40.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier.size(40.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp),
-                )
-            }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp),
             )
         }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
