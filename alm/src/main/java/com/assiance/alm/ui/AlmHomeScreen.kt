@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -54,8 +55,9 @@ import java.util.Locale
  * 与原实现的对应关系：
  * - 顶部日期/时钟：原来是 `Handler.postDelayed` 每秒刷新，这里换成 `LaunchedEffect` + `delay(1000)`。
  * - 「闹钟 / 待办」两个标签：原来是两个 MaterialButton + 手写的指示器动画，这里换成 M3 的 [TabRow]。
- * - 两个列表：仍然复用原有的 `AlarmAdapter` / `TodoAdapter`（通过 `AndroidView` 桥接），
- *   侧滑删除、长按、开关、已完成不能侧滑等行为全部来自原 Adapter。
+ * - 两个列表：2026-09-23 从 XML 的 `AlarmAdapter` / `TodoAdapter` 重写成 Compose
+ *   （见 [AlarmListView] / [TodoListView]），改动缘由是液态玻璃用不到 XML View 上。
+ *   侧滑删除、长按、开关、已完成不能侧滑等行为逐条对齐，出处在 AlmListViews.kt 标注。
  * - 右下角的「新增」按钮：换成 [DraggableAddFab]（Compose 拖动），行为对齐见该文件注释。
  * - 生命周期：原来在 `onResume` 里 `loadAlarms()` + `loadTodos()`，这里用 `LifecycleEventEffect`。
  * - 广播注册与通知渠道：原来在 `onCreate` 里做一次，这里在首次组合时做一次，见 [AlmReceivers]。
@@ -200,7 +202,10 @@ internal fun AlmHomeScreen(navController: NavController) {
     // ---------------------------------------------------------------- 界面
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -244,7 +249,13 @@ internal fun AlmHomeScreen(navController: NavController) {
 
                 // PrimaryTabRow 是 material3 1.4.0 里 TabRow 的替代：指示器由「通栏细下划线」
                 // 变成「贴合文字宽度的圆角粗条」，这是本次升级引入的唯一视觉变化，属有意为之。
-                PrimaryTabRow(selectedTabIndex = currentTab) {
+                //
+                // containerColor 必须显式置透明：它的默认值是 TabRowDefaults.primaryContainerColor
+                // （不透明的 surface），会在全 App 的渐变背景上留下一条实色横带。
+                PrimaryTabRow(
+                    selectedTabIndex = currentTab,
+                    containerColor = Color.Transparent,
+                ) {
                     Tab(
                         selected = currentTab == TAB_ALARM,
                         onClick = { currentTab = TAB_ALARM },
@@ -265,10 +276,11 @@ internal fun AlmHomeScreen(navController: NavController) {
                     // 原实现是两个列表都装在 ViewFlipper 里同时保活、切标签只切显示，
                     // 所以各自的滚动位置都在。这里等价处理：两个列表都常驻组合树，只切可见性。
                     //
-                    // 必须「常驻」的原因：AndroidView 一旦离开组合，承载的 View 会被从视图树
-                    // 摘掉（compose-ui 的 AndroidViewHolder.onDetach → removeAllViewsInLayout），
-                    // 再次进入时 factory 会重新造一个 RecyclerView，LinearLayoutManager 的
-                    // 滚动位置随之丢失。
+                    // 必须「常驻」的原因：列表一旦离开组合，它的滚动状态就没了。
+                    // 走 AndroidView 桥接的（如历史列表）会被 compose-ui 的
+                    // AndroidViewHolder.onDetach → removeAllViewsInLayout 把承载的
+                    // RecyclerView 整个摘掉，LinearLayoutManager 的位置随之丢失；
+                    // 这里的 LazyColumn 同理，rememberLazyListState 是跟着组合走的。
                     // 隐藏用 alpha 而不是 size(0)/GONE：alpha 只落在绘制层，完全不碰 View 的
                     // measure/layout，RecyclerView 不受任何打扰（且 alpha == 1f 时 Compose
                     // 直接返回原 Modifier，可见的那份连图层都不会多出来）。

@@ -4,11 +4,13 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import io.github.nadeemiqbal.liquidglass.LiquidGlassState
 
 /**
  * alm 模块对外的**唯一入口**。
@@ -111,9 +113,14 @@ object AlmRoutes {
  *
  * 宿主 NavGraph 里只调用这一次；alm 内部再次跳转（首页 → 设置页 / 历史记录）由 alm 自己完成。
  */
-fun NavGraphBuilder.almGraph(navController: NavController) {
+fun NavGraphBuilder.almGraph(
+    navController: NavController,
+    glassState: LiquidGlassState,
+) {
     composable(AlmRoutes.HOME) {
-        AlmHomeScreen(navController = navController)
+        CompositionLocalProvider(LocalAlmGlassState provides glassState) {
+            AlmHomeScreen(navController = navController)
+        }
     }
 
     composable(
@@ -134,12 +141,14 @@ fun NavGraphBuilder.almGraph(navController: NavController) {
             },
         ),
     ) { entry ->
-        AlarmSettingScreen(
-            navController = navController,
-            alarmId = entry.arguments?.getInt(AlmRoutes.ARG_ALARM_ID) ?: -1,
-            alarmTime = entry.arguments?.getLong(AlmRoutes.ARG_ALARM_TIME) ?: -1L,
-            ringtoneUri = entry.arguments?.getString(AlmRoutes.ARG_RINGTONE_URI),
-        )
+        CompositionLocalProvider(LocalAlmGlassState provides glassState) {
+            AlarmSettingScreen(
+                navController = navController,
+                alarmId = entry.arguments?.getInt(AlmRoutes.ARG_ALARM_ID) ?: -1,
+                alarmTime = entry.arguments?.getLong(AlmRoutes.ARG_ALARM_TIME) ?: -1L,
+                ringtoneUri = entry.arguments?.getString(AlmRoutes.ARG_RINGTONE_URI),
+            )
+        }
     }
 
     composable(
@@ -177,22 +186,27 @@ fun NavGraphBuilder.almGraph(navController: NavController) {
             },
         ),
     ) { entry ->
-        TodoSettingScreen(
-            navController = navController,
-            todoId = entry.arguments?.getInt(AlmRoutes.ARG_TODO_ID) ?: -1,
-            initialTitle = entry.arguments?.getString(AlmRoutes.ARG_TODO_TITLE) ?: "",
-            initialDescription = entry.arguments?.getString(AlmRoutes.ARG_TODO_DESCRIPTION) ?: "",
-            initialStartTime = entry.arguments?.getLong(AlmRoutes.ARG_TODO_START_TIME) ?: -1L,
-            initialDueTime = entry.arguments?.getLong(AlmRoutes.ARG_TODO_DUE_TIME) ?: -1L,
-            initialStartRingtoneUri =
-                entry.arguments?.getString(AlmRoutes.ARG_TODO_START_RINGTONE_URI),
-            initialDueRingtoneUri =
-                entry.arguments?.getString(AlmRoutes.ARG_TODO_DUE_RINGTONE_URI),
-        )
+        CompositionLocalProvider(LocalAlmGlassState provides glassState) {
+            TodoSettingScreen(
+                navController = navController,
+                todoId = entry.arguments?.getInt(AlmRoutes.ARG_TODO_ID) ?: -1,
+                initialTitle = entry.arguments?.getString(AlmRoutes.ARG_TODO_TITLE) ?: "",
+                initialDescription =
+                    entry.arguments?.getString(AlmRoutes.ARG_TODO_DESCRIPTION) ?: "",
+                initialStartTime = entry.arguments?.getLong(AlmRoutes.ARG_TODO_START_TIME) ?: -1L,
+                initialDueTime = entry.arguments?.getLong(AlmRoutes.ARG_TODO_DUE_TIME) ?: -1L,
+                initialStartRingtoneUri =
+                    entry.arguments?.getString(AlmRoutes.ARG_TODO_START_RINGTONE_URI),
+                initialDueRingtoneUri =
+                    entry.arguments?.getString(AlmRoutes.ARG_TODO_DUE_RINGTONE_URI),
+            )
+        }
     }
 
     composable(AlmRoutes.CALENDAR) {
-        CalendarScreen(navController = navController)
+        CompositionLocalProvider(LocalAlmGlassState provides glassState) {
+            CalendarScreen(navController = navController)
+        }
     }
 }
 

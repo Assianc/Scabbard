@@ -1,20 +1,13 @@
 package com.assiance.alm.ui
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
-import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
-import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.NumberPicker
-import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -44,6 +37,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -53,12 +47,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import com.assiance.alm.AlmRepository
 import com.assiance.alm.TodoData
+import com.assiance.alm.ui.ds.AlmTimeWheel
+import com.assiance.alm.ui.ds.AlmWheelPicker
+import com.assiance.alm.ui.ds.rememberWheelYearRange
+import com.assiance.alm.ui.ds.wheelSelectionBand
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -68,12 +66,18 @@ import java.util.Locale
  *
  * 逻辑与原实现逐条对齐：
  * - 内容必填，空则报错「请输入待办内容」，不保存；
- * - 开始/截止时间用**系统** `DatePickerDialog` + `TimePickerDialog`（与原实现同一套控件），
- *   选择结果仍然走「开始必须早于截止、截止必须晚于开始」的校验与 Toast 文案；
+ * - 开始/截止时间的选择结果仍然走「开始必须早于截止、截止必须晚于开始」的校验与 Toast 文案；
  * - 提醒档位（不提醒 / 立即提醒 / 提前 15、30、60、120 分钟 / 自定义）与按钮文案映射不变；
- *   自定义弹窗仍然是 `NumberPicker(1..999)` + `Spinner(分钟/小时/天)`；
  * - 保存：先取消旧提醒 → 读回原完成状态/创建时间 → 写库 → 未完成才设置提醒 →
  *   提示「待办已添加 / 待办已更新」→ 返回上一页。
+ *
+ * **2026-09-23 时间选择器整体换成了滚轮**（用户要求复用 LoveScore 那一套，见
+ * `ui/ds/AlmWheelPicker.kt`），两处都是有意为之的形态变化：
+ * - 开始/截止时间：原来是系统的 `DatePickerDialog` + `TimePickerDialog` **分两步**弹，
+ *   现在并成一个弹窗（日期三列 + 时间两列）。滚轮不像日历格子那样要占满一屏，
+ *   分两步反而多一次弹窗切换。校验与 Toast 文案不变。
+ * - 自定义提醒量：原来是 `NumberPicker(1..999)` + `Spinner(分钟/小时/天)`，
+ *   现在换成两列滚轮（数值 + 单位）。取值范围与单位映射不变。
  *
  * 与原实现唯一的模型差异：复选框的选中状态直接由「时间是否已设置」推导
  * （原实现是「勾选后弹框，取消再回滚勾选」）。净效果一致：弹框取消 = 未勾选 = 时间为空。
@@ -131,9 +135,10 @@ internal fun TodoSettingScreen(
     val startRingtoneName = remember(startRingtoneUri) { resolveRingtoneName(startRingtoneUri) }
     val dueRingtoneName = remember(dueRingtoneUri) { resolveRingtoneName(dueRingtoneUri) }
 
-    // 提醒选择弹窗 / 自定义弹窗
-    var reminderDialogTarget by remember { mutableStateOf<ReminderTarget?>(null) }
-    var customReminderTarget by remember { mutableStateOf<ReminderTarget?>(null) }
+    // 提醒选择弹窗 / 自定义弹窗 / 日期时间选择弹窗
+    var reminderDialogTarget by remember { mutableStateOf<StartOrDue?>(null) }
+    var customReminderTarget by remember { mutableStateOf<StartOrDue?>(null) }
+    var dateTimePickerTarget by remember { mutableStateOf<StartOrDue?>(null) }
 
     // 铃声选择（仍然是外部系统 UI）。
     // 原实现用两个 requestCode（1001 / 1002）区分开始与截止；新的 ActivityResult API 不带
@@ -173,14 +178,105 @@ internal fun TodoSettingScreen(
         }
     }
 
+    // ---------------------------------------------------------------- 日期时间选择弹窗
+    //
+    // 原实现是 `DatePickerDialog` → `TimePickerDialog` 分两步弹（见已删除的 showDateTimePicker）。
+    // 换成滚轮后并成一个弹窗：日期三列在上、时间两列在下。**这是有意的交互偏离** ——
+    // 滚轮不像日历格子那样需要占满一屏，分两步反而多一次弹窗切换。
+    // 初始值与原实现一致：已经设过时间就从那个时间起步，没设过就从当前时刻起步。
+    dateTimePickerTarget?.let { target ->
+        val base = remember(target) {
+            Calendar.getInstance().apply {
+                (if (target == StartOrDue.START) startTime else dueTime)?.let { timeInMillis = it }
+            }
+        }
+        var yearValue by remember(target) { mutableIntStateOf(base.get(Calendar.YEAR)) }
+        var monthValue by remember(target) { mutableIntStateOf(base.get(Calendar.MONTH) + 1) }
+        var dayValue by remember(target) { mutableIntStateOf(base.get(Calendar.DAY_OF_MONTH)) }
+        var hourValue by remember(target) { mutableIntStateOf(base.get(Calendar.HOUR_OF_DAY)) }
+        var minuteValue by remember(target) { mutableIntStateOf(base.get(Calendar.MINUTE)) }
+
+        // 与原实现一致：取消则回滚勾选（已经设过时间的保持原样）
+        fun dismissPicker() {
+            dateTimePickerTarget = null
+            if (target == StartOrDue.START) {
+                if (startTime == null) clearStart()
+            } else {
+                if (dueTime == null) clearDue()
+            }
+        }
+
+        AlertDialog(
+            onDismissRequest = { dismissPicker() },
+            title = {
+                Text(if (target == StartOrDue.START) "选择开始时间" else "选择截止时间")
+            },
+            text = {
+                Column {
+                    WheelDatePicker(
+                        year = yearValue,
+                        month = monthValue,
+                        day = dayValue,
+                        onDateChange = { y, m, d ->
+                            yearValue = y
+                            monthValue = m
+                            dayValue = d
+                        },
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AlmTimeWheel(
+                        hour = hourValue,
+                        minute = minuteValue,
+                        onHourChange = { hourValue = it },
+                        onMinuteChange = { minuteValue = it },
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val picked = Calendar.getInstance().apply {
+                        set(Calendar.YEAR, yearValue)
+                        set(Calendar.MONTH, monthValue - 1)
+                        // 日再夹一次当月天数：用户只拨了月份没拨日时，dayValue 还停在 31，
+                        // 直接塞进 Calendar 会被静默进位到 3 月 3 日。
+                        set(Calendar.DAY_OF_MONTH, dayValue.coerceAtMost(daysInMonth(yearValue, monthValue)))
+                        set(Calendar.HOUR_OF_DAY, hourValue)
+                        set(Calendar.MINUTE, minuteValue)
+                        set(Calendar.SECOND, 0)
+                    }.timeInMillis
+
+                    if (target == StartOrDue.START) {
+                        if (dueTime != null && picked >= dueTime!!) {
+                            Toast.makeText(context, "开始时间必须早于截止时间", Toast.LENGTH_SHORT).show()
+                            clearStart()
+                        } else {
+                            startTime = picked
+                        }
+                    } else {
+                        if (startTime != null && picked <= startTime!!) {
+                            Toast.makeText(context, "截止时间必须晚于开始时间", Toast.LENGTH_SHORT).show()
+                            clearDue()
+                        } else {
+                            dueTime = picked
+                        }
+                    }
+                    dateTimePickerTarget = null
+                }) { Text("确定") }
+            },
+            dismissButton = {
+                TextButton(onClick = { dismissPicker() }) { Text("取消") }
+            },
+        )
+    }
+
     // ---------------------------------------------------------------- 提醒选择弹窗
     reminderDialogTarget?.let { target ->
         val currentMinutes =
-            if (target == ReminderTarget.START) startAdvanceMinutes else dueAdvanceMinutes
+            if (target == StartOrDue.START) startAdvanceMinutes else dueAdvanceMinutes
         AlertDialog(
             onDismissRequest = { reminderDialogTarget = null },
             title = {
-                Text(if (target == ReminderTarget.START) "设置开始时间提醒" else "设置截止时间提醒")
+                Text(if (target == StartOrDue.START) "设置开始时间提醒" else "设置截止时间提醒")
             },
             text = {
                 Column {
@@ -195,7 +291,7 @@ internal fun TodoSettingScreen(
                                         customReminderTarget = target
                                     } else {
                                         val minutes = optionMinutes(index)
-                                        if (target == ReminderTarget.START) {
+                                        if (target == StartOrDue.START) {
                                             startAdvanceMinutes = minutes
                                         } else {
                                             dueAdvanceMinutes = minutes
@@ -223,7 +319,7 @@ internal fun TodoSettingScreen(
     // ---------------------------------------------------------------- 自定义提醒弹窗
     customReminderTarget?.let { target ->
         val currentMinutes =
-            if (target == ReminderTarget.START) startAdvanceMinutes else dueAdvanceMinutes
+            if (target == StartOrDue.START) startAdvanceMinutes else dueAdvanceMinutes
         val initialNumber = when {
             currentMinutes >= 1440 -> currentMinutes / 1440
             currentMinutes >= 60 -> currentMinutes / 60
@@ -242,60 +338,26 @@ internal fun TodoSettingScreen(
             onDismissRequest = { customReminderTarget = null },
             title = {
                 Text(
-                    if (target == ReminderTarget.START) "自定义开始时间提醒" else "自定义截止时间提醒"
+                    if (target == StartOrDue.START) "自定义开始时间提醒" else "自定义截止时间提醒"
                 )
             },
             text = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    AndroidView(
-                        factory = { ctx ->
-                            NumberPicker(ctx).apply {
-                                minValue = 1
-                                maxValue = 999
-                                value = initialNumber
-                                setOnValueChangedListener { _, _, newValue ->
-                                    numberValue = newValue
-                                }
-                            }
-                        },
-                        update = { picker ->
-                            if (picker.value != numberValue) picker.value = numberValue
-                        },
+                    // 原来是 AndroidView 包的 NumberPicker(1..999) + Spinner，
+                    // 换成与时间滚轮同一套的 AlmWheelPicker（数值列 + 单位列）。
+                    AlmWheelPicker(
+                        value = numberValue,
+                        onValueChange = { numberValue = it },
+                        range = CUSTOM_REMINDER_RANGE,
+                        modifier = Modifier.weight(1f),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    AndroidView(
-                        factory = { ctx ->
-                            Spinner(ctx).apply {
-                                adapter = ArrayAdapter(
-                                    ctx,
-                                    android.R.layout.simple_spinner_item,
-                                    REMINDER_UNITS,
-                                ).apply {
-                                    setDropDownViewResource(
-                                        android.R.layout.simple_spinner_dropdown_item
-                                    )
-                                }
-                                setSelection(initialUnitIndex)
-                                onItemSelectedListener = object :
-                                    AdapterView.OnItemSelectedListener {
-                                    override fun onItemSelected(
-                                        parent: AdapterView<*>?,
-                                        view: View?,
-                                        position: Int,
-                                        id: Long,
-                                    ) {
-                                        unitIndex = position
-                                    }
-
-                                    override fun onNothingSelected(parent: AdapterView<*>?) = Unit
-                                }
-                            }
-                        },
-                        update = { spinner ->
-                            if (spinner.selectedItemPosition != unitIndex) {
-                                spinner.setSelection(unitIndex)
-                            }
-                        },
+                    AlmWheelPicker(
+                        value = unitIndex,
+                        onValueChange = { unitIndex = it },
+                        range = REMINDER_UNITS.indices,
+                        label = { REMINDER_UNITS[it] },
+                        modifier = Modifier.weight(1f),
                     )
                 }
             },
@@ -308,7 +370,7 @@ internal fun TodoSettingScreen(
                         else -> 1
                     }
                     val minutes = numberValue * multiplier
-                    if (target == ReminderTarget.START) {
+                    if (target == StartOrDue.START) {
                         startAdvanceMinutes = minutes
                     } else {
                         dueAdvanceMinutes = minutes
@@ -324,9 +386,13 @@ internal fun TodoSettingScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text(if (isEditing) "编辑待办" else "添加待办") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                ),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -377,23 +443,7 @@ internal fun TodoSettingScreen(
                     checked = startTime != null,
                     onCheckedChange = { checked ->
                         if (checked) {
-                            showDateTimePicker(
-                                context = context,
-                                initial = null,
-                                onPicked = { selected ->
-                                    if (dueTime != null && selected >= dueTime!!) {
-                                        Toast.makeText(
-                                            context,
-                                            "开始时间必须早于截止时间",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                        clearStart()
-                                    } else {
-                                        startTime = selected
-                                    }
-                                },
-                                onCancelled = { if (startTime == null) clearStart() },
-                            )
+                            dateTimePickerTarget = StartOrDue.START
                         } else {
                             clearStart()
                         }
@@ -408,23 +458,7 @@ internal fun TodoSettingScreen(
                     modifier = Modifier
                         .weight(1f)
                         .clickable(enabled = startTime != null) {
-                            showDateTimePicker(
-                                context = context,
-                                initial = startTime,
-                                onPicked = { selected ->
-                                    if (dueTime != null && selected >= dueTime!!) {
-                                        Toast.makeText(
-                                            context,
-                                            "开始时间必须早于截止时间",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                        clearStart()
-                                    } else {
-                                        startTime = selected
-                                    }
-                                },
-                                onCancelled = { if (startTime == null) clearStart() },
-                            )
+                            dateTimePickerTarget = StartOrDue.START
                         }
                         .padding(4.dp),
                 )
@@ -435,7 +469,7 @@ internal fun TodoSettingScreen(
             // ---------------- 开始提醒 / 开始铃声
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedButton(
-                    onClick = { reminderDialogTarget = ReminderTarget.START },
+                    onClick = { reminderDialogTarget = StartOrDue.START },
                     enabled = startTime != null,
                 ) {
                     Text(reminderLabel(startAdvanceMinutes))
@@ -468,23 +502,7 @@ internal fun TodoSettingScreen(
                     checked = dueTime != null,
                     onCheckedChange = { checked ->
                         if (checked) {
-                            showDateTimePicker(
-                                context = context,
-                                initial = null,
-                                onPicked = { selected ->
-                                    if (startTime != null && selected <= startTime!!) {
-                                        Toast.makeText(
-                                            context,
-                                            "截止时间必须晚于开始时间",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                        clearDue()
-                                    } else {
-                                        dueTime = selected
-                                    }
-                                },
-                                onCancelled = { if (dueTime == null) clearDue() },
-                            )
+                            dateTimePickerTarget = StartOrDue.DUE
                         } else {
                             clearDue()
                         }
@@ -499,23 +517,7 @@ internal fun TodoSettingScreen(
                     modifier = Modifier
                         .weight(1f)
                         .clickable(enabled = dueTime != null) {
-                            showDateTimePicker(
-                                context = context,
-                                initial = dueTime,
-                                onPicked = { selected ->
-                                    if (startTime != null && selected <= startTime!!) {
-                                        Toast.makeText(
-                                            context,
-                                            "截止时间必须晚于开始时间",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                        clearDue()
-                                    } else {
-                                        dueTime = selected
-                                    }
-                                },
-                                onCancelled = { if (dueTime == null) clearDue() },
-                            )
+                            dateTimePickerTarget = StartOrDue.DUE
                         }
                         .padding(4.dp),
                 )
@@ -526,7 +528,7 @@ internal fun TodoSettingScreen(
             // ---------------- 截止提醒 / 截止铃声
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedButton(
-                    onClick = { reminderDialogTarget = ReminderTarget.DUE },
+                    onClick = { reminderDialogTarget = StartOrDue.DUE },
                     enabled = dueTime != null,
                 ) {
                     Text(reminderLabel(dueAdvanceMinutes))
@@ -617,7 +619,7 @@ internal fun TodoSettingScreen(
     }
 }
 
-private enum class ReminderTarget { START, DUE }
+private enum class StartOrDue { START, DUE }
 
 
 private val REMINDER_OPTIONS = arrayOf(
@@ -669,46 +671,79 @@ private fun reminderLabel(minutes: Int): String = when (minutes) {
 }
 
 /**
- * 原 `showDateTimePicker()`：先弹系统日期选择，选完再弹系统时间选择。
- * 两个弹窗的取消都会走 [onCancelled]（原实现里就是「取消则回滚勾选」）。
+ * 日期滚轮：年 / 月 / 日三列。
+ *
+ * 三列共用同一个日期，任一列变动都重算「日」的上限，避免出现 2 月 31 日 ——
+ * 把月份切到 2 月时，日会往回夹到当月最后一天。天数差异由「日」列的 range 本身
+ * 表达，所以不需要额外的合法性校验。
+ *
+ * 三列**共用一条**选中指示带（[wheelSelectionBand]）：年月日是同一次选择的三个字段，
+ * 一条带子横贯三列才读得出「这是一个日期」，三条窄带并排会读成三个互不相干的开关。
+ * 带子由 [Box] 统一画在滚轮下面，因此三列都要 `showSelectionBand = false`。
+ *
+ * 2026-09-23 起由日历页的「点年月跳转」一并复用，所以是 `internal` 而不是 `private` ——
+ * 两处都需要「选一个日期」的同一个滚轮，各写一份的话手感会分叉。
  */
-private fun showDateTimePicker(
-    context: Context,
-    initial: Long?,
-    onPicked: (Long) -> Unit,
-    onCancelled: () -> Unit,
+@Composable
+internal fun WheelDatePicker(
+    year: Int,
+    month: Int,
+    day: Int,
+    onDateChange: (year: Int, month: Int, day: Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val currentDateTime = Calendar.getInstance().apply {
-        if (initial != null) timeInMillis = initial
-    }
-
-    val dateDialog = DatePickerDialog(
-        context,
-        { _, year, month, day ->
-            TimePickerDialog(
-                context,
-                { _, hour, minute ->
-                    val calendar = Calendar.getInstance().apply {
-                        set(Calendar.YEAR, year)
-                        set(Calendar.MONTH, month)
-                        set(Calendar.DAY_OF_MONTH, day)
-                        set(Calendar.HOUR_OF_DAY, hour)
-                        set(Calendar.MINUTE, minute)
-                        set(Calendar.SECOND, 0)
-                    }
-                    onPicked(calendar.timeInMillis)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .wheelSelectionBand(WHEEL_DATE_VISIBLE_ITEMS),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AlmWheelPicker(
+                value = year,
+                onValueChange = {
+                    onDateChange(it, month, day.coerceAtMost(daysInMonth(it, month)))
                 },
-                currentDateTime.get(Calendar.HOUR_OF_DAY),
-                currentDateTime.get(Calendar.MINUTE),
-                true,
-            ).apply {
-                setOnCancelListener { onCancelled() }
-            }.show()
-        },
-        currentDateTime.get(Calendar.YEAR),
-        currentDateTime.get(Calendar.MONTH),
-        currentDateTime.get(Calendar.DAY_OF_MONTH),
-    )
-    dateDialog.setOnCancelListener { onCancelled() }
-    dateDialog.show()
+                range = rememberWheelYearRange(),
+                visibleItemCount = WHEEL_DATE_VISIBLE_ITEMS,
+                modifier = Modifier.weight(1f),
+                showSelectionBand = false,
+            )
+            AlmWheelPicker(
+                value = month,
+                onValueChange = {
+                    onDateChange(year, it, day.coerceAtMost(daysInMonth(year, it)))
+                },
+                range = 1..12,
+                visibleItemCount = WHEEL_DATE_VISIBLE_ITEMS,
+                label = { "${it}月" },
+                modifier = Modifier.weight(1f),
+                showSelectionBand = false,
+            )
+            val days = daysInMonth(year, month)
+            AlmWheelPicker(
+                // 外层 state 可能还停在切换月份前的旧值（如 2 月里的 31），
+                // 显示时夹一次，免得滚轮上出现一个它自己 range 里没有的数字。
+                value = day.coerceAtMost(days),
+                onValueChange = { onDateChange(year, month, it) },
+                range = 1..days,
+                visibleItemCount = WHEEL_DATE_VISIBLE_ITEMS,
+                modifier = Modifier.weight(1f),
+                showSelectionBand = false,
+            )
+        }
+    }
 }
+
+/** 日期滚轮同时可见的行数（取奇数，正中间那行即选中行）。 */
+internal const val WHEEL_DATE_VISIBLE_ITEMS = 5
+
+/** 某年某月的天数。用 `getActualMaximum` 而不是查表：闰年自动正确。 */
+internal fun daysInMonth(year: Int, month: Int): Int =
+    Calendar.getInstance().apply { set(year, month - 1, 1) }
+        .getActualMaximum(Calendar.DAY_OF_MONTH)
+
+/** 自定义提醒量的取值范围，对齐原 `NumberPicker` 的 1..999。 */
+private val CUSTOM_REMINDER_RANGE = 1..999

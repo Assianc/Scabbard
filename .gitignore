@@ -3,3 +3,6 @@
 local.properties
 release
 .kotlin
+# Gradle 构建产物。原来只忽略了 .gradle/，各模块的 build/ 一直靠全局忽略兜着，
+# 但根目录那个 build/（Gradle 9 起会生成报告）没被兜住，曾被 git add -A 误提交。
+build/

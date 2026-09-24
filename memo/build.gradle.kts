@@ -2,13 +2,13 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")  // 如果 memo 是一个库模块
-    kotlin("android")
+    // kotlin("android") 已移除：AGP 9.0 起 Kotlin 支持内置，显式声明会直接报错。
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "com.assiance.memo"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -96,4 +96,8 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.lifecycle.runtime.compose)
     debugImplementation(libs.compose.ui.tooling)
+
+    // 液态玻璃（iOS 26 风格毛玻璃）。memo 的备忘录记录卡要用，且玻璃的跨模块契约
+    // （ui/LiquidGlassContract.kt）声明在这里，其类型来自本库。宿主 app 自己也声明了同一份。
+    implementation(libs.liquid.glass)
 }

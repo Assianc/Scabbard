@@ -60,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -271,6 +272,7 @@ fun MemoDetailScreen(
     )
 
     Scaffold(
+        containerColor = Color.Transparent,
         floatingActionButton = {
             if (editControlsAlpha > 0.01f) {
                 MemoMediaCaptureFab(

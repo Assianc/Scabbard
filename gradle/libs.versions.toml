@@ -1,5 +1,15 @@
 [versions]
-agp = "8.13.2"
+# AGP 9.0.1 + Gradle 9.6.1（wrapper 里那个），配套 compileSdk 37。
+#
+# 为什么非要 compileSdk 37：alm 的滚轮选择器要用 miuix 的 NumberPicker，而 miuix 传递
+# 依赖 miuix-shader，其 AAR 元数据写着 minCompileSdk=37；它被 squircle 硬引用，排不掉。
+# 而 AGP 8.13.2 官方只支持到 compileSdk 36.1 —— 升 AGP 9 是为了踩在官方支持范围内，
+# 而不是挂着 suppressUnsupportedCompileSdk 硬上。版本与 LoveScore 对齐。
+#
+# AGP 9 的迁移点（都已处理，别再踩一遍）：`org.jetbrains.kotlin.android` 插件不再允许
+# 显式声明（Kotlin 支持已内置，compose 插件仍要显式加）；旧 Variant API
+# `applicationVariants` 及其实现类被移除，APK 改名改走独立 Task + finalizedBy。
+agp = "9.0.1"
 androidxCoreKtx = "1.15.0"
 appcompatVersion = "1.7.0"
 coreKtxVersion = "1.15.0"
@@ -27,6 +37,13 @@ lifecycle = "2.8.7"
 # （Android 侧映射到 androidx compose 1.10.x），因此本项目的 Kotlin/AGP/compileSdk/BOM 四条轴
 # 是按它反推上来的，不要单独回退其中任意一条。
 liquidGlass = "0.2.3"
+# miuix（HyperOS 风格 KMP 组件库）。只为它的 NumberPicker —— 滚轮选择器
+# （拖动跟手、松手吸附、跨格轻震、离选中线越远越小越淡）自己实现不划算。
+# 来源是 LoveScore 的 ui/ds/DsWheelPicker.kt，两边共用同一套封装。
+miuix = "0.9.3"
+# 农历转换（tyme4kt：纯 Kotlin 多平台，支持公元前 2500 ~ 公元 9999）。
+# 日历页的日期格子与标题要显示农历 / 节气 / 节日，与 LoveScore 用同一个库、同一个版本。
+tyme4kt = "1.5.0"
 composeBom = "2026.02.01"
 activityCompose = "1.9.3"
 navigationCompose = "2.8.5"
@@ -66,6 +83,8 @@ compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-mani
 compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 liquid-glass = { module = "io.github.nadeemiqbal:liquid-glass", version.ref = "liquidGlass" }
+miuix-ui = { module = "top.yukonga.miuix.kmp:miuix-ui", version.ref = "miuix" }
+tyme4kt = { module = "cn.6tail:tyme4kt", version.ref = "tyme4kt" }
 activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }

@@ -73,13 +73,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.assiance.memo.ui.GLASS_TINT_ALPHA
+import com.assiance.memo.ui.LocalLiquidGlassState
+import com.assiance.memo.ui.glassGrainFor
+import com.assiance.memo.ui.rememberSharedGlassState
 import com.assiance.scabbard.R
 import com.assiance.scabbard.data.AppSettings
 import com.assiance.scabbard.ui.component.GradientTitle
 import com.assiance.scabbard.ui.util.findActivity
 import com.assiance.scabbard.update.UpdateChecker
 import io.github.nadeemiqbal.liquidglass.liquidGlass
-import io.github.nadeemiqbal.liquidglass.rememberLiquidGlassState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -250,11 +253,11 @@ fun HomeScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                        containerColor = Color.Transparent,
                     ),
                 )
             },
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = Color.Transparent,
         ) { innerPadding ->
             Column(
                 modifier = Modifier
@@ -388,20 +391,24 @@ fun HomeScreen(
 }
 
 /**
- * 首页入口卡玻璃 tint 的不透明度 —— 唯一需要调的观感旋钮。
- * 调低更透、玻璃感更强；调高更接近原来那张实底 Card。
- */
-private const val HOME_ENTRY_GLASS_TINT_ALPHA = 0.6f
-
-/**
  * 首页入口卡：材质由 Material3 [Card] 换成液态玻璃。
  *
  * 布局、内边距、圆角、点击范围都保持原样，只换材质 —— 圆角仍取 [CardDefaults.shape]，
  * 也就是被替换掉的那张 Card 的默认圆角，不趁换材质顺手改形状。
  *
- * 降级交给库自己判断：[rememberLiquidGlassState] 在 API < 31 或低内存设备上返回
- * Fallback 档，此时不分配离屏图层、不做背板模糊，只保留 tint 与边缘高光，
- * 观感与高档位一致且不拖性能。
+ * 档位（含降级与「液态玻璃模糊」开关）**不在这里决定**，由 App 根的
+ * [LocalLiquidGlassState] 统一给：那边一处按 `AppSettings.glassBlurEnabled` 把 quality
+ * 切成 Fallback，本组件只负责消费。放在根上是因为背板和玻璃面必须共用同一个实例
+ * （原因见 [LocalLiquidGlassState]）。
+ *
+ * 只切 quality、不动 tint：那条开关的字面语义就是"模糊"这一个维度，卡片的底色
+ * （[GLASS_TINT_ALPHA]）不归它管。玻璃面的颗粒（[GLASS_GRAIN]）则**跟着档位走** ——
+ * Fallback 时一并收掉，见 [glassGrainFor]。
+ * （移植来源 LoveScore 在关掉模糊时还会把 tint 一起清成全透明、改画一圈极淡描边，
+ * 那是它的观感选择，本项目不跟。）
+ *
+ * tint / 颗粒这两个观感参数**不在本文件定义**，和另外两处玻璃面（备忘录记录卡、关于页
+ * 作者行）共用 [com.assiance.memo.ui.LiquidGlassContract] 里那一份 —— 调参只改一个地方。
  */
 @Composable
 private fun HomeEntryCard(
@@ -410,8 +417,14 @@ private fun HomeEntryCard(
     onClick: () -> Unit,
 ) {
     val shape = CardDefaults.shape
-    // 每张卡各持一份 state：库靠它缓存 RenderEffect / 离屏图层，跨重组保持稳定。
-    val glassState = rememberLiquidGlassState()
+    // 玻璃状态由 App 根的 [LocalLiquidGlassState] 提供，**必须与背板共用同一个实例**：
+    // 模糊挂在该 state 的 `backdrop` 这个 GraphicsLayer 上，而那个 layer 只由背景层的
+    // `Modifier.liquidGlassSource(state)` 录制 —— 卡片自己 new 一个 state 就采不到任何像素，
+    // 不报错、不崩，只是不模糊。（本项目此前正是各自持一份，所以玻璃从来没模糊过。）
+    //
+    // 取不到时（预览、单测里脱离 App 根复用本组件）的兜底收在 [rememberSharedGlassState] 里：
+    // 退回一份自持的 Fallback state，此时没有背板，渲染成纯 tint + 边缘高光。
+    val glassState = rememberSharedGlassState()
 
     Row(
         modifier = Modifier
@@ -422,7 +435,8 @@ private fun HomeEntryCard(
                 state = glassState,
                 shape = shape,
                 tint = MaterialTheme.colorScheme.surfaceContainer
-                    .copy(alpha = HOME_ENTRY_GLASS_TINT_ALPHA),
+                    .copy(alpha = GLASS_TINT_ALPHA),
+                grain = glassGrainFor(glassState.quality),
             )
             // liquidGlass 只裁渲染，触摸命中仍由整条 modifier 链决定，所以这里再裁一次。
             .clip(shape)
