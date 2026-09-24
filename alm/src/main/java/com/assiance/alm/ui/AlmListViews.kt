@@ -38,7 +38,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
@@ -322,10 +324,23 @@ private fun AlmGlassListItem(
     ) {
         // 露出来的那一层：原实现画在 itemView 右侧，这里做成整块背景 + 前景滑动，
         // 露出的部分与原来一致。
+        //
+        // 红底**必须裁到"已经滑开的那一条"**：原实现的条目是不透明的 CardView，红底只在
+        // 条目滑走后才露出来；而这里的玻璃面是半透明的（tint alpha 0.3），整块铺红会让它
+        // 从玻璃下面透上来，静止时整条泛红 —— 看着就像玻璃没生效。左边界跟着拖动偏移走，
+        // 静止（offset = 0）时宽度为 0，与原来的观感一致。
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .clip(ITEM_SHAPE)
+                // 裁的是**整个 Box 的内容**（红底 + 删除图标），不是单画一个红矩形 ——
+                // `drawBehind` 的裁剪只作用于它自己 draw 的东西，图标是在其后绘制的，
+                // 不跟着裁就会留在原地、隔着半透明玻璃露出来。
+                .drawWithContent {
+                    clipRect(left = (size.width + offset).coerceAtMost(size.width)) {
+                        this@drawWithContent.drawContent()
+                    }
+                }
                 .background(Color.Red),
         ) {
             Icon(
