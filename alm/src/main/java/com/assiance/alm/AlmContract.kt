@@ -27,4 +27,8 @@ object AlmContract {
     const val TODO_REMINDER_STOP_ACTION = "com.assiance.alm.TODO_REMINDER_STOP"
     const val TODO_CHANNEL_ID = "TodoChannel"
     const val TODO_NOTIFICATION_ID = 2
+
+    // ------------------------------------------------------------ 法定假期
+    /** 假期缓存（每年一个键，存原始 JSON 响应体）。见 `HolidayRepository`。 */
+    internal const val HOLIDAY_PREFS = "holiday_prefs"
 }

@@ -54,6 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.assiance.alm.AlarmData
 import com.assiance.alm.HistoryItem
+import com.assiance.alm.HolidayData
+import com.assiance.alm.HolidayRepository
 import com.assiance.alm.TodoData
 import io.github.nadeemiqbal.liquidglass.liquidGlass
 import kotlinx.coroutines.launch
@@ -76,6 +78,10 @@ import java.util.Locale
  *
  * 其余（月份 Pager 的 PAGE_OFFSET、6×7 固定格、周日开头、农历+干支三行标题、
  * 点年月弹滚轮、回到今天、右上角 Add）都按约定页的口径来。
+ *
+ * **另外**：法定假期标记（格子角的「休/班」角标 + 当日面板标题里的假期名）是约定页**没有**的，
+ * 来自用户 2026-09-24 单独提的需求（数据与口径见 [HolidayRepository]），不属于「照约定页重做」
+ * 的一部分，所以前面那份偏离清单里不列它。
  */
 
 // ============================================================ 玻璃卡容器
@@ -128,6 +134,8 @@ private fun AlmGlassCard(
  * @param viewMonth 当前显示的月份（1..12）
  * @param selectedDate 当前选中的日期
  * @param items     全量数据（内部按格子过滤出标记）
+ * @param holidays  法定假期，key 是 `HolidayRepository.holidayKey` 格式的日期。
+ *                  可能不含当前年（比如还没联网拿到），缺了就只是不标角标。
  */
 @Composable
 internal fun CalendarCard(
@@ -136,6 +144,7 @@ internal fun CalendarCard(
     selectedDate: CalendarDay,
     today: CalendarDay,
     items: List<HistoryItem>,
+    holidays: Map<String, HolidayData>,
     onSelectDate: (CalendarDay) -> Unit,
     onJumpToMonth: (Int, Int) -> Unit,
     onJumpToToday: () -> Unit,
@@ -270,6 +279,7 @@ internal fun CalendarCard(
                 today = today,
                 selectedDate = selectedDate,
                 items = items,
+                holidays = holidays,
                 onSelectDate = onSelectDate,
             )
         }
@@ -343,11 +353,19 @@ private fun MonthGrid(
     today: CalendarDay,
     selectedDate: CalendarDay,
     items: List<HistoryItem>,
+    holidays: Map<String, HolidayData>,
     onSelectDate: (CalendarDay) -> Unit,
 ) {
     val cells = remember(year, month) { buildMonthCells(year, month) }
     val marks = remember(items, year, month) {
         cells.associateWith { marksOn(items, it.toMillis()) }
+    }
+    // 42 格里含相邻月的几天，跨年时这两天落在上一年 12 月 / 下一年 1 月，
+    // 所以这个 map 里必须同时备着相邻年份的数据（见 CalendarScreen 的拉取范围）。
+    val holidayByCell = remember(holidays, year, month) {
+        cells.associateWith {
+            holidays[HolidayRepository.holidayKey(it.year, it.month, it.day)]
+        }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -363,6 +381,7 @@ private fun MonthGrid(
                         isToday = cell == today,
                         isSelected = cell == selectedDate,
                         marks = marks[cell] ?: DayMarks(),
+                        holiday = holidayByCell[cell],
                         onClick = { onSelectDate(cell) },
                         modifier = Modifier.weight(1f),
                     )
@@ -373,12 +392,13 @@ private fun MonthGrid(
 }
 
 /**
- * 单日格子：日期数字 + 农历/节日 + 两个标记圆点。
+ * 单日格子：日期数字 + 农历/节日 + 两个标记圆点 +（有假期时）右上角的「休/班」角标。
  *
  * 三种状态叠加：选中（描边 + 数字染主题色）/ 今日（浅色底）/ 普通；非当月日期整体淡出。
  * 「今日」用底色、「选中」用描边，两者可以同时命中（今天正好被选中时既有底色又有描边）。
  *
- * 约定页的对应物是 `DayCell`，这里是它的 alm 版（去掉打卡相关的一切）。
+ * 约定页的对应物是 `DayCell`，这里是它的 alm 版（去掉打卡相关的一切）——**假期角标是
+ * 约定页没有的**，来自用户 2026-09-24 单独提的「日历要加上法定假期显示」。
  */
 @Composable
 private fun DayCell(
@@ -387,6 +407,7 @@ private fun DayCell(
     isToday: Boolean,
     isSelected: Boolean,
     marks: DayMarks,
+    holiday: HolidayData?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -448,6 +469,18 @@ private fun DayCell(
                 }
             }
         }
+
+        // 角标走绝对定位贴右上角，不参与 Column 的纵向排布：
+        // 格子本来就窄（一屏 7 格），再往农历那行塞个「休」字会把日期数字挤变形，
+        // 而贴角既不占行高、也不受下面标记圆点有无的影响。
+        if (holiday != null) {
+            HolidayBadge(
+                isOffDay = holiday.isOffDay,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 2.dp, end = 2.dp),
+            )
+        }
     }
 }
 
@@ -459,6 +492,28 @@ private fun MarkerDot(color: Color) {
             .size(5.dp)
             .clip(RoundedCornerShape(percent = 50))
             .background(color),
+    )
+}
+
+/**
+ * 「休 / 班」角标。
+ *
+ * 用户 2026-09-24 拍板「休和班都标」，所以两种都显示、靠颜色区分，而不是「只标放假、
+ * 补班日不标」——后者会让人误以为那天是普通周末。配色用中国日历的通行口径：
+ * 红=放假、灰蓝=调休上班（补班日用低饱和色，免得和「休」抢注意力）。
+ */
+@Composable
+private fun HolidayBadge(isOffDay: Boolean, modifier: Modifier = Modifier) {
+    Text(
+        text = if (isOffDay) "休" else "班",
+        modifier = modifier
+            .clip(BADGE_SHAPE)
+            .background(if (isOffDay) HOLIDAY_OFF_ACCENT else HOLIDAY_WORK_ACCENT)
+            .padding(horizontal = 3.dp, vertical = 1.dp),
+        color = Color.White,
+        fontSize = 9.sp,
+        lineHeight = 11.sp,
+        fontWeight = FontWeight.Bold,
     )
 }
 
@@ -568,6 +623,7 @@ internal fun DayPanelCard(
     day: CalendarDay,
     today: CalendarDay,
     dayItems: DayItems,
+    holiday: HolidayData?,
     onAddTodo: () -> Unit,
     onAddAlarm: () -> Unit,
     onTodoClick: (TodoData) -> Unit,
@@ -591,13 +647,38 @@ internal fun DayPanelCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Column {
-                Text(
-                    text = "${day.year} · ${day.month}月${day.day}日",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+            // weight(1f) 是给下面假期名留的收缩余地：不加的话这一列按内容撑宽，
+            // 假期名一长就把右上角的 Add 按钮挤出屏幕。
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "${day.year} · ${day.month}月${day.day}日",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    // 假期名紧跟日期 —— 用户 2026-09-24 拍板的第二个显示位置（当日面板标题）。
+                    // 光看日期看不出这天是放假还是补班，所以「班」也必须显示，不能只显示「休」。
+                    if (holiday != null) {
+                        Spacer(Modifier.width(8.dp))
+                        HolidayBadge(isOffDay = holiday.isOffDay)
+                        if (holiday.name.isNotEmpty()) {
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = holiday.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (holiday.isOffDay) {
+                                    HOLIDAY_OFF_ACCENT
+                                } else {
+                                    HOLIDAY_WORK_ACCENT
+                                },
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
 
                 val lunarText = remember(day) {
                     AlmLunarUtils.formatLunarFull(day.year, day.month, day.day)
@@ -903,6 +984,15 @@ private val CALENDAR_ALARM_ACCENT = Color(0xFFFFA000)
 
 /** 当日面板的页数：待办 / 闹钟（见文件头第 1 条）。 */
 private const val DAY_PANEL_PAGE_COUNT = 2
+
+/** 「休 / 班」角标的圆角。比格子本身的 10dp 小一档，看得出是个角标而不是块。 */
+private val BADGE_SHAPE = RoundedCornerShape(4.dp)
+
+/** 放假（休）的语义色。中国日历的通行口径是红。 */
+private val HOLIDAY_OFF_ACCENT = Color(0xFFE53935)
+
+/** 调休上班（班）的语义色。低饱和蓝灰，免得和「休」抢视觉权重。 */
+private val HOLIDAY_WORK_ACCENT = Color(0xFF78909C)
 
 private val dayAlarmTimeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
 

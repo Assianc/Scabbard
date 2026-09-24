@@ -18,6 +18,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,8 +35,12 @@ import androidx.navigation.NavController
 import com.assiance.alm.AlarmData
 import com.assiance.alm.AlmRepository
 import com.assiance.alm.HistoryItem
+import com.assiance.alm.HolidayData
+import com.assiance.alm.HolidayRepository
 import com.assiance.alm.TodoData
 import java.util.Calendar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 日历页（原 `CalendarActivity`）。
@@ -77,6 +82,9 @@ internal fun CalendarScreen(navController: NavController) {
     /** 待确认删除的项。 */
     var pendingDelete by remember { mutableStateOf<DeleteTarget?>(null) }
 
+    /** 法定假期，key 是 [HolidayRepository.holidayKey] 格式的日期（`yyyy-MM-dd`）。 */
+    var holidays by remember { mutableStateOf<Map<String, HolidayData>>(emptyMap()) }
+
     fun loadData() {
         historyItems = AlmRepository.loadHistoryItems(context)
     }
@@ -90,6 +98,35 @@ internal fun CalendarScreen(navController: NavController) {
     /** 选中日期当天的待办与闹钟。 */
     val dayItems = remember(historyItems, selectedDay) {
         filterDay(historyItems, selectedDay.toMillis())
+    }
+
+    /** 选中日期当天的假期信息，没有就是 `null`（没数据 / 那天本来就不是假期）。 */
+    val selectedHoliday = remember(holidays, selectedDay) {
+        holidays[HolidayRepository.holidayKey(selectedDay.year, selectedDay.month, selectedDay.day)]
+    }
+
+    // —— 法定假期数据（用户 2026-09-24 的需求，数据源与口径见 HolidayRepository）——
+    // 范围取「当前显示年 ±1」而不是只取当前年：月历那 42 格里含相邻月的几天，
+    // 跨年时会落在上一年 12 月 / 下一年 1 月，只拉当前年的话，1 月的月历里
+    // 上一年 12/31 就标不出「休」来。
+    // 顺序上先同步读缓存铺底（切月时立刻有内容、不闪），再只对**完全没有缓存**的年份联网；
+    // 拉不到就维持现状、不标角标 —— 这是用户拍板的降级口径，不弹错、不打扰。
+    LaunchedEffect(viewYear) {
+        val years = listOf(viewYear - 1, viewYear, viewYear + 1)
+
+        fun readCached(): Map<String, HolidayData> =
+            years.fold(emptyMap<String, HolidayData>()) { acc, year ->
+                acc + HolidayRepository.cached(context, year)
+            }
+
+        holidays = readCached()
+
+        val missing = years.filterNot { HolidayRepository.hasCache(context, it) }
+        if (missing.isEmpty()) return@LaunchedEffect
+        withContext(Dispatchers.IO) {
+            missing.forEach { HolidayRepository.fetch(context, it) }
+        }
+        holidays = readCached()
     }
 
     // 删除回调：当天（"今天"是选中日）不允许删，其余进确认框。
@@ -171,6 +208,7 @@ internal fun CalendarScreen(navController: NavController) {
                     selectedDate = selectedDay,
                     today = currentCalendarDay(),
                     items = historyItems,
+                    holidays = holidays,
                     onSelectDate = { day ->
                         selectedDay = day
                         // 选中的日期可能落在相邻月份（格子里灰显的那几天），
@@ -200,6 +238,7 @@ internal fun CalendarScreen(navController: NavController) {
                     day = selectedDay,
                     today = currentCalendarDay(),
                     dayItems = dayItems,
+                    holiday = selectedHoliday,
                     onAddTodo = { navController.navigate(AlmRoutes.todoSetting()) },
                     onAddAlarm = { navController.navigate(AlmRoutes.alarmSetting()) },
                     onTodoClick = { todo -> navController.navigate(todo.toEditRoute()) },
