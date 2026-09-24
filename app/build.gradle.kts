@@ -1,10 +1,10 @@
 import org.gradle.api.DefaultTask
-import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
@@ -68,50 +68,59 @@ android {
 // `BaseVariantOutputImpl` 一起没了；而新的公开 API（`VariantOutput`）**没有**
 // `outputFileName` —— 也就是说"在配置阶段直接指定产物文件名"这条路已经封死。
 //
-// 所以改成产物生成之后统一改名，做法与 LoveScore（同样跑在 AGP 9.0.1 上）一致：
-// 独立 Task 类 + `finalizedBy`，两者都是为了配置缓存能正确命中。
+// 所以改成产物生成之后再产出一份改名副本。debug / release 各注册一个任务
+// （与改造前对齐：原来 `applicationVariants.all` 也是两个都覆盖），
+// 名字仍是 `Scabbard-<版本名>.apk`。
 //
-// 与改造前对齐的点：debug / release **两个产物都改**（原来的 `applicationVariants.all`
-// 也是两个都覆盖），名字仍是 `Scabbard-<版本名>.apk`。
-// Android Studio 的 Run 走的是 `packageDebug` 的输出路径而不是文件名，不受影响。
+// **为什么是「复制」而不是「改名」**（2026-09-24 修）：
+// 最初的版本直接在 `build/outputs/apk/<variant>/` 里把 `app-debug.apk` 改名成
+// `Scabbard-<版本>.apk`。这等于把 `packageDebug` 的产物从 Gradle 的追踪里挪走 ——
+// 它下次执行时看到自己的输出不见了，会走异常路径。实测出现过一次 `:app:assembleDebug`
+// 产出 **41 KB 的残包**（解包只有一个 `classes5.dex`），`adb install` 报
+// `INSTALL_PARSE_FAILED_UNEXPECTED_EXCEPTION: Failed to parse ... AndroidManifest.xml`
+// —— **那个 manifest 报错是假象**，manifest 本身完全正常，是包残缺（别顺着 manifest 查）。
+// 改成复制后 `packageDebug` 的产物原地不动，两边互不干扰。
+//
+// 代价是 `build/outputs/apk/debug/` 下会同时存在 `app-debug.apk` 与改名副本。
+// 这是有意接受的：Android Studio 的 Run 走的就是 `packageDebug` 的输出路径，
+// 留着它反而更贴合 AS 的预期。
+//
+// 另外，`@InputFile` / `@OutputFile` 是必须的：原版只声明了 `@Input`、没有任何
+// `@Output*`，Gradle 无从判断新鲜度，等于每次 assemble 都必然重跑。
 abstract class RenameApkTask : DefaultTask() {
 
-    @get:Input
-    abstract val versionName: Property<String>
+    /** `packageDebug` / `packageRelease` 产出的原始 APK（AGP 的默认名 `app-<variant>.apk`）。 */
+    @get:InputFile
+    abstract val sourceApk: RegularFileProperty
 
-    @get:Input
-    abstract val apkDirs: ListProperty<String>
+    /** 改名后的副本。声明成输出，Gradle 才会追踪它的新鲜度。 */
+    @get:OutputFile
+    abstract val renamedApk: RegularFileProperty
 
     @TaskAction
-    fun rename() {
-        val target = "Scabbard-${versionName.get()}.apk"
-        for (path in apkDirs.get()) {
-            val dir = File(path)
-            if (!dir.isDirectory) continue
-            dir.listFiles()?.forEach { apk ->
-                if (apk.isFile && apk.name.endsWith(".apk") && apk.name != target) {
-                    val renamed = File(dir, target)
-                    if (renamed.exists()) renamed.delete()
-                    apk.renameTo(renamed)
-                }
-            }
-        }
+    fun copyRenamed() {
+        sourceApk.get().asFile.copyTo(renamedApk.get().asFile, overwrite = true)
     }
 }
 
-val renameApks = tasks.register<RenameApkTask>("renameApks") {
-    versionName.set(android.defaultConfig.versionName ?: "unknown")
-    apkDirs.set(
-        listOf("debug", "release").map { variant ->
-            layout.buildDirectory.dir("outputs/apk/$variant").get().asFile.path
-        },
-    )
+/** 给单个 variant 注册改名任务。`variant` 取 `debug` / `release`。 */
+fun registerRenameApkTask(variant: String): TaskProvider<RenameApkTask> {
+    val renamedFileName = "Scabbard-${android.defaultConfig.versionName ?: "unknown"}.apk"
+    return tasks.register<RenameApkTask>(
+        "rename${variant.replaceFirstChar { it.uppercaseChar() }}Apk",
+    ) {
+        val apkDir = layout.buildDirectory.dir("outputs/apk/$variant")
+        sourceApk.set(apkDir.map { it.file("app-$variant.apk") })
+        renamedApk.set(apkDir.map { it.file(renamedFileName) })
+    }
 }
 
 // AGP 注册好 assemble* 之后再挂 —— 直接在 androidComponents 里写会在任务图还没建好时求值。
 afterEvaluate {
-    tasks.matching { it.name == "assembleDebug" || it.name == "assembleRelease" }
-        .configureEach { finalizedBy(renameApks) }
+    val renameDebugApk = registerRenameApkTask("debug")
+    val renameReleaseApk = registerRenameApkTask("release")
+    tasks.matching { it.name == "assembleDebug" }.configureEach { finalizedBy(renameDebugApk) }
+    tasks.matching { it.name == "assembleRelease" }.configureEach { finalizedBy(renameReleaseApk) }
 }
 
 kotlin {
