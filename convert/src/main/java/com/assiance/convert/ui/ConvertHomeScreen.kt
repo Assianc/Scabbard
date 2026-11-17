@@ -2,6 +2,8 @@ package com.assiance.convert.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,11 +34,13 @@ import androidx.compose.ui.unit.dp
 import io.github.nadeemiqbal.liquidglass.liquidGlass
 
 /**
- * 「晨昏」首页 —— 一个平铺的功能入口列表（目前只有一项）。
+ * 「晨昏」首页 —— 一个平铺的功能入口列表。
  *
  * 这一层是二级菜单页：页面本身不再分「标题 + 条目」的小组，后续功能直接往
- * [Column] 里追加 [MenuEntryCard] 即可。页面底色保持透明，让全 App 的背景层透出来，
- * 与 memo / alm 各页一致。
+ * [Column] 里追加 [MenuEntryCard] 即可。条目数量已经超过一屏，所以整列必须可滚动 ——
+ * 否则屏幕外的功能既看不到也点不到。
+ *
+ * 页面底色保持透明，让全 App 的背景层透出来，与 memo / alm 各页一致。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +68,7 @@ internal fun ConvertHomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
