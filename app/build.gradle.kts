@@ -151,6 +151,7 @@ dependencies {
     // 本地模块依赖 —— 主模块 → 辅助模块，方向不变
     implementation(project(":memo"))
     implementation(project(":alm"))
+    implementation(project(":convert"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

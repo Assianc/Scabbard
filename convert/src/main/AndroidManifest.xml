@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+        convert 是纯 Compose 界面库：没有任何 Activity / Receiver / 权限，
+        页面全部由宿主 NavHost 通过 ConvertRoutes 注册。
+    -->
+</manifest>

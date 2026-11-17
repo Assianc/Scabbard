@@ -16,6 +16,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.assiance.alm.ui.AlmRoutes
 import com.assiance.alm.ui.almGraph
+import com.assiance.convert.ui.ConvertRoutes
+import com.assiance.convert.ui.convertGraph
 import com.assiance.memo.ui.LocalLiquidGlassState
 import com.assiance.memo.ui.MemoRoutes
 import com.assiance.memo.ui.memoGraph
@@ -112,6 +114,7 @@ fun ScabbardApp(deepLinkRoute: String? = null) {
                         },
                         onOpenMemo = { navController.navigate(MemoRoutes.LIST) },
                         onOpenAlm = { navController.navigate(AlmRoutes.HOME) },
+                        onOpenConvert = { navController.navigate(ConvertRoutes.HOME) },
                         onOpenAppearance = { navController.navigate(AppRoutes.APPEARANCE) },
                         onOpenAbout = { navController.navigate(AppRoutes.ABOUT) },
                     )
@@ -153,6 +156,9 @@ fun ScabbardApp(deepLinkRoute: String? = null) {
                 // 玻璃的 backdrop 录在这个实例上，给成另一个实例就永远不模糊（见 AlmGlassContract）。
                 memoGraph(navController)
                 almGraph(navController, glassState)
+                // convert 与 memo/alm 平级，同样跨不过模块边界拿到 memo 的契约符号，
+                // 所以把**同一个** state 实例显式交给它（原因同 alm，见 ConvertGlassContract）。
+                convertGraph(navController, glassState)
             }
         }
     }

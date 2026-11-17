@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.WbTwilight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
@@ -108,6 +109,7 @@ fun HomeScreen(
     onOpenAllocate: () -> Unit,
     onOpenMemo: () -> Unit,
     onOpenAlm: () -> Unit,
+    onOpenConvert: () -> Unit,
     onOpenAppearance: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
@@ -285,6 +287,11 @@ fun HomeScreen(
                     icon = Icons.Default.NotificationsActive,
                     title = "冬去鸟鸣时",
                     onClick = onOpenAlm,
+                )
+                HomeEntryCard(
+                    icon = Icons.Default.WbTwilight,
+                    title = "晨昏",
+                    onClick = onOpenConvert,
                 )
             }
         }

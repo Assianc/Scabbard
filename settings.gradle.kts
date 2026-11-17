@@ -35,3 +35,4 @@ rootProject.name = "Scabbard"
 include(":app")
 include(":memo")
 include(":alm")
+include(":convert")
