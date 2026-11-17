@@ -1,6 +1,8 @@
 package com.assiance.convert.ui
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -25,5 +27,17 @@ internal val CONVERT_TOOLS = listOf(
         subtitle = "选择时间，生成定时任务表达式",
         icon = Icons.Default.Schedule,
         route = ConvertRoutes.CRON,
+    ),
+    ConvertTool(
+        title = "时间戳转换",
+        subtitle = "时间戳与日期时间互转",
+        icon = Icons.Default.AccessTime,
+        route = ConvertRoutes.TIMESTAMP,
+    ),
+    ConvertTool(
+        title = "日期差计算",
+        subtitle = "两个日期相差多少天",
+        icon = Icons.Default.DateRange,
+        route = ConvertRoutes.DATE_DIFF,
     ),
 )

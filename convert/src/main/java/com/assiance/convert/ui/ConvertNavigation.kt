@@ -4,6 +4,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.assiance.convert.ui.tools.DateDiffScreen
+import com.assiance.convert.ui.tools.TimestampScreen
 import io.github.nadeemiqbal.liquidglass.LiquidGlassState
 
 /**
@@ -19,6 +21,12 @@ object ConvertRoutes {
 
     /** 定时任务 cron 表达式转换。 */
     const val CRON = "convert/cron"
+
+    /** 时间戳 ↔ 日期时间。 */
+    const val TIMESTAMP = "convert/timestamp"
+
+    /** 两个日期相差的自然日数。 */
+    const val DATE_DIFF = "convert/date_diff"
 }
 
 /**
@@ -43,6 +51,18 @@ fun NavGraphBuilder.convertGraph(
     composable(ConvertRoutes.CRON) {
         CompositionLocalProvider(LocalConvertGlassState provides glassState) {
             CronConverterScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.TIMESTAMP) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            TimestampScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.DATE_DIFF) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            DateDiffScreen(onBack = { navController.popBackStack() })
         }
     }
 }
