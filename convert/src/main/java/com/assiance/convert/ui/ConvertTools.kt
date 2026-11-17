@@ -3,7 +3,9 @@ package com.assiance.convert.ui
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Schedule
@@ -55,6 +57,18 @@ internal val CONVERT_TOOLS = listOf(
         subtitle = "农历与公历日期互转",
         icon = Icons.Default.CalendarMonth,
         route = ConvertRoutes.LUNAR,
+    ),
+    ConvertTool(
+        title = "进制转换",
+        subtitle = "2 / 8 / 10 / 16 进制互转",
+        icon = Icons.Default.Numbers,
+        route = ConvertRoutes.NUMBER_BASE,
+    ),
+    ConvertTool(
+        title = "编码转换",
+        subtitle = "URL / Base64 / JSON 编解码",
+        icon = Icons.Default.Code,
+        route = ConvertRoutes.ENCODING,
     ),
     ConvertTool(
         title = "单位换算",

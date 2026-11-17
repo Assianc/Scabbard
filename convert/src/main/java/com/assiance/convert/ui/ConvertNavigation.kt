@@ -6,7 +6,9 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.assiance.convert.ui.tools.ColorScreen
 import com.assiance.convert.ui.tools.DateDiffScreen
+import com.assiance.convert.ui.tools.EncodingScreen
 import com.assiance.convert.ui.tools.LunarScreen
+import com.assiance.convert.ui.tools.NumberBaseScreen
 import com.assiance.convert.ui.tools.TimeZoneScreen
 import com.assiance.convert.ui.tools.TimestampScreen
 import com.assiance.convert.ui.tools.UnitConvertScreen
@@ -37,6 +39,12 @@ object ConvertRoutes {
 
     /** 农历 ↔ 公历。 */
     const val LUNAR = "convert/lunar"
+
+    /** 进制转换。 */
+    const val NUMBER_BASE = "convert/number_base"
+
+    /** URL / Base64 / JSON 编码转换。 */
+    const val ENCODING = "convert/encoding"
 
     /** 生活单位换算。 */
     const val UNITS = "convert/units"
@@ -91,6 +99,18 @@ fun NavGraphBuilder.convertGraph(
     composable(ConvertRoutes.LUNAR) {
         CompositionLocalProvider(LocalConvertGlassState provides glassState) {
             LunarScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.NUMBER_BASE) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            NumberBaseScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.ENCODING) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            EncodingScreen(onBack = { navController.popBackStack() })
         }
     }
 
