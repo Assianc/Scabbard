@@ -2,8 +2,10 @@ package com.assiance.convert.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -41,6 +43,18 @@ internal val CONVERT_TOOLS = listOf(
         subtitle = "两个日期相差多少天",
         icon = Icons.Default.DateRange,
         route = ConvertRoutes.DATE_DIFF,
+    ),
+    ConvertTool(
+        title = "时区对照",
+        subtitle = "同一时刻，看各地是几点",
+        icon = Icons.Default.Public,
+        route = ConvertRoutes.TIME_ZONE,
+    ),
+    ConvertTool(
+        title = "农历公历",
+        subtitle = "农历与公历日期互转",
+        icon = Icons.Default.CalendarMonth,
+        route = ConvertRoutes.LUNAR,
     ),
     ConvertTool(
         title = "单位换算",

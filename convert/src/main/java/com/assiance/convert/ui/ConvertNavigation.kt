@@ -6,6 +6,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.assiance.convert.ui.tools.ColorScreen
 import com.assiance.convert.ui.tools.DateDiffScreen
+import com.assiance.convert.ui.tools.LunarScreen
+import com.assiance.convert.ui.tools.TimeZoneScreen
 import com.assiance.convert.ui.tools.TimestampScreen
 import com.assiance.convert.ui.tools.UnitConvertScreen
 import io.github.nadeemiqbal.liquidglass.LiquidGlassState
@@ -29,6 +31,12 @@ object ConvertRoutes {
 
     /** 两个日期相差的自然日数。 */
     const val DATE_DIFF = "convert/date_diff"
+
+    /** 时区对照。 */
+    const val TIME_ZONE = "convert/timezone"
+
+    /** 农历 ↔ 公历。 */
+    const val LUNAR = "convert/lunar"
 
     /** 生活单位换算。 */
     const val UNITS = "convert/units"
@@ -71,6 +79,18 @@ fun NavGraphBuilder.convertGraph(
     composable(ConvertRoutes.DATE_DIFF) {
         CompositionLocalProvider(LocalConvertGlassState provides glassState) {
             DateDiffScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.TIME_ZONE) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            TimeZoneScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.LUNAR) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            LunarScreen(onBack = { navController.popBackStack() })
         }
     }
 
