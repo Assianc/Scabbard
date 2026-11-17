@@ -2,6 +2,8 @@ package com.assiance.convert.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -25,5 +27,17 @@ internal val CONVERT_TOOLS = listOf(
         subtitle = "选择时间，生成定时任务表达式",
         icon = Icons.Default.Schedule,
         route = ConvertRoutes.CRON,
+    ),
+    ConvertTool(
+        title = "命名风格",
+        subtitle = "snake_case / camelCase / kebab-case 互转",
+        icon = Icons.Default.TextFields,
+        route = ConvertRoutes.NAMING_CASE,
+    ),
+    ConvertTool(
+        title = "存储单位",
+        subtitle = "B / KB / MB / GB / TB，支持 1024 与 1000",
+        icon = Icons.Default.Storage,
+        route = ConvertRoutes.STORAGE_UNIT,
     ),
 )

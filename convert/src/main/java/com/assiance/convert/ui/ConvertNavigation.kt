@@ -4,6 +4,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.assiance.convert.ui.tools.NamingCaseScreen
+import com.assiance.convert.ui.tools.StorageUnitScreen
 import io.github.nadeemiqbal.liquidglass.LiquidGlassState
 
 /**
@@ -19,6 +21,12 @@ object ConvertRoutes {
 
     /** 定时任务 cron 表达式转换。 */
     const val CRON = "convert/cron"
+
+    /** 命名风格转换。 */
+    const val NAMING_CASE = "convert/naming_case"
+
+    /** 存储单位换算。 */
+    const val STORAGE_UNIT = "convert/storage_unit"
 }
 
 /**
@@ -43,6 +51,18 @@ fun NavGraphBuilder.convertGraph(
     composable(ConvertRoutes.CRON) {
         CompositionLocalProvider(LocalConvertGlassState provides glassState) {
             CronConverterScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.NAMING_CASE) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            NamingCaseScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.STORAGE_UNIT) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            StorageUnitScreen(onBack = { navController.popBackStack() })
         }
     }
 }
