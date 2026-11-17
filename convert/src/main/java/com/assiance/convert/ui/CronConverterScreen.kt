@@ -66,8 +66,11 @@ import com.assiance.convert.cron.Recurrence
 import com.assiance.convert.cron.WeekDay
 import com.assiance.convert.cron.buildCronExpression
 import com.assiance.convert.cron.dialectNotes
+import com.assiance.convert.cron.nextRuns
 import io.github.nadeemiqbal.liquidglass.liquidGlass
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
@@ -127,6 +130,9 @@ internal fun CronConverterScreen(onBack: () -> Unit) {
     )
     val expression = buildCronExpression(spec)
     val notes = dialectNotes(spec)
+    // 预览基准取进入页面时的时刻；选任何选项都会重算，但时间锚点不再漂移。
+    val now = remember { System.currentTimeMillis() }
+    val upcoming = nextRuns(spec, now)
 
     fun copyExpression() {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -164,6 +170,8 @@ internal fun CronConverterScreen(onBack: () -> Unit) {
                 notes = notes,
                 onCopy = ::copyExpression,
             )
+
+            NextRunsCard(times = upcoming)
 
             SectionLabel("方言")
             ChipRow(
@@ -381,6 +389,65 @@ private fun ExpressionCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+/**
+ * 接下来 5 次触发预览。
+ *
+ * 时刻直接由结构化的 [CronSpec] 推算（见 `CronNextRun.kt`），不解析表达式字符串；
+ * 单次执行已过去时列表为空，这里显示「该时刻已过」而不是留一张空卡。
+ */
+@Composable
+private fun NextRunsCard(times: List<Long>) {
+    val shape = CardDefaults.shape
+    val glassState = rememberConvertGlassState()
+    val formatter = remember {
+        SimpleDateFormat("yyyy-MM-dd HH:mm EEEE", Locale.CHINESE)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .liquidGlass(
+                state = glassState,
+                shape = shape,
+                tint = MaterialTheme.colorScheme.surfaceContainer
+                    .copy(alpha = GLASS_TINT_ALPHA),
+                grain = glassGrainFor(glassState.quality),
+            )
+            .clip(shape)
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+    ) {
+        Text(
+            text = "接下来 5 次",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (times.isEmpty()) {
+            Text(
+                text = "该时刻已过",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            times.forEachIndexed { index, millis ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "${index + 1}.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = formatter.format(Date(millis)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
         }
     }
 }
