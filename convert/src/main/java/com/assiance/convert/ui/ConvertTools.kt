@@ -1,6 +1,8 @@
 package com.assiance.convert.ui
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -25,5 +27,17 @@ internal val CONVERT_TOOLS = listOf(
         subtitle = "选择时间，生成定时任务表达式",
         icon = Icons.Default.Schedule,
         route = ConvertRoutes.CRON,
+    ),
+    ConvertTool(
+        title = "进制转换",
+        subtitle = "2 / 8 / 10 / 16 进制互转",
+        icon = Icons.Default.Numbers,
+        route = ConvertRoutes.NUMBER_BASE,
+    ),
+    ConvertTool(
+        title = "编码转换",
+        subtitle = "URL / Base64 / JSON 编解码",
+        icon = Icons.Default.Code,
+        route = ConvertRoutes.ENCODING,
     ),
 )

@@ -4,6 +4,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.assiance.convert.ui.tools.EncodingScreen
+import com.assiance.convert.ui.tools.NumberBaseScreen
 import io.github.nadeemiqbal.liquidglass.LiquidGlassState
 
 /**
@@ -19,6 +21,12 @@ object ConvertRoutes {
 
     /** 定时任务 cron 表达式转换。 */
     const val CRON = "convert/cron"
+
+    /** 进制转换。 */
+    const val NUMBER_BASE = "convert/number_base"
+
+    /** URL / Base64 / JSON 编码转换。 */
+    const val ENCODING = "convert/encoding"
 }
 
 /**
@@ -43,6 +51,18 @@ fun NavGraphBuilder.convertGraph(
     composable(ConvertRoutes.CRON) {
         CompositionLocalProvider(LocalConvertGlassState provides glassState) {
             CronConverterScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.NUMBER_BASE) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            NumberBaseScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.ENCODING) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            EncodingScreen(onBack = { navController.popBackStack() })
         }
     }
 }
