@@ -9,7 +9,9 @@ import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Straighten
+import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -69,6 +71,18 @@ internal val CONVERT_TOOLS = listOf(
         subtitle = "URL / Base64 / JSON 编解码",
         icon = Icons.Default.Code,
         route = ConvertRoutes.ENCODING,
+    ),
+    ConvertTool(
+        title = "命名风格",
+        subtitle = "snake_case / camelCase / kebab-case 互转",
+        icon = Icons.Default.TextFields,
+        route = ConvertRoutes.NAMING_CASE,
+    ),
+    ConvertTool(
+        title = "存储单位",
+        subtitle = "B / KB / MB / GB / TB，支持 1024 与 1000",
+        icon = Icons.Default.Storage,
+        route = ConvertRoutes.STORAGE_UNIT,
     ),
     ConvertTool(
         title = "单位换算",

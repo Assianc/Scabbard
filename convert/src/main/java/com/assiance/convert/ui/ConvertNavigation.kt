@@ -8,7 +8,9 @@ import com.assiance.convert.ui.tools.ColorScreen
 import com.assiance.convert.ui.tools.DateDiffScreen
 import com.assiance.convert.ui.tools.EncodingScreen
 import com.assiance.convert.ui.tools.LunarScreen
+import com.assiance.convert.ui.tools.NamingCaseScreen
 import com.assiance.convert.ui.tools.NumberBaseScreen
+import com.assiance.convert.ui.tools.StorageUnitScreen
 import com.assiance.convert.ui.tools.TimeZoneScreen
 import com.assiance.convert.ui.tools.TimestampScreen
 import com.assiance.convert.ui.tools.UnitConvertScreen
@@ -45,6 +47,12 @@ object ConvertRoutes {
 
     /** URL / Base64 / JSON 编码转换。 */
     const val ENCODING = "convert/encoding"
+
+    /** 命名风格转换。 */
+    const val NAMING_CASE = "convert/naming_case"
+
+    /** 存储单位换算。 */
+    const val STORAGE_UNIT = "convert/storage_unit"
 
     /** 生活单位换算。 */
     const val UNITS = "convert/units"
@@ -111,6 +119,18 @@ fun NavGraphBuilder.convertGraph(
     composable(ConvertRoutes.ENCODING) {
         CompositionLocalProvider(LocalConvertGlassState provides glassState) {
             EncodingScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.NAMING_CASE) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            NamingCaseScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.STORAGE_UNIT) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            StorageUnitScreen(onBack = { navController.popBackStack() })
         }
     }
 
