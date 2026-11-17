@@ -1,6 +1,8 @@
 package com.assiance.convert.ui
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -25,5 +27,17 @@ internal val CONVERT_TOOLS = listOf(
         subtitle = "选择时间，生成定时任务表达式",
         icon = Icons.Default.Schedule,
         route = ConvertRoutes.CRON,
+    ),
+    ConvertTool(
+        title = "时区对照",
+        subtitle = "同一时刻，看各地是几点",
+        icon = Icons.Default.Public,
+        route = ConvertRoutes.TIME_ZONE,
+    ),
+    ConvertTool(
+        title = "农历公历",
+        subtitle = "农历与公历日期互转",
+        icon = Icons.Default.CalendarMonth,
+        route = ConvertRoutes.LUNAR,
     ),
 )

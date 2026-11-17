@@ -59,6 +59,9 @@ dependencies {
     // 跨模块契约见 ui/ConvertGlassContract.kt。
     implementation(libs.liquid.glass)
 
+    // 农历转换（tyme4kt：纯 Kotlin 多平台），与 alm 日历页同库同版本。
+    implementation(libs.tyme4kt)
+
     // cron 生成逻辑是纯 Kotlin，单测直接跑在 JVM 上，不需要 Robolectric。
     testImplementation(libs.junit)
 }

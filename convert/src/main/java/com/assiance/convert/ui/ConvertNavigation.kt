@@ -4,6 +4,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.assiance.convert.ui.tools.LunarScreen
+import com.assiance.convert.ui.tools.TimeZoneScreen
 import io.github.nadeemiqbal.liquidglass.LiquidGlassState
 
 /**
@@ -19,6 +21,12 @@ object ConvertRoutes {
 
     /** 定时任务 cron 表达式转换。 */
     const val CRON = "convert/cron"
+
+    /** 时区对照。 */
+    const val TIME_ZONE = "convert/timezone"
+
+    /** 农历 ↔ 公历。 */
+    const val LUNAR = "convert/lunar"
 }
 
 /**
@@ -43,6 +51,18 @@ fun NavGraphBuilder.convertGraph(
     composable(ConvertRoutes.CRON) {
         CompositionLocalProvider(LocalConvertGlassState provides glassState) {
             CronConverterScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.TIME_ZONE) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            TimeZoneScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.LUNAR) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            LunarScreen(onBack = { navController.popBackStack() })
         }
     }
 }
