@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,7 +41,7 @@ import io.github.nadeemiqbal.liquidglass.liquidGlass
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ConvertHomeScreen(
-    onOpenCron: () -> Unit,
+    onNavigate: (route: String) -> Unit,
     onBack: () -> Unit,
 ) {
     Scaffold(
@@ -68,12 +67,14 @@ internal fun ConvertHomeScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            MenuEntryCard(
-                icon = Icons.Default.Schedule,
-                title = "Cron 表达式",
-                subtitle = "选择时间，生成定时任务表达式",
-                onClick = onOpenCron,
-            )
+            CONVERT_TOOLS.forEach { tool ->
+                MenuEntryCard(
+                    icon = tool.icon,
+                    title = tool.title,
+                    subtitle = tool.subtitle,
+                    onClick = { onNavigate(tool.route) },
+                )
+            }
         }
     }
 }

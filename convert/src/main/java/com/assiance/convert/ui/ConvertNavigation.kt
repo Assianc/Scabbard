@@ -34,7 +34,7 @@ fun NavGraphBuilder.convertGraph(
     composable(ConvertRoutes.HOME) {
         CompositionLocalProvider(LocalConvertGlassState provides glassState) {
             ConvertHomeScreen(
-                onOpenCron = { navController.navigate(ConvertRoutes.CRON) },
+                onNavigate = { route -> navController.navigate(route) },
                 onBack = { navController.popBackStack() },
             )
         }
