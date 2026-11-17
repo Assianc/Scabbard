@@ -4,6 +4,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.assiance.convert.ui.tools.ColorScreen
+import com.assiance.convert.ui.tools.UnitConvertScreen
 import io.github.nadeemiqbal.liquidglass.LiquidGlassState
 
 /**
@@ -19,6 +21,12 @@ object ConvertRoutes {
 
     /** 定时任务 cron 表达式转换。 */
     const val CRON = "convert/cron"
+
+    /** 生活单位换算。 */
+    const val UNITS = "convert/units"
+
+    /** 颜色格式转换。 */
+    const val COLOR = "convert/color"
 }
 
 /**
@@ -43,6 +51,18 @@ fun NavGraphBuilder.convertGraph(
     composable(ConvertRoutes.CRON) {
         CompositionLocalProvider(LocalConvertGlassState provides glassState) {
             CronConverterScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.UNITS) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            UnitConvertScreen(onBack = { navController.popBackStack() })
+        }
+    }
+
+    composable(ConvertRoutes.COLOR) {
+        CompositionLocalProvider(LocalConvertGlassState provides glassState) {
+            ColorScreen(onBack = { navController.popBackStack() })
         }
     }
 }

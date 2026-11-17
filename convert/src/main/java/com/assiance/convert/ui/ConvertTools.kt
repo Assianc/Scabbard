@@ -1,7 +1,9 @@
 package com.assiance.convert.ui
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -25,5 +27,17 @@ internal val CONVERT_TOOLS = listOf(
         subtitle = "选择时间，生成定时任务表达式",
         icon = Icons.Default.Schedule,
         route = ConvertRoutes.CRON,
+    ),
+    ConvertTool(
+        title = "单位换算",
+        subtitle = "温度、长度、重量",
+        icon = Icons.Default.Straighten,
+        route = ConvertRoutes.UNITS,
+    ),
+    ConvertTool(
+        title = "颜色格式",
+        subtitle = "HEX、RGB、HSL 互转",
+        icon = Icons.Default.Palette,
+        route = ConvertRoutes.COLOR,
     ),
 )
