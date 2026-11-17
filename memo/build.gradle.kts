@@ -1,11 +1,14 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.library")  // 如果 memo 是一个库模块
-    kotlin("android")
+    // kotlin("android") 已移除：AGP 9.0 起 Kotlin 支持内置，显式声明会直接报错。
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "com.assiance.memo"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -29,13 +32,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     // 启用 ViewBinding
     buildFeatures {
         viewBinding = true
+        compose = true
     }
 
     // 正确配置 assets 和 res 目录
@@ -48,6 +48,12 @@ android {
                 srcDirs("src/main/res")
             }
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
@@ -76,4 +82,22 @@ dependencies {
 
     // 添加 AndroidX interpolator 依赖
     implementation("androidx.interpolator:interpolator:1.0.0")
+
+    // ---- Jetpack Compose ----
+    val composeBom = platform(libs.compose.bom)
+    implementation(composeBom)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.activity.compose)
+    implementation(libs.navigation.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.runtime.compose)
+    debugImplementation(libs.compose.ui.tooling)
+
+    // 液态玻璃（iOS 26 风格毛玻璃）。memo 的备忘录记录卡要用，且玻璃的跨模块契约
+    // （ui/LiquidGlassContract.kt）声明在这里，其类型来自本库。宿主 app 自己也声明了同一份。
+    implementation(libs.liquid.glass)
 }

@@ -36,47 +36,32 @@
         android:theme="@style/Theme.Scabbard"
         tools:targetApi="33">
 
-        <!-- StartSplashActivity 作为主入口 -->
-        <activity
-            android:name=".StartSplashActivity"
-            android:exported="true" />
+        <!--
+            全 App 唯一的 Activity，承载 NavHost。
+            改造前这里是 StartSplashActivity / StartActivity / MainActivity / AboutActivity /
+            AppearanceActivity / PlayerSelectionActivity 六个，外加 memo、alm 两个模块各自的 Activity。
 
-        <!-- Main Activities -->
+            launchMode="singleTop"：alm 的闹钟通知会带路由 extra 打回来（见 AlmHostNavigation），
+            singleTop 让 Intent 落到已有实例上，路由 push 到现有返回栈，看完闹钟按返回能退回原来那页。
+        -->
         <activity
-            android:name=".StartActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
-        <activity
-            android:name=".AboutActivity"
-            android:exported="false" />
-        <activity
-            android:name=".AppearanceActivity"
-            android:exported="false" />
-        <activity
-            android:name=".PlayerSelectionActivity"
-            android:exported="false" />
+            android:name=".ScabbardActivity"
+            android:exported="true"
+            android:launchMode="singleTop" />
 
-        <!-- Memo Module Activities -->
-        <activity
-            android:name="com.assiance.memo.MainActivityMemo"
-            android:exported="false" />
-        <activity
-            android:name="com.assiance.memo.AddMemoActivity"
-            android:exported="false" />
-        <activity
-            android:name="com.assiance.memo.MemoDetailActivity"
-            android:exported="false" />
-
-        <!-- App Icon Aliases -->
+        <!--
+            App Icon Aliases —— 15 个。
+            ★ 别名名字一个都没动：IconManager 是按别名名字启停组件的，而别名名字又存进了
+              老用户的 app_settings.current_icon，改名会让已有用户的图标设置失效。
+              变的只有 targetActivity（.StartSplashActivity → .ScabbardActivity）。
+        -->
         <activity-alias
             android:name=".MainActivity.Default"
             android:enabled="true"
             android:exported="true"
             android:icon="@mipmap/scabbard14"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -89,7 +74,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard11"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -102,7 +87,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard12"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -115,7 +100,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard13"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -128,7 +113,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard14"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -141,7 +126,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard15"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -154,7 +139,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard16"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -167,7 +152,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard17"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -180,7 +165,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard21"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -193,7 +178,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard22"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -206,7 +191,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard23"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -219,7 +204,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard24"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -232,7 +217,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard25"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -245,7 +230,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard26"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -258,7 +243,7 @@
             android:exported="true"
             android:icon="@mipmap/scabbard27"
             android:label="@string/app_name"
-            android:targetActivity=".StartSplashActivity">
+            android:targetActivity=".ScabbardActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -276,12 +261,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
-        <!-- 添加 MainActivityAlm 的注册 -->
-        <activity
-            android:name="com.assiance.alm.MainActivityAlm"
-            android:exported="false"
-            android:label="冬去鸟鸣时" />
 
     </application>
 </manifest>

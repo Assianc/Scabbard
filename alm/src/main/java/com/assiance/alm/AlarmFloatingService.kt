@@ -9,26 +9,36 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import android.view.ContextThemeWrapper
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
-import android.widget.TextView
-import android.widget.Button
+import com.assiance.alm.overlay.AlarmFloatingContent
+import com.assiance.alm.overlay.OverlayViewTreeOwner
+import com.assiance.alm.overlay.createOverlayComposeView
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+/**
+ * 闹钟悬浮窗 Service。
+ *
+ * 行为（窗口参数、出现/消失动画、停止广播、START_STICKY）全部保持原样；
+ * 唯一的变化是把 XML 布局换成 Compose（悬浮窗没有宿主 Activity，所以 ComposeView
+ * 自带 ViewTree owner 与一个只服务于 overlay 的极小主题）。
+ */
 class AlarmFloatingService : Service() {
     private var windowManager: WindowManager? = null
     private var floatingView: View? = null
+    private val viewTreeOwner = OverlayViewTreeOwner()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        viewTreeOwner.onCreate()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -39,33 +49,42 @@ class AlarmFloatingService : Service() {
     }
 
     private fun showFloatingWindow() {
-        val contextThemeWrapper = android.view.ContextThemeWrapper(
-            this, 
+        val contextThemeWrapper = ContextThemeWrapper(
+            this,
             R.style.Theme_Alm
         )
-        val inflater = LayoutInflater.from(contextThemeWrapper)
-        floatingView = inflater.inflate(R.layout.layout_alarm_floating, null)
 
         // 设置当前时间
-        val timeText = floatingView?.findViewById<TextView>(R.id.alarmTimeText)
-        val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-        timeText?.text = timeFormat.format(System.currentTimeMillis())
+        val timeText = SimpleDateFormat("HH:mm", Locale.getDefault())
+            .format(System.currentTimeMillis())
 
-        // 设置停止按钮点击事件
-        floatingView?.findViewById<Button>(R.id.stopAlarmButton)?.setOnClickListener {
-            // 添加消失动画
-            animateClose {
-                // 发送停止闹钟的广播
-                val stopIntent = Intent(MainActivityAlm.ALARM_STOP_ACTION).apply {
-                    `package` = packageName
-                    flags = Intent.FLAG_INCLUDE_STOPPED_PACKAGES
-                }
-                sendBroadcast(stopIntent)
-                
-                // 关闭悬浮窗
-                stopSelf()
-            }
+        val view = createOverlayComposeView(
+            context = contextThemeWrapper,
+            owner = viewTreeOwner,
+        ) {
+            AlarmFloatingContent(
+                timeText = timeText,
+                onStop = {
+                    // 添加消失动画
+                    animateClose {
+                        // 发送停止闹钟的广播
+                        val stopIntent = Intent(AlmContract.ALARM_STOP_ACTION).apply {
+                            `package` = packageName
+                            flags = Intent.FLAG_INCLUDE_STOPPED_PACKAGES
+                        }
+                        sendBroadcast(stopIntent)
+
+                        // 关闭悬浮窗
+                        stopSelf()
+                    }
+                },
+            )
         }
+
+        // 与 animateShow() 的动画起点保持一致，避免出现前先闪一下
+        view.alpha = 0f
+        view.translationY = -200f
+        floatingView = view
 
         // 设置窗口参数
         val params = WindowManager.LayoutParams().apply {
@@ -85,7 +104,11 @@ class AlarmFloatingService : Service() {
         }
 
         // 添加悬浮窗到窗口管理器
-        windowManager?.addView(floatingView, params)
+        windowManager?.addView(view, params)
+
+        // 视图已上屏，把 owner 推到 RESUMED（Compose 的动效/协程依赖它）
+        viewTreeOwner.onStart()
+        viewTreeOwner.onResume()
 
         // 添加出现动画
         animateShow()
@@ -95,7 +118,7 @@ class AlarmFloatingService : Service() {
         floatingView?.let { view ->
             val translateY = ObjectAnimator.ofFloat(view, "translationY", -200f, 0f)
             val alpha = ObjectAnimator.ofFloat(view, "alpha", 0f, 1f)
-            
+
             AnimatorSet().apply {
                 playTogether(translateY, alpha)
                 duration = 500
@@ -109,7 +132,7 @@ class AlarmFloatingService : Service() {
         floatingView?.let { view ->
             val translateY = ObjectAnimator.ofFloat(view, "translationY", 0f, -200f)
             val alpha = ObjectAnimator.ofFloat(view, "alpha", 1f, 0f)
-            
+
             AnimatorSet().apply {
                 playTogether(translateY, alpha)
                 duration = 300
@@ -130,5 +153,6 @@ class AlarmFloatingService : Service() {
             windowManager?.removeView(floatingView)
             floatingView = null
         }
+        viewTreeOwner.onDestroy()
     }
-} 
+}

@@ -1,16 +1,19 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    // kotlin.android 已移除：AGP 9.0 起 Kotlin 支持内置，显式声明会直接报错。
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "com.assiance.alm"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
         lint {
-            targetSdk = 34
+            targetSdk = 36
         }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -27,11 +30,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
+    buildFeatures {
+        compose = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
@@ -45,7 +54,30 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
-    
+
+    // ---- Jetpack Compose ----
+    val composeBom = platform(libs.compose.bom)
+    implementation(composeBom)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.activity.compose)
+    implementation(libs.navigation.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.runtime.compose)
+    // 液态玻璃（iOS 26 风格毛玻璃）。宿主把共享 state 经 almGraph 传进来，
+    // 跨模块契约见 ui/AlmGlassContract.kt。
+    implementation(libs.liquid.glass)
+
+    // miuix 只为它的 NumberPicker，封装在 ui/ds/AlmWheelPicker.kt（移植自 LoveScore 的同名封装）。
+    implementation(libs.miuix.ui)
+
+    // 农历转换，日历页的格子与日期标题要用（与 LoveScore 同库同版本）。
+    implementation(libs.tyme4kt)
+    debugImplementation(libs.compose.ui.tooling)
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

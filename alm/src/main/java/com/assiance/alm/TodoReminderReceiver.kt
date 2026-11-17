@@ -28,7 +28,7 @@ class TodoReminderReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
         when (intent?.action) {
-            MainActivityAlm.TODO_REMINDER_ACTION -> {
+            AlmContract.TODO_REMINDER_ACTION -> {
                 val ringtoneUri = intent.getStringExtra("ringtone_uri")
                 // 只调用一次启动悬浮窗服务
                 val serviceIntent = Intent(context, TodoFloatingService::class.java).apply {
@@ -42,16 +42,28 @@ class TodoReminderReceiver : BroadcastReceiver() {
 
                 // 播放铃声
                 playRingtone(context!!, ringtoneUri)
+
+                // 到点提醒的通知（本次新增接通）。渠道此前从未创建过，且 Android 8+ 往不存在的
+                // 渠道发通知会被静默丢弃，所以先确保渠道存在再发。标题/正文用待办自己的字段，
+                // 就是上面已经放进 serviceIntent 的那两个 extra。
+                // context 沿用上一行的 `!!` 用法，不动这一段的既有写法。
+                val ctx = context!!
+                AlmRepository.createTodoNotificationChannel(ctx)
+                AlmNotifications.showTodoReminder(
+                    context = ctx,
+                    title = intent.getStringExtra("todo_title"),
+                    description = intent.getStringExtra("todo_description"),
+                )
             }
-            MainActivityAlm.TODO_REMINDER_STOP_ACTION -> {
+            AlmContract.TODO_REMINDER_STOP_ACTION -> {
                 Log.d("TodoReminder", "收到停止提醒广播")
                 // 立即停止铃声和振动
                 stopRingtone()
                 // 取消通知
                 val notificationManager = context?.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                notificationManager?.cancel(MainActivityAlm.TODO_NOTIFICATION_ID)
-                notificationManager?.cancel(MainActivityAlm.TODO_NOTIFICATION_ID + 1)
-                notificationManager?.cancel(MainActivityAlm.TODO_NOTIFICATION_ID + 2)
+                notificationManager?.cancel(AlmContract.TODO_NOTIFICATION_ID)
+                notificationManager?.cancel(AlmContract.TODO_NOTIFICATION_ID + 1)
+                notificationManager?.cancel(AlmContract.TODO_NOTIFICATION_ID + 2)
             }
         }
     }

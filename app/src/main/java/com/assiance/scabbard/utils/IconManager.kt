@@ -26,6 +26,9 @@ object IconManager {
         "MainActivity.Default" to R.mipmap.scabbard14
     )
 
+    /** 别名 → mipmap 资源。外观设置页的图标预览网格要用。 */
+    fun iconResOf(alias: String): Int = iconMap[alias] ?: R.mipmap.scabbard14
+
     fun getCurrentIconResourceId(context: Context): Int {
         // 先检查是否有其他图标设置（关于界面和启动动画）
         val otherIcon = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
