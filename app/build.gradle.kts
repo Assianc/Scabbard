@@ -22,8 +22,8 @@ android {
         applicationId = "com.assiance.scabbard"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "4.2.4"
+        versionCode = 20261119
+        versionName = "5.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -56,8 +56,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
 }
@@ -125,7 +125,7 @@ afterEvaluate {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
+        jvmTarget.set(JvmTarget.JVM_21)
         // 迁移自 android.kotlinOptions.freeCompilerArgs 里那三条 "-Xopt-in="：
         // 该 flag 在 Kotlin 2.x 已更名为 -opt-in，这里直接用类型化的 optIn 列表表达。
         optIn.addAll(
