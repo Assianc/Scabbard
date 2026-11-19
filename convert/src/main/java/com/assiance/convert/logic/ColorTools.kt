@@ -51,6 +51,53 @@ fun toHslString(rgb: Rgb): String {
     return "hsl($h, $s%, $l%)"
 }
 
+/**
+ * HSV 表示。取色器用：h ∈ [0,360)，s / v ∈ [0,1]。
+ *
+ * 单独于 HSL 存在，是因为取色面板的交互天然是「色相 + 饱和度 + 明度」，
+ * 用 HSL 的 l 直接画面板会把纯色挤在中间一窄条。
+ */
+data class Hsv(val h: Float, val s: Float, val v: Float)
+
+/** 标准 RGB → HSV。黑色（max=0）时色相与饱和度均为 0。 */
+fun toHsv(rgb: Rgb): Hsv {
+    val r = rgb.r / 255f
+    val g = rgb.g / 255f
+    val b = rgb.b / 255f
+    val max = maxOf(r, g, b)
+    val min = minOf(r, g, b)
+    val d = max - min
+    val saturation = if (max == 0f) 0f else d / max
+    val hue = when {
+        d == 0f -> 0f
+        max == r -> 60f * (((g - b) / d) % 6f)
+        max == g -> 60f * (((b - r) / d) + 2f)
+        else -> 60f * (((r - g) / d) + 4f)
+    }.let { if (it < 0f) it + 360f else it }
+    return Hsv(hue, saturation, max)
+}
+
+/** 标准 HSV → RGB，结果四舍五入并夹到 0–255。 */
+fun fromHsv(hsv: Hsv): Rgb {
+    val c = hsv.v * hsv.s
+    val hh = (hsv.h % 360f) / 60f
+    val x = c * (1f - kotlin.math.abs(hh % 2f - 1f))
+    val (r1, g1, b1) = when {
+        hh < 1f -> Triple(c, x, 0f)
+        hh < 2f -> Triple(x, c, 0f)
+        hh < 3f -> Triple(0f, c, x)
+        hh < 4f -> Triple(0f, x, c)
+        hh < 5f -> Triple(x, 0f, c)
+        else -> Triple(c, 0f, x)
+    }
+    val m = hsv.v - c
+    return Rgb(
+        r = ((r1 + m) * 255f).roundToInt().coerceIn(0, 255),
+        g = ((g1 + m) * 255f).roundToInt().coerceIn(0, 255),
+        b = ((b1 + m) * 255f).roundToInt().coerceIn(0, 255),
+    )
+}
+
 /** 标准 RGB → HSL：h ∈ [0,360)，s / l 为百分数。 */
 fun toHsl(rgb: Rgb): Triple<Int, Int, Int> {
     val r = rgb.r / 255.0
