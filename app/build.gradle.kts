@@ -22,8 +22,8 @@ android {
         applicationId = "com.assiance.scabbard"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "4.2.4"
+        versionCode = 20261119
+        versionName = "5.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
